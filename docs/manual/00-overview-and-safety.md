@@ -60,8 +60,9 @@ arduino-cli board list                 # shows which /dev/ttyACM* is which board
 | P4 USBD_N/USBD_P pins 25/27 not usable as GPIO | Verified | Waveshare docs |
 | XIAO ESP32-S3: D6 = GPIO43 (TX), D7 = GPIO44 (RX), 3V3 pin 700 mA, 5V pin dead on battery | Verified | wiki.seeedstudio.com xiao_esp32s3_getting_started |
 | R4 WiFi: D0 = RX, D1 = TX, Serial1; 5 V logic; 8 mA per pin, 60 mA total; 5 V pin ~4.7 V on USB | Verified | Arduino docs via lastminuteengineers |
-| R4 D8 is not a marked PWM pin; tone() on D8 | **Unverified, test with the buzzer sketch**; fallback D9 | see Phase 1 |
-| Adafruit 757 pin layout (A = low side, B = high side) | From the Setup Guide, not re-checked | Adafruit product page |
-| BNO085 default address 0x4A (0x4B with ADR bridged) | From the Setup Guide, not re-checked | Adafruit 4754 |
-| P4 MX1.25 battery plug polarity | **Unverified**: read the board silkscreen | n/a |
-| OV5647 15-pin 0.5 mm ribbon fits the P4 CSI connector | From the Setup Guide; test with Waveshare demo | n/a |
+| R4 `tone()` works on D8 (any digital pin; timer-interrupt toggling) | Verified | ArduinoCore-renesas `Tone.cpp` |
+| Adafruit 757 pin layout: LV, A1-A4, GND on one side; HV, B1-B4, GND on the other; 10K pull-ups | Verified | adafruit/4-Channel-Level-Shifter-PCB board file |
+| BNO085 default address 0x4A; alternate 0x4B when DI is pulled high (NOT an ADR jumper); VIN 3-5 V; 10K I2C pull-ups on board | Verified (manual corrected) | learn.adafruit.com BNO085 pinouts |
+| P4 battery connector J2: pin 1 = BAT, pin 2 = GND | Verified in schematic (physical pin 1 position: confirm on the board) | Waveshare schematic PDF |
+| P4 header 5V = VCC_5V rail, fed from USB or battery boost (Q7); not gated by the power button | Verified in schematic; **live-measure once** | Waveshare schematic PDF |
+| P4 CSI: 15-pin 0.5 mm, MIPI 2-lane; OV5647 supported | Verified | Waveshare product page |

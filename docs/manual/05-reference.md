@@ -14,7 +14,7 @@
 |---|---|---|
 | R4 | USB-C (computer or power bank) | 5 V pin ~4.7 V on USB; max 8 mA per pin, 60 mA total |
 | XIAO (Phase 2) | R4 5V pin | do not also plug its USB-C |
-| XIAO (Phase 3) | P4 header pin 1 (5V) | do not also plug its USB-C; XIAO 5V is dead on battery-only power per Seeed, check P4 5V behavior on LiPo |
+| XIAO (Phase 3) | P4 header pin 1 (5V) | do not also plug its USB-C; Seeed's "5V dead on battery" refers to the XIAO's own battery pads, not this feed; P4 header 5V comes from its boost on LiPo |
 | P4 | USB-C or MX1.25 LiPo | short-press POWER |
 
 ## Board pin cheats
@@ -22,8 +22,8 @@
 - **XIAO ESP32-S3:** D0=GPIO1, D1=2, D2=3, D3=4, D4=5 (SDA), D5=6 (SCL), D6=43 (TX), D7=44 (RX), D8=7, D9=8, D10=9.
 - **P4 header:** see the full table in `03-phase3-p4-rf-camera.md`.
 
-## Open verification items
-1. R4 `tone()` on D8 (fallback D9).
-2. P4 battery plug polarity (silkscreen).
-3. 5 V availability on the P4 header when running on LiPo alone (it may be off, which would not power the XIAO); measure with a multimeter.
-4. Adafruit 757 and BNO085 details were taken from the original Setup Guide.
+## Verification status
+All items from the original guide are now checked against sources (see the log in `00-overview-and-safety.md`).
+Two bench confirmations remain, both one-minute multimeter checks done when you have the hardware:
+1. Header 5V (pin 1 or 3) reads about 5 V when the P4 runs on LiPo alone (the schematic says yes).
+2. LiPo plug: red wire lands on J2 pin 1 (BAT) and black on pin 2 (GND) before you connect it.

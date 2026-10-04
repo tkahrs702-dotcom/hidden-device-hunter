@@ -39,13 +39,14 @@ Numbering is Waveshare's, not Raspberry Pi's: pin 1 is 5V. Odd pins are the left
 | 35 | GPIO46 | 36 | GPIO51 |
 | 37 | GPIO47 | 38 | GPIO52 |
 | 39 | GPIO48 | 40 | GND |
+**Header 5V pins (1, 3):** per the schematic these are the VCC_5V rail, fed from USB or, on battery, from an on-board boost converter through a P-FET (Q7), with a 5.0 V TVS diode. The power-button gate (Q6) switches a different rail (Core_5V), so header 5V should be live on battery even when the screen is "off"; confirm once with a multimeter. The boost chip's current rating is not stated in the schematic; the XIAO draws well under 0.4 A.
 Leave GPIO37/38 (pins 7, 9) free: likely the USB-UART console. I2C GPIO7/8 is shared with touch, audio codec and camera; the BNO085 at 0x4A does not clash. On-board GPIOs in use (from `board-p4.md`): backlight 26, LCD reset 27, audio 9-13 and 53, SD 43/44. None of those are on the header pins used here.
 
 ## Pin-to-pin wiring
 | # | From | To (header pin, signal) | Note |
 |---|---|---|---|
 | 1 | OV5647 ribbon | CSI connector | 15-pin 0.5 mm; contacts toward the board per the Waveshare camera demo photos |
-| 2 | 3.7 V LiPo | MX1.25 battery header | check polarity on silkscreen first; the board charges over USB-C |
+| 2 | 3.7 V LiPo | MX1.25 battery header J2 | schematic: J2 pin 1 = BAT (+), pin 2 = GND. Check your cell's red/black against that with a multimeter before plugging in; the board charges over USB-C |
 | 3 | BNO085 VIN | pin 2, 3V3 | |
 | 4 | BNO085 GND | pin 5, GND | |
 | 5 | BNO085 SDA | pin 4, GPIO7 | |
@@ -100,7 +101,7 @@ Hotspot hidden behind a wall: it appears as a hot spot on the image and stays pu
 |---|---|---|
 | Screen black | board powered (short-press POWER) | Waveshare LCD demo; charge LiPo or use USB-C |
 | No camera image | ribbon orientation, lens cap | Waveshare camera demo alone |
-| BNO085 missing on I2C | VIN on 3V3, SDA/SCL not swapped | STEMMA cable; address 0x4A (0x4B if ADR bridged) |
+| BNO085 missing on I2C | VIN on 3V3, SDA/SCL not swapped | STEMMA cable; address 0x4A (0x4B only if the DI pin is pulled high) |
 | Heading drifts | magnets, speaker, power bank near the IMU | move away; redo the figure-8 |
 | No data from XIAO | TX/RX crossed? common ground? | check pin 11 / pin 14, baud 115200, XIAO powered |
 | Board will not boot after build | silicon rev settings | rev config lines above |

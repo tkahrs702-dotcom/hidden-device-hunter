@@ -20,7 +20,8 @@ Pigtail female + Alfa male must mate. The XIAO's stock antenna is weak; the pane
    LOW side (3.3 V)                 HIGH side (5 V)
    LV  A1 A2 A3 A4 GND              HV  B1 B2 B3 B4 GND
 ```
-A-channel pins are on the low (3.3 V) side, B-channel pins are on the high (5 V) side; A1<->B1 etc. Each channel works both ways.
+Silkscreen read from Adafruit's board file (`adafruit/4-Channel-Level-Shifter-PCB`, 2026-10-03): left column top to bottom LV, A1, A2, A3, A4, GND; right column HV, B1, B2, B3, B4, GND.
+A1<->B1 etc. Each channel works both ways. Low side 1.8 V up to HV; HV up to 10 V. Each line has a 10K pull-up on both sides, so idle UART lines sit high (correct for UART).
 
 ## Pin-to-pin wiring
 | # | From | To | Note |

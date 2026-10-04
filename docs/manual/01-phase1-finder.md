@@ -58,8 +58,9 @@ void setup() {
 }
 void loop() {}
 ```
-Expect three short beeps after upload. If silent: swap the buzzer legs (piezos mostly don't care), then try D9 in place of D8
-(D8 is not a marked PWM pin; `tone()` on the R4 may or may not work there, unverified). Use whichever pin works and update the wiring table.
+Expect three short beeps after upload. If silent: swap the buzzer legs (piezos mostly don't care) and re-check the resistor.
+`tone()` works on D8: the R4 core drives it from a hardware timer interrupt that toggles any digital pin, so PWM capability is not needed
+(verified in `ArduinoCore-renesas/cores/arduino/Tone.cpp`, 2026-10-03). The board's "PWM pin" markings do not apply.
 
 ### Test 2: Wi-Fi scan with signal strength (serial monitor, 115200)
 ```cpp
@@ -94,7 +95,7 @@ Scan-based RSSI updates every few seconds, so walk slowly. Phase 2 removes that 
 ## Troubleshooting (Phase 1)
 | Symptom | Check first | Then |
 |---|---|---|
-| No beep | polarity, resistor seated, pin D8 | run Test 1; try D9; try an active buzzer on a 3-pin module |
+| No beep | polarity, resistor seated, pin D8 | run Test 1; check the buzzer is passive; try a 3-pin module |
 | Board not in port list | data-capable cable, other USB port | `arduino-cli board list`, dialout group |
 | Scan shows nothing | R4 WiFi firmware on the ESP32-S3 module | update via Arduino IDE firmware updater |
 | Power bank shuts off | low-current auto-off | bank with always-on mode, or add a small load |
