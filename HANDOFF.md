@@ -21,7 +21,7 @@ Known limits: R4 Wi-Fi scan max 10 networks and skips hidden SSIDs; 2.4 GHz only
 5. Needs Taelor: order parts; confirm go on Phase 1 firmware.
 
 ## Claude app copy
-Claude Project doc "Hidden Device Hunter": https://claude.ai/artifact/JRZNRaVzCsuKZQ8Rz8ohqj (status mirrored from this file; repo is the source of truth, refresh the doc when this changes). Duplicate cloud docs deleted 2026-10-04. Still to rename in claude.ai: "Sentinel RF Finder — Build Plan" and "— Setup Guide" (they are this project's docs).
+Claude Project doc "Hidden Device Hunter": https://claude.ai/artifact/JRZNRaVzCsuKZQ8Rz8ohqj (status mirrored from this file; repo is the source of truth, refresh the doc when this changes). Duplicate cloud docs deleted 2026-10-04. Companion docs (renamed 2026-10-04 from "Sentinel RF Finder"): Build Plan https://claude.ai/artifact/PuYyKuxAEt5E7tMc9CCF2e and Setup Guide https://claude.ai/artifact/QAQKwawgR31SS5VzCug1D1. Their in-body titles still say "Sentinel RF Finder"; the gallery list may lag the rename.
 
 ## Manual
 Full manual written 2026-10-03 in `docs/manual/` (pin-to-pin tables, ASCII diagrams, assembly, software, tests). Pin data checked against the Waveshare schematic and docs, Seeed, Arduino core source and Adafruit board files.
