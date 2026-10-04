@@ -31,3 +31,5 @@ Cart status: see bottom of this file (updated as items are added).
 - Rokland: not yet added
 - Adafruit: not yet added
 - Amazon: not yet added
+
+Claude app copy (phone/Android): https://claude.ai/code/artifact/8124fc81-7a50-4d38-b862-1a4d592f9da1
