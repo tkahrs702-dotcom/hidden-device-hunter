@@ -9,7 +9,7 @@ Claude Android app; copied here so every computer has it. Status: **planning onl
 |---|---|
 | [`HANDOFF.md`](HANDOFF.md) | Start here: status, decisions, open items, next step |
 | [`docs/build-plan.md`](docs/build-plan.md) | The four phases, roles, parts list |
-| [`setup-guide.md`](docs/setup-guide.md) | Priced parts with links, installs, wiring tables, assembly, tests, troubleshooting |
+| [`docs/setup-guide.md`](docs/setup-guide.md) | Priced parts with links, installs, wiring tables, assembly, tests, troubleshooting |
 
 ## Cloud originals (live Claude Docs, private to Taelor)
 - Hidden Device Hunter (8 tabs: Overview, Parts & shopping, Software setup, Phases 1-4, Troubleshooting): https://claude.ai/artifact/6Hofsp6NwQrS2nxhyiZN5e. Only its Overview tab has content (summarised below); the other 7 tabs are empty placeholders.

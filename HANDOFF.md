@@ -1,4 +1,4 @@
-# RF Finder handoff
+# Hidden Device Hunter (RF Finder) handoff
 Last updated 2026-10-03. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
 
 ## State
