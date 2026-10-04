@@ -1,0 +1,33 @@
+HIDDEN DEVICE HUNTER - PHASE 1-2 SHOPPING LIST
+Prices checked 2026-10-04 (Las Vegas, before shipping and tax). Nothing ordered yet.
+
+1. Seeed Studio XIAO ESP32-S3 (plain, NOT Sense; un-soldered, 1 pc)   $7.49
+   https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html
+   Amazon price for comparison: $16.99 (https://www.amazon.com/dp/B0BYSB66S5)
+
+2. Alfa APA-M04 2.4 GHz 7 dBi directional panel antenna, RP-SMA male   $8.97
+   https://store.rokland.com/products/alfa-7-dbi-gain-rp-sma-directional-panel-antenna-apa-m04
+   Amazon: currently unavailable. Fallback: Alfa APA-M25 dual band, $21.99, arrives Oct 15
+   (https://www.amazon.com/dp/B003ZWILOW is the M04 page; M25 is in the Amazon search results)
+
+3. Adafruit 757 4-channel bi-directional logic level converter (BSS138)   $3.95
+   https://www.adafruit.com/product/757
+   Amazon price for comparison: $6.88 (https://www.amazon.com/dp/B00NAY3J7O)
+
+4. U.FL (IPEX) to RP-SMA FEMALE bulkhead pigtail, Futheda 2-pack, 30 cm   $6.99
+   https://www.amazon.com/dp/B0CT5M9BMD
+   Must be RP-SMA female to mate with the Alfa's RP-SMA male plug.
+
+TOTAL (items 1-4): $27.40 before shipping/tax
+
+Already owned: Arduino Uno R4 WiFi, Waveshare ESP32-P4 4.3" board, TTGO T3.
+Still needed for Phase 1 (cheap, not priced here): piezo buzzer + 100 ohm resistor, USB power bank.
+Phase 3 parts not in this list: OV5647 camera, BNO085 IMU, LiPo battery.
+
+NOT this project: ALFA AOA-915-5ACM (915 MHz LoRa antenna, $18.97) - wrong band for 2.4 GHz Wi-Fi.
+
+Cart status: see bottom of this file (updated as items are added).
+- Seeed: not yet added (first attempt missed; retrying)
+- Rokland: not yet added
+- Adafruit: not yet added
+- Amazon: not yet added
