@@ -1,0 +1,8 @@
+build/
+*.bin
+*.elf
+*.hex
+.vscode/
+secrets.h
+__pycache__/
+oui.csv

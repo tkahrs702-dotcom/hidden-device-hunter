@@ -2,8 +2,11 @@
 Last updated 2026-10-03. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
 
 ## State
-Planning only. No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy"). No firmware written
-for any phase (finder, XIAO sniffer, P4 camera/heat map). Cloud progress table: all phases Not started.
+No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy").
+Firmware (imported 2026-10-04 from a cloud-session bundle, see `docs/worklog/2026-10-04-firmware-import.md`): Phase 1 `firmware/phase1-r4-finder`,
+Phase 2 `firmware/phase2-xiao-sniffer` + `firmware/phase2-r4-display`, `tools/make_oui_table.py` (771-entry maker table). All compile
+(arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12) but are NOT run on hardware. Phase 3 (P4 camera): no firmware, notes only.
+Known limits: R4 Wi-Fi scan max 10 networks and skips hidden SSIDs; 2.4 GHz only; random MACs carry no maker info.
 
 ## Decisions made on copy (2026-10-03)
 - Level shifting: Build Plan said 1k+2k divider; Setup Guide (later, detailed) says Adafruit 757 shifter. Used the shifter everywhere (also needed for bidirectional UART).
@@ -21,4 +24,4 @@ for any phase (finder, XIAO sniffer, P4 camera/heat map). Cloud progress table: 
 Full manual written 2026-10-03 in `docs/manual/` (pin-to-pin tables, ASCII diagrams, assembly, software, tests). Pin data checked against the Waveshare schematic and docs, Seeed, Arduino core source and Adafruit board files.
 
 ## Next step
-Write Phase 1 finder firmware for the R4 (needs only buzzer + resistor, both cheap), test with phone hotspot.
+Phase 1 firmware exists; flash it to the R4 (buzzer + resistor) and test with a phone hotspot. Find ports with `arduino-cli board list` (serial number, not ttyACM order).
