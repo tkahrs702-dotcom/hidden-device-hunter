@@ -1,5 +1,5 @@
 # Hidden Device Hunter (RF Finder) handoff
-Last updated 2026-10-03. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
+Last updated 2026-10-04. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
 
 ## State
 No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy").
@@ -14,7 +14,7 @@ Known limits: R4 Wi-Fi scan max 10 networks and skips hidden SSIDs; 2.4 GHz only
 - Toolchain: HaLjr already has ESP-IDF v5.5.5 and arduino-cli (see `~/Projects/sentinel/HANDOFF.md` sec. 4); guide's generic install steps only needed for Arduino IDE boards if the IDE is wanted.
 
 ## Open items
-1. Cloud doc "Hidden Device Hunter": only the Overview tab has content. The other 7 tabs (Parts & shopping, Software setup, Phases 1-4, Troubleshooting) are empty "pending" placeholders, checked 2026-10-03. The Setup Guide doc holds all real detail; nothing to copy from them. Overview's claim of "full firmware" per tab is not yet true.
+1. Claude app doc "Hidden Device Hunter" now holds a status summary (see Claude app copy below); the old 7 empty placeholder tabs were in the deleted original.
 2. Setup Guide Sources list still has stale links (7-DSI-TOUCH-A, RPi Camera B); dropped in this copy.
 3. P4 header pins, R4 tone() on D8, shifter and IMU details all verified 2026-10-03 (see `docs/manual/00-overview-and-safety.md`). Left: two bench multimeter checks (header 5V on LiPo, LiPo plug polarity) once the hardware is in hand.
 4. Overlap with existing work: `firmware/ttgo-node` (undeployed anti-spy) and the R4 Wi-Fi/BLE scanner in `~/Projects/sentinel/docs/worklog/2026-09-29-r4-wifi-scanner.md`. Decide whether Phase 1/2 reuse that hub.
