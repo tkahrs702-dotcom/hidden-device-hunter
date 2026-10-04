@@ -4,6 +4,7 @@ name: Compile firmware
 
 on:
   push:
+    branches: [main]  # PR branches are covered by pull_request; avoids running twice
   pull_request:
   workflow_dispatch:
 
