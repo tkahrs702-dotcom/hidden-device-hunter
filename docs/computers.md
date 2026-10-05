@@ -33,13 +33,13 @@ compiles all three sketches, and lists the boards plugged in. Run it again any t
 ```
 curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/.local/bin sh -s 1.3.1
 ```
-The esp32 core download is large (roughly 1-2 GB with its toolchains); renesas_uno is much smaller.
+The esp32 core download is large (roughly 1-2 GB with its toolchains); renesas_uno is much smaller. On a slow link the default download
+timeout cuts it off (`context deadline exceeded`); raise it first: `arduino-cli config set network.connection_timeout 1800s`.
 If it says `dialout` is missing: `sudo usermod -aG dialout $USER`, log out, log back in.
 
 | | HaL | HaLjr |
 |---|---|---|
-| arduino-cli | not installed (checked 2026-10-05); install it first, see below | installed (1.3.1) |
-| cores | run `tools/setup.sh` once arduino-cli is in | installed (renesas_uno 1.6.0, esp32 3.3.12) |
+| arduino-cli + cores | installed 2026-10-05 (arduino-cli 1.3.1 in `~/.local/bin`, renesas_uno 1.6.0, esp32 3.3.12) | installed (arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12) |
 | ESP-IDF v5.5.5 (Phase 3 only) | not needed until Phase 3 | installed at `~/esp/esp-idf-v5.5.5` |
 | SENTINEL boards also plugged in | possibly | yes: SENTINEL P4 and TTGOs |
 
