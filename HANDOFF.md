@@ -34,5 +34,14 @@ flashing with arduino-cli, use, troubleshooting. Pin data checked against the Wa
 ## Computers
 HaL and HaLjr: `docs/computers.md` (layout, per-session routine, board serial numbers to fill in). `tools/setup.sh` sets up or checks either one.
 
+Pending per computer (2026-10-05; tick off and delete when done, log it in `docs/worklog/`):
+- HaL: arduino-cli missing, so `tools/setup.sh` stops early. Waiting on Taelor's yes to install arduino-cli 1.3.1 into `~/.local/bin`
+  (command in `docs/computers.md`), then run `tools/setup.sh` (cores ~1-2 GB, compiles all three sketches).
+  `user1` is not in `dialout`: Taelor runs `sudo usermod -aG dialout user1`, then logs out and back in.
+- HaLjr: was offline from HaL on 2026-10-05 (`haljr.local` did not resolve). Next session there: `git pull`, check out PR #2's branch
+  `claude/build-manual-schematics-4gaef6` (or `main` once merged), run `tools/setup.sh`, report every ok/WARN line,
+  run `arduino-cli board list` and `ls -l /dev/serial/by-id/` (do not flash; SENTINEL P4 and TTGOs are plugged in there),
+  and fill in the board serial-number table in `docs/computers.md` for any of this project's boards that are plugged in.
+
 ## Next step
 Phase 1 firmware exists; flash it to the R4 (buzzer + resistor) and test with a phone hotspot. Find ports with `arduino-cli board list` (serial number, not ttyACM order).
