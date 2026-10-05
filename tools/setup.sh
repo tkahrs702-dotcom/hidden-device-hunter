@@ -44,6 +44,7 @@ done
 
 step "Serial port permission"
 if id -nG | grep -qw dialout; then ok "$USER is in dialout"
+elif id -nG "$USER" | grep -qw dialout; then warn "$USER was added to dialout but this login predates it: log out and back in"
 else warn "$USER is not in dialout: sudo usermod -aG dialout $USER, then log out and back in"; fi
 
 if [[ $CHECK_ONLY == 0 ]]; then

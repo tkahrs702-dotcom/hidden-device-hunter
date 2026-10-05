@@ -35,8 +35,7 @@ flashing with arduino-cli, use, troubleshooting. Pin data checked against the Wa
 HaL and HaLjr: `docs/computers.md` (layout, per-session routine, board serial numbers to fill in). `tools/setup.sh` sets up or checks either one.
 
 Pending per computer (2026-10-05; tick off and delete when done, log it in `docs/worklog/`):
-- HaL: toolchain installed and all three sketches compile (2026-10-05). Still needs `dialout`: Taelor runs
-  `sudo usermod -aG dialout user1`, then logs out and back in.
+- HaL: done 2026-10-05. Toolchain installed, all three sketches compile, `user1` added to `dialout`.
 - HaLjr: was offline from HaL on 2026-10-05 (`haljr.local` did not resolve). Next session there: `git pull`, check out PR #2's branch
   `claude/build-manual-schematics-4gaef6` (or `main` once merged), run `tools/setup.sh`, report every ok/WARN line,
   run `arduino-cli board list` and `ls -l /dev/serial/by-id/` (do not flash; SENTINEL P4 and TTGOs are plugged in there),
