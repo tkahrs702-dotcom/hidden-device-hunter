@@ -31,5 +31,8 @@ flashing with arduino-cli, use, troubleshooting. Pin data checked against the Wa
 (R4 and breadboard are sockets); generic BSS138 shifter (LV1-4/HV1-4) mapped to Adafruit 757 (A/B) in 02 sec. 2.2; Phase 3 GND pins swapped
 (XIAO GND -> P4 pin 5, BNO085 GND -> pin 10) so BNO085 uses only pins 2/4/6/10.
 
+## Computers
+HaL and HaLjr: `docs/computers.md` (layout, per-session routine, board serial numbers to fill in). `tools/setup.sh` sets up or checks either one.
+
 ## Next step
 Phase 1 firmware exists; flash it to the R4 (buzzer + resistor) and test with a phone hotspot. Find ports with `arduino-cli board list` (serial number, not ttyACM order).

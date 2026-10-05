@@ -4,6 +4,26 @@ Handheld finder for hidden Wi-Fi and Bluetooth devices in Taelor's own home. Sta
 Status: Phase 1 and 2 firmware written and compiling, **not yet run on hardware**; Phase 3 planned. No parts ordered yet.
 The manual below is the build guide: wiring diagrams and schematics (SVG), pin-to-pin wire lists, step-by-step assembly, meter checks, flashing, use and troubleshooting.
 
+## Quick start (HaL or HaLjr)
+```
+cd ~/Projects/hidden-device-hunter && git pull     # first time: see docs/computers.md to clone
+tools/setup.sh                                     # toolchain check + compile all sketches + list boards
+```
+Then open the phase you are on: [Phase 1](docs/manual/01-phase1-finder.md) (start here), [Phase 2](docs/manual/02-phase2-xiao-antenna.md),
+[Phase 3](docs/manual/03-phase3-p4-rf-camera.md). [`docs/computers.md`](docs/computers.md) has the folder layout, the per-session routine,
+how to tell boards apart by serial number, and copy-paste flash commands.
+
+## Repo map
+| Path | What |
+|---|---|
+| [`HANDOFF.md`](HANDOFF.md) | current state, decisions, next step: read first |
+| [`docs/manual/`](docs/manual) | build manual with diagrams (table below) |
+| [`docs/computers.md`](docs/computers.md) | HaL / HaLjr setup and routine |
+| [`docs/shopping-list.txt`](docs/shopping-list.txt) | parts to buy, with prices and links |
+| [`docs/worklog/`](docs/worklog) | one file per session |
+| [`firmware/`](firmware) | `phase1-r4-finder`, `phase2-r4-display`, `phase2-xiao-sniffer`, `phase3-p4-rfcam` (placeholder) |
+| [`tools/`](tools) | `setup.sh`, `make_oui_table.py` (camera-maker table), `diagrams/` (SVG generator) |
+
 ## Manual (`docs/manual/`, read in order)
 | File | What |
 |---|---|
