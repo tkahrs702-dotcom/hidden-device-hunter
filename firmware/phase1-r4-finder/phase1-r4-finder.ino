@@ -1,5 +1,5 @@
 // Hidden Device Hunter - Phase 1: Wi-Fi finder with buzzer
-// Board: Arduino Uno R4 WiFi        Buzzer: D8 -> 100 ohm -> piezo + ; piezo - -> GND
+// Board: Arduino Uno R4 WiFi        Buzzer: Modulino Buzzer on the Qwiic socket
 //
 // What it does
 //   1. Scans the Wi-Fi networks around you every few seconds.
@@ -26,7 +26,7 @@
 #include "meter.h"
 
 // ---------- settings you can change ----------
-const uint8_t BUZZER_PIN = 8;
+// Buzzer: Modulino Buzzer on the Qwiic socket (see beeper.h). No pin to set.
 const int RSSI_FAR = -90;       // dBm at or below this = 0 % strength
 const int RSSI_NEAR = -35;      // dBm at or above this = 100 % strength
 const int MISSES_BEFORE_LOST = 3;
@@ -100,7 +100,7 @@ void loadTarget() {
 }
 
 void printHelp() {
-  Serial.println(F("\nCommands: <number> = lock target   l = list   c = clear target   m = mute   h = help"));
+  Serial.println(F("\nCommands: <number> = lock target   l = list   c = clear target   m = mute   t = test buzzer   h = help"));
 }
 
 void printTable() {
@@ -145,6 +145,10 @@ void handleSerial() {
       Meter::question();
       Serial.println(F("Target cleared."));
       printList = true;
+    } else if (buf[0] == 't' || buf[0] == 'T') {
+      Serial.println(Beeper::found ? F("Buzzer found. Test beeps playing; type c to stop.")
+                                   : F("Buzzer NOT found on the Qwiic port. Check the cable."));
+      Beeper::set(500, 100);
     } else if (buf[0] == 'm' || buf[0] == 'M') {
       muted = !muted;
       Beeper::mute(muted);
@@ -181,7 +185,7 @@ void setup() {
 
   Meter::begin();
   Meter::question();
-  if (!Beeper::begin(BUZZER_PIN)) Serial.println(F("WARNING: no free hardware timer for the buzzer."));
+  if (!Beeper::begin()) Serial.println(F("WARNING: Modulino Buzzer not found. Check the Qwiic cable."));
 
   Serial.println(F("\n=== Hidden Device Hunter - Phase 1 (Uno R4 WiFi) ==="));
   if (WiFi.status() == WL_NO_MODULE) {
@@ -195,10 +199,7 @@ void setup() {
   if (fv < WIFI_FIRMWARE_LATEST_VERSION)
     Serial.println(F("  (Older than this library expects. Update it with the Arduino IDE's Firmware Updater.)"));
 
-  // Startup chirp so you know the buzzer is wired right.
-  Beeper::set(150, 60);
-  delay(450);
-  Beeper::set(0, 0);
+  // The beeper plays a 3-beep startup chirp once the tasks start.
 
   loadTarget();
   if (hasTarget) {
@@ -211,12 +212,13 @@ void setup() {
   }
   printHelp();
   Serial.println(F("Scanning..."));
+  Beeper::runLoopAsTask();  // loop() runs as a task from here on
 }
 
 void loop() {
   handleSerial();
 
-  int n = WiFi.scanNetworks();  // blocks a few seconds; the timer keeps the beeps going
+  int n = WiFi.scanNetworks();  // blocks a few seconds; the beeper task keeps the beeps going
   handleSerial();
   if (n < 0) n = 0;
 
