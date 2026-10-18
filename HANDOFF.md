@@ -1,7 +1,8 @@
 # Hidden Device Hunter (RF Finder) handoff
-Last updated 2026-10-04. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
+Last updated 2026-10-17. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
 
 ## State
+2026-10-17: Phase 1 with a Modulino Buzzer flashed and working on the R4 (HaLjr); code on branch `modulino-buzzer`, not merged. Phase 2 compiles, not flashed (needs XIAO). See `docs/worklog/2026-10-17-modulino-buzzer-status.md`.
 No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy").
 Firmware (imported 2026-10-04 from a cloud-session bundle, see `docs/worklog/2026-10-04-firmware-import.md`): Phase 1 `firmware/phase1-r4-finder`,
 Phase 2 `firmware/phase2-xiao-sniffer` + `firmware/phase2-r4-display`, `tools/make_oui_table.py` (771-entry maker table). All compile
