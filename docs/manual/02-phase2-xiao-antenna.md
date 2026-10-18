@@ -15,6 +15,14 @@ Requires Phase 1 working. R4 is 5 V, XIAO is 3.3 V, so a level shifter sits betw
 | Pin headers | for XIAO and shifter if not pre-soldered | have |
 Pigtail female + Alfa male must mate. The XIAO's stock antenna is weak; the panel antenna replaces it.
 
+### Using the XIAO ESP32-C5 instead (added 2026-10-18)
+The sniffer firmware also builds for the Seeed XIAO ESP32-C5 (FQBN `esp32:esp32:XIAO_ESP32C5`, esp32 core 3.3.12). Wiring is unchanged: D6/D7 sit
+on the same XIAO pins (C5: D6 = GPIO11 TX, D7 = GPIO12 RX, from Seeed's wiki and the core's variant file), 3V3/GND/5V likewise. Differences:
+- BOOT button is GPIO28 (the firmware picks it automatically).
+- It listens on 5 GHz too (US channels 36-165, DFS included; receive only), so one sweep takes about 8 s instead of 2.4 s.
+- It has a u.FL jack and ships with a dual-band antenna. The 2.4 GHz panel antennas above (Alfa, ECSiNG) do not aim on 5 GHz: for a 5 GHz
+  device use the stock antenna, or a 5 GHz/dual-band directional antenna.
+
 ## Adafruit 757 pin layout
 ```
    LOW side (3.3 V)                 HIGH side (5 V)
@@ -98,4 +106,4 @@ Phone on your Wi-Fi in the next room. Pick its MAC. Hold the panel antenna in fr
 | XIAO sees almost nothing | pigtail fully clicked? | try the stock antenna to confirm the XIAO works |
 | Signal jumps | walls and bodies reflect 2.4 GHz | average readings, sweep slowly, antenna away from body |
 | XIAO not in the port list | BOOT-hold procedure | different cable, dialout group |
-| Antenna reads 5 GHz devices as missing | 2.4 GHz only | expected limit |
+| Antenna reads 5 GHz devices as missing | S3/C3 hear 2.4 GHz only; the 2.4 GHz panel antenna is deaf on 5 GHz | use the C5 with its stock dual-band antenna |
