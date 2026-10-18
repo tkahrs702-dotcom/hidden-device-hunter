@@ -3,7 +3,8 @@
 //
 // What it does
 //   1. Scans the Wi-Fi networks around you every few seconds.
-//   2. You pick one from the list in the Serial Monitor (type its number, press Enter).
+//   2. With no network picked it follows the strongest one (AUTO). To follow one network,
+//      type its number in the Serial Monitor and press Enter.
 //   3. The buzzer beeps faster and the LED matrix bars rise as you walk toward it.
 //   The pick is saved, so it keeps working on a power bank away from the computer.
 //
@@ -117,7 +118,7 @@ void printTable() {
   }
   if (lastCount == WIFI_MAX_SSID_COUNT)
     Serial.println(F("(The R4 lists only the 10 strongest networks. Move closer if yours is missing.)"));
-  if (!hasTarget) Serial.println(F("Type a number and press Enter to lock onto that network."));
+  if (!hasTarget) Serial.println(F("AUTO mode: beeping for the strongest network. Type a number and press Enter to lock onto one."));
 }
 
 void handleSerial() {
@@ -236,14 +237,28 @@ void loop() {
     lastCount++;
   }
 
+  // No locked target: follow the strongest network heard (hot/cold for the nearest
+  // router or hotspot), so the finder works on a power bank with no computer.
+  static uint8_t autoBssid[6];
   if (!hasTarget) {
     if (printList) {
       printTable();
       printList = false;
     }
-    Meter::waiting(waitStep++);
-    return;
+    if (lastCount == 0) {
+      Beeper::set(0, 0);
+      Meter::waiting(waitStep++);
+      return;
+    }
+    found = 0;
+    for (int i = 1; i < lastCount; i++)
+      if (lastList[i].rssi > lastList[found].rssi) found = i;
+    if (memcmp(autoBssid, lastList[found].bssid, 6) != 0) {  // new strongest: restart the average
+      memcpy(autoBssid, lastList[found].bssid, 6);
+      avgValid = false;
+    }
   }
+  const char *name = hasTarget ? target.ssid : lastList[found >= 0 ? found : 0].ssid;
 
   if (found >= 0) {
     misses = 0;
@@ -258,8 +273,8 @@ void loop() {
     Meter::bars((pct * 12 + 50) / 100);
 
     char line[120];
-    snprintf(line, sizeof(line), "TARGET %-20.20s ch%-2u now %4d dBm  avg %4d dBm  strength %3d%%  %s",
-             target.ssid, lastList[found].ch, r, (int)avgRssi, pct,
+    snprintf(line, sizeof(line), "%s %-20.20s ch%-2u now %4d dBm  avg %4d dBm  strength %3d%%  %s",
+             hasTarget ? "TARGET" : "AUTO  ", name, lastList[found].ch, r, (int)avgRssi, pct,
              gap == 0 ? "STEADY TONE" : "");
     Serial.print(line);
     if (gap) {
