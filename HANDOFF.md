@@ -7,7 +7,7 @@ No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all stil
 Firmware (imported 2026-10-04 from a cloud-session bundle, see `docs/worklog/2026-10-04-firmware-import.md`): Phase 1 `firmware/phase1-r4-finder`,
 Phase 2 `firmware/phase2-xiao-sniffer` + `firmware/phase2-r4-display`, `tools/make_oui_table.py` (771-entry maker table). All compile
 (arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12); only the sniffer has run on hardware (C5, 2026-10-18).
-GitHub Action `.github/workflows/compile.yml` compiles the finder (with Arduino_Modulino 0.10.0), the R4 display and the sniffer for S3 and C5, with those same versions, on every PR and every push to main. Phase 3 (P4 camera): no firmware, notes only.
+GitHub Action `.github/workflows/compile.yml` compiles the finder and the R4 display (both with Arduino_Modulino 0.10.0) and the sniffer for S3 and C5, with those same versions, on every PR and every push to main. Phase 3 (P4 camera): no firmware, notes only.
 Known limits: R4 Wi-Fi scan max 10 networks and skips hidden SSIDs; 2.4 GHz only; random MACs carry no maker info.
 
 ## Decisions made on copy (2026-10-03)

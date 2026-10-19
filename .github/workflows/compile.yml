@@ -22,6 +22,7 @@ jobs:
           - sketch: firmware/phase2-r4-display
             fqbn: arduino:renesas_uno:unor4wifi
             core: arduino:renesas_uno@1.6.0
+            libs: Arduino_Modulino@0.10.0
           - sketch: firmware/phase2-xiao-sniffer
             fqbn: esp32:esp32:XIAO_ESP32S3
             core: esp32:esp32@3.3.12
