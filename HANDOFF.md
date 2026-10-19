@@ -6,7 +6,8 @@ Last updated 2026-10-04. Owner Taelor. Source: Claude Android app docs, copied h
 No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy").
 Firmware (imported 2026-10-04 from a cloud-session bundle, see `docs/worklog/2026-10-04-firmware-import.md`): Phase 1 `firmware/phase1-r4-finder`,
 Phase 2 `firmware/phase2-xiao-sniffer` + `firmware/phase2-r4-display`, `tools/make_oui_table.py` (771-entry maker table). All compile
-(arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12) but are NOT run on hardware. Phase 3 (P4 camera): no firmware, notes only.
+(arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12) but are NOT run on hardware.
+GitHub Action `.github/workflows/compile.yml` compiles all three sketches with those same versions on every PR and every push to main. Phase 3 (P4 camera): no firmware, notes only.
 Known limits: R4 Wi-Fi scan max 10 networks and skips hidden SSIDs; 2.4 GHz only; random MACs carry no maker info.
 
 ## Decisions made on copy (2026-10-03)
