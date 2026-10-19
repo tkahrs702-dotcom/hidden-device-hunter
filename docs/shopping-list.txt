@@ -21,7 +21,11 @@ Prices checked 2026-10-04 (Las Vegas, before shipping and tax). Nothing ordered 
 TOTAL (items 1-4): $27.40 before shipping/tax
 
 Already owned: Arduino Uno R4 WiFi, Waveshare ESP32-P4 4.3" board, TTGO T3.
-Still needed for Phase 1 (cheap, not priced here): piezo buzzer + 100 ohm resistor, USB power bank.
+Still needed for Phase 1 (cheap, not priced here): passive piezo buzzer + 100 ohm resistor, USB power bank,
+half-size breadboard (400 points, with +/- rails, about $3-5).
+Jumpers: get a mixed kit with M-M, M-F and F-F (40 each, about $6-7). F-F alone is not enough: the R4's headers and the
+breadboard are sockets, so wires landing there need a male end (manual 05-reference.md counts each type).
+A generic BSS138 4-channel shifter (LV1-4/HV1-4 labels) works in place of the Adafruit 757 (manual 02 section 2.2).
 Phase 3 parts not in this list: OV5647 camera, BNO085 IMU, LiPo battery.
 
 NOT this project: ALFA AOA-915-5ACM (915 MHz LoRa antenna, $18.97) - wrong band for 2.4 GHz Wi-Fi.

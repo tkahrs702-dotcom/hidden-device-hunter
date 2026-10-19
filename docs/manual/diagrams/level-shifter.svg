@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="900" viewBox="0 0 1300 900" role="img" aria-labelledby="t d">
+<title id="t">Level shifter pinout and how one channel works</title>
+<desc id="d">Generic BSS138 4-channel board and Adafruit 757 pin names, the one-channel circuit, and which channel each phase uses.</desc>
+<rect x="0" y="0" width="1300" height="900" fill="#ffffff"/>
+<text x="24" y="34" font-family="Helvetica, Arial, sans-serif" font-size="20" text-anchor="start" font-weight="bold" fill="#111111">Level shifter: pin names, one channel, and channel use</text>
+<text x="24" y="56" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" font-weight="normal" fill="#555555">Generic BSS138 board (LV1-4 / HV1-4) and Adafruit 757 (A1-4 / B1-4) are the same circuit with different labels.</text>
+<rect x="230" y="110" width="176" height="120" rx="8" fill="#1d4f91" stroke="#0e2d55" stroke-width="2"/>
+<rect x="243" y="119" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="245.5" y="121.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="248" y="141" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">HV1</text>
+<rect x="271" y="119" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="273.5" y="121.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="276" y="141" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">HV2</text>
+<rect x="299" y="119" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="301.5" y="121.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="304" y="141" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">HV</text>
+<rect x="327" y="119" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="329.5" y="121.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="332" y="141" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">GND</text>
+<rect x="355" y="119" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="357.5" y="121.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="360" y="141" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">HV3</text>
+<rect x="383" y="119" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="385.5" y="121.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="388" y="141" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">HV4</text>
+<rect x="243" y="211" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="245.5" y="213.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="248" y="206" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">LV1</text>
+<rect x="271" y="211" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="273.5" y="213.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="276" y="206" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">LV2</text>
+<rect x="299" y="211" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="301.5" y="213.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="304" y="206" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">LV</text>
+<rect x="327" y="211" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="329.5" y="213.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="332" y="206" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">GND</text>
+<rect x="355" y="211" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="357.5" y="213.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="360" y="206" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">LV3</text>
+<rect x="383" y="211" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="385.5" y="213.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="388" y="206" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="middle" font-weight="normal" fill="white">LV4</text>
+<rect x="264" y="160" width="14" height="12" rx="0" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="294" y="160" width="14" height="12" rx="0" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="324" y="160" width="14" height="12" rx="0" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="354" y="160" width="14" height="12" rx="0" fill="#222" stroke="#000" stroke-width="1"/>
+<text x="318.0" y="184" font-family="Helvetica, Arial, sans-serif" font-size="8" text-anchor="middle" font-weight="normal" fill="#cfe">4 x BSS138 &quot;J1Y&quot;</text>
+<text x="414" y="128" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="bold" fill="#d62728">HIGH side (5 V)</text>
+<text x="414" y="220" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="bold" fill="#c25f00">LOW side (3.3 V)</text>
+<text x="218" y="168.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="end" font-weight="bold" fill="#111111">Generic 4-ch</text>
+<text x="218" y="182.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" font-weight="normal" fill="#555555">LV1-4 / HV1-4 labels</text>
+<rect x="820" y="100" width="170" height="200" rx="8" fill="#1d1d4d" stroke="#000" stroke-width="2"/>
+<rect x="833" y="120" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="835.5" y="122.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="848" y="128.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="start" font-weight="normal" fill="white">LV</text>
+<rect x="833" y="148" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="835.5" y="150.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="848" y="156.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="start" font-weight="normal" fill="white">A1</text>
+<rect x="833" y="176" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="835.5" y="178.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="848" y="184.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="start" font-weight="normal" fill="white">A2</text>
+<rect x="833" y="204" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="835.5" y="206.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="848" y="212.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="start" font-weight="normal" fill="white">A3</text>
+<rect x="833" y="232" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="835.5" y="234.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="848" y="240.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="start" font-weight="normal" fill="white">A4</text>
+<rect x="833" y="260" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="835.5" y="262.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="848" y="268.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="start" font-weight="normal" fill="white">GND</text>
+<rect x="967" y="120" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="969.5" y="122.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="962" y="128.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="end" font-weight="normal" fill="white">HV</text>
+<rect x="967" y="148" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="969.5" y="150.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="962" y="156.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="end" font-weight="normal" fill="white">B1</text>
+<rect x="967" y="176" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="969.5" y="178.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="962" y="184.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="end" font-weight="normal" fill="white">B2</text>
+<rect x="967" y="204" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="969.5" y="206.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="962" y="212.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="end" font-weight="normal" fill="white">B3</text>
+<rect x="967" y="232" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="969.5" y="234.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="962" y="240.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="end" font-weight="normal" fill="white">B4</text>
+<rect x="967" y="260" width="10" height="10" rx="1" fill="#222" stroke="#000" stroke-width="1"/>
+<rect x="969.5" y="262.5" width="5" height="5" rx="0" fill="#d4af37" stroke="none" stroke-width="0"/>
+<text x="962" y="268.5" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="10" text-anchor="end" font-weight="normal" fill="white">GND</text>
+<text x="810" y="200" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" font-weight="bold" fill="#c25f00">LOW side</text>
+<text x="1000" y="200" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="bold" fill="#d62728">HIGH side</text>
+<text x="905" y="322" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#111111">Adafruit 757</text>
+<text x="70" y="360" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" font-weight="bold" fill="#111111">Same pin, two names</text>
+<rect x="70" y="370" width="660" height="19.25" rx="0" fill="#e9eef5" stroke="#9aa" stroke-width="1"/>
+<text x="76" y="383.09" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">Generic</text>
+<text x="186" y="383.09" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">Adafruit 757</text>
+<text x="306" y="383.09" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">Side</text>
+<text x="376" y="383.09" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">Connects to</text>
+<rect x="70" y="389.25" width="660" height="19.25" rx="0" fill="white" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="402.34" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV</text>
+<text x="186" y="402.34" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV</text>
+<text x="306" y="402.34" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">5 V</text>
+<text x="376" y="402.34" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">R4 5V (via breadboard + rail)</text>
+<rect x="70" y="408.5" width="660" height="19.25" rx="0" fill="#f7f7f7" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="421.59" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">LV</text>
+<text x="186" y="421.59" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">LV</text>
+<text x="306" y="421.59" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">3.3 V</text>
+<text x="376" y="421.59" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">XIAO 3V3 (Phase 2) / P4 pin 18 (Phase 3)</text>
+<rect x="70" y="427.75" width="660" height="19.25" rx="0" fill="white" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="440.84" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">GND (x2)</text>
+<text x="186" y="440.84" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">GND (x2)</text>
+<text x="306" y="440.84" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">both</text>
+<text x="376" y="440.84" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">ground; the two GND pins are joined</text>
+<rect x="70" y="447.0" width="660" height="19.25" rx="0" fill="#f7f7f7" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="460.09" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV1 / LV1</text>
+<text x="186" y="460.09" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">B1 / A1</text>
+<text x="306" y="460.09" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">ch 1</text>
+<text x="376" y="460.09" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">R4 D1 TX  -&gt;  XIAO D7 RX</text>
+<rect x="70" y="466.25" width="660" height="19.25" rx="0" fill="white" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="479.34" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV2 / LV2</text>
+<text x="186" y="479.34" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">B2 / A2</text>
+<text x="306" y="479.34" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">ch 2</text>
+<text x="376" y="479.34" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">R4 D0 RX  &lt;-  XIAO D6 TX</text>
+<rect x="70" y="485.5" width="660" height="19.25" rx="0" fill="#f7f7f7" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="498.59" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV3 / LV3</text>
+<text x="186" y="498.59" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">B3 / A3</text>
+<text x="306" y="498.59" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">ch 3</text>
+<text x="376" y="498.59" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">Phase 3 optional: R4 D0 RX  &lt;-  P4 pin 8 GPIO2</text>
+<rect x="70" y="504.75" width="660" height="19.25" rx="0" fill="white" stroke="#ccc" stroke-width="0.8"/>
+<text x="76" y="517.84" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV4 / LV4</text>
+<text x="186" y="517.84" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">B4 / A4</text>
+<text x="306" y="517.84" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">ch 4</text>
+<text x="376" y="517.84" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">spare</text>
+<text x="790" y="390" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="start" font-weight="bold" fill="#111111">Inside one channel (x4 on the board)</text>
+<line x1="810" y1="430" x2="1230" y2="430" stroke="#ff7f0e" stroke-width="2" stroke-linecap="round"/>
+<text x="810" y="422" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#c25f00">LV (3.3 V)</text>
+<line x1="810" y1="470" x2="1230" y2="470" stroke="#d62728" stroke-width="2" stroke-linecap="round"/>
+<text x="1120" y="462" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#d62728">HV (5 V)</text>
+<line x1="950" y1="630" x2="972" y2="630" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="972" y1="612" x2="972" y2="648" stroke="#111111" stroke-width="2" stroke-linecap="round"/>
+<line x1="980" y1="608" x2="980" y2="620" stroke="#111111" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="980" y1="624" x2="980" y2="636" stroke="#111111" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="980" y1="640" x2="980" y2="652" stroke="#111111" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="980" y1="614" x2="990" y2="614" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="990" y1="614" x2="990" y2="590" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="980" y1="646" x2="990" y2="646" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="990" y1="646" x2="990" y2="670" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="980" y1="630" x2="990" y2="630" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="990" y1="630" x2="990" y2="646" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M 981 630 L 988.0 626.5 L 988.0 633.5 Z" fill="#111111" stroke="none"/>
+<text x="1000" y="634" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">Q1 BSS138</text>
+<text x="1000" y="608" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">D</text>
+<text x="1000" y="664" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">S</text>
+<text x="946" y="622" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="end" font-weight="normal" fill="#555555">G</text>
+<line x1="950" y1="630" x2="910" y2="630" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="910" y1="630" x2="910" y2="430" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="910" cy="430" r="3.5" fill="#ff7f0e" stroke="#ff7f0e" stroke-width="1"/>
+<line x1="990" y1="670" x2="990" y2="700" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="990" y1="700" x2="850" y2="700" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="820" y="704" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" text-anchor="middle" font-weight="bold" fill="#111111">LVn</text>
+<path d="M 890 430 L 890 545.0 L 884 548.3333333333334 L 896 555.0 L 884 561.6666666666666 L 896 568.3333333333334 L 884 575.0 L 896 581.6666666666666 L 890 585.0 L 890 700" fill="none" stroke="#111111" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="901" y="563.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">R</text>
+<text x="901" y="577.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">10k</text>
+<circle cx="890" cy="430" r="3.5" fill="#ff7f0e" stroke="#ff7f0e" stroke-width="1"/>
+<circle cx="890" cy="700" r="3.5" fill="#111111" stroke="#111111" stroke-width="1"/>
+<line x1="990" y1="590" x2="990" y2="560" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="990" y1="560" x2="1210" y2="560" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="1230" y="564" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="12" text-anchor="start" font-weight="bold" fill="#111111">HVn</text>
+<path d="M 1150 470 L 1150 495.0 L 1144 498.3333333333333 L 1156 505.0 L 1144 511.6666666666667 L 1156 518.3333333333334 L 1144 525.0 L 1156 531.6666666666666 L 1150 535.0 L 1150 560" fill="none" stroke="#111111" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1161" y="513.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">R</text>
+<text x="1161" y="527.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">10k</text>
+<circle cx="1150" cy="470" r="3.5" fill="#d62728" stroke="#d62728" stroke-width="1"/>
+<circle cx="1150" cy="560" r="3.5" fill="#111111" stroke="#111111" stroke-width="1"/>
+<rect x="70" y="560" width="680" height="137.2" rx="6" fill="#fff7d6" stroke="#c9a400" stroke-width="1.2"/>
+<text x="80" y="577.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">How it works (both directions, no direction pin):</text>
+<text x="80" y="591.85" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">LV side pulls low: the MOSFET&#x27;s source drops, it turns on and pulls HVn low too.</text>
+<text x="80" y="606.7" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV side pulls low: the body diode drags LVn low, the MOSFET turns on and finishes the job.</text>
+<text x="80" y="621.55" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">Nobody pulls low: both sides float up to their own rail through the 10k resistors.</text>
+<text x="80" y="636.4" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">So a 5 V high never reaches the 3.3 V side, and a 3.3 V high is lifted to 5 V.</text>
+<text x="80" y="651.25" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">Speed: fine for UART at 115200 and I2C at 400 kHz; do not push UART much higher.</text>
+<text x="80" y="666.1" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">Buying a clone: look for four 3-pin parts marked J1Y (BSS138). Boards built on a</text>
+<text x="80" y="680.95" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">TXS0108 or TXB0104 chip are a different design and are not recommended here.</text>
+<rect x="790" y="720" width="470" height="75.6" rx="6" fill="#fde2e1" stroke="#c33" stroke-width="1.2"/>
+<text x="800" y="737.0" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">Power both sides before sending data:</text>
+<text x="800" y="751.85" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">HV pin to 5 V and LV pin to 3.3 V, GND to ground.</text>
+<text x="800" y="766.7" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">LV must be the lower voltage (1.8 V min).</text>
+<text x="800" y="781.55" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">With LV unpowered, nothing reaches the 3.3 V board.</text>
+</svg>

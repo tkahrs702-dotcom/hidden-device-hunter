@@ -1,33 +1,39 @@
 # 00. Overview, safety, tools and software
 
 Manual for the Hidden Device Hunter. Read this first, then do Phase 1, 2, 3 in order. Each phase file stands alone:
-parts, pin-to-pin wiring, ASCII diagram, assembly, software, test, troubleshooting.
-Status of the project: planning only; no parts ordered, no firmware written (see `../../HANDOFF.md`).
+parts, wiring diagram and schematic, pin-to-pin wire list, step-by-step assembly, checks before power, flashing, use, test, troubleshooting.
+Status: Phase 1 and 2 firmware written and compiling, not yet run on hardware; Phase 3 planned, no firmware; no parts ordered
+(see `../../HANDOFF.md`).
 
 Legal: use only on your own home, network and devices. The finder passively listens; it does not break into or join anything.
 
 ## How the pieces fit
-```
-                      PHASE 1                    PHASE 2                       PHASE 3
-                 +--------------+          +----------------+            +----------------------+
- Wi-Fi in air -->| Uno R4 WiFi  |          | XIAO ESP32-S3  |  UART      | Waveshare ESP32-P4   |
- (R4 scans)      | scan + beep  |<--UART---| monitor mode   |----------->| camera + LVGL screen |
-                 | LED matrix   | (shifter)| panel antenna  |  (direct,  | heat map + crosshair |
-                 +--------------+          +----------------+   3.3 V)   |  + BNO085 IMU (I2C)  |
-                       |                                                  +----------+-----------+
-                     buzzer                                      R4 stays optional beeper (via shifter)
-```
-Phase 1 works alone. Phase 2 adds the XIAO as a sharper "RF eye". Phase 3 moves the display and aiming to the P4.
+![System overview](diagrams/system-overview.svg)
+
+Phase 1 works alone. Phase 2 adds the XIAO as a sharper "RF eye" and turns the R4 into its beeper. Phase 3 moves the display and aiming
+to the P4. Every diagram is listed in [`05-reference.md`](05-reference.md).
+
+## How to read the diagrams
+- **Wiring diagrams** (`phaseN-wiring.svg`) are top views drawn pin for pin: every coloured line is one jumper wire, and its tag
+  (W1, P3, S2, T4 ...) is the ID used in that phase's wire list, assembly steps and troubleshooting table. Pin order on each header is
+  exact; part positions on the boards are approximate.
+- **Schematics** (`phaseN-schematic.svg`) show the same circuit electrically: parts as boxes (U1 R4, U2 shifter, U3 XIAO, U4 P4, U5 BNO085),
+  nets as lines, one ground symbol for the shared ground.
+- **Colours** mean the same thing everywhere: red 5 V, orange 3.3 V, black ground; signal colours are in the legend in
+  [`05-reference.md`](05-reference.md). Your real jumpers can be any colour.
+- **Jumper ends:** the R4's headers and the breadboard are sockets, so a wire landing there needs a **male** end. The XIAO, the shifter,
+  the BNO085 and the P4 header have pins, so a wire landing there needs a **female** end. Each wire list says M-M, M-F or F-F.
+- **Build order** in every phase: parts -> wire with everything unplugged -> continuity checks -> first power -> voltage checks -> firmware.
 
 ## Voltage rule (the one that destroys boards)
 | Board | Logic level |
 |---|---|
 | Uno R4 WiFi (RA4M1) | **5 V** |
 | XIAO ESP32-S3, ESP32-P4, BNO085 data lines, T3 | **3.3 V** |
-Never connect an R4 pin straight to an ESP32 pin. R4 <-> ESP32 goes through the Adafruit 757 level shifter. XIAO <-> P4 is 3.3 V both sides, direct.
+Never connect an R4 pin straight to an ESP32 pin. R4 <-> ESP32 goes through the BSS138 level shifter (generic board or Adafruit 757). XIAO <-> P4 is 3.3 V both sides, direct.
 
 ## Safety rules
-1. Wire only with everything unplugged. Check the pin table before applying power.
+1. Wire only with everything unplugged. Do the phase's "checks before power" table with a meter before applying power.
 2. One power source per board at a time (see the XIAO USB + 5 V pin warning in Phase 2).
 3. Never transmit from the T3 LoRa radio without its antenna.
 4. Do not hot-plug the u.FL antenna connector; click it on before power.
@@ -35,8 +41,15 @@ Never connect an R4 pin straight to an ESP32 pin. R4 <-> ESP32 goes through the 
 6. Own network and devices only.
 
 ## Tools
-Soldering iron and solder (XIAO headers, BNO085 headers), multimeter, flush cutters, heat-shrink, small Phillips screwdriver,
-USB-C data cables (not charge-only), breadboard or Dupont jumpers (F-F pack), hot glue or standoffs for mounting.
+| Tool / supply | Used for |
+|---|---|
+| Soldering iron (fine tip, ~330 C) and 0.6-0.8 mm solder | XIAO headers, shifter headers (if loose), BNO085 headers |
+| Multimeter with continuity beep | every "checks before power" table; supply voltages; LiPo polarity |
+| Half-size breadboard (400 points, + and - rails) | Phase 1 buzzer and resistor; Phase 2 5 V distribution |
+| Jumper kit with all three types: M-M, M-F, F-F (40 each, 10-20 cm) | all wiring; count per type in `05-reference.md` |
+| Flush cutters, heat-shrink, small Phillips screwdriver | trimming, insulating, mounting |
+| USB-C data cables (not charge-only), x2 | R4 and XIAO (and P4) programming |
+| Plate (plywood/acrylic ~20 x 15 cm), zip ties, hot glue or M2.5 standoffs | handheld mounting, strain relief for the coax |
 
 ## Software install (once, on HaL or HaLjr)
 HaLjr already has ESP-IDF v5.5.5 (`~/esp/esp-idf-v5.5.5`) and `arduino-cli` (see `~/Projects/sentinel/HANDOFF.md` sec. 4).
