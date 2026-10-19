@@ -1,8 +1,9 @@
-build/
 *.bin
+build/
 *.elf
+firmware/*/build/
 *.hex
-.vscode/
-secrets.h
-__pycache__/
 oui.csv
+__pycache__/
+secrets.h
+.vscode/
