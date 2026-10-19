@@ -16,7 +16,7 @@ Requires Phase 1 working. R4 is 5 V, XIAO is 3.3 V, so a level shifter sits betw
 Pigtail female + Alfa male must mate. The XIAO's stock antenna is weak; the panel antenna replaces it.
 
 ### Using the XIAO ESP32-C5 instead (added 2026-10-18)
-The sniffer firmware also builds for the Seeed XIAO ESP32-C5 (FQBN `esp32:esp32:XIAO_ESP32C5`, esp32 core 3.3.12). Wiring is unchanged: D6/D7 sit
+The sniffer firmware also builds for the Seeed XIAO ESP32-C5 (FQBN `esp32:esp32:XIAO_ESP32C5:CDCOnBoot=cdc`, esp32 core 3.3.12; without `CDCOnBoot=cdc` the console goes to the UART pins and USB serial stays silent). Wiring is unchanged: D6/D7 sit
 on the same XIAO pins (C5: D6 = GPIO11 TX, D7 = GPIO12 RX, from Seeed's wiki and the core's variant file), 3V3/GND/5V likewise. Differences:
 - BOOT button is GPIO28 (the firmware picks it automatically).
 - It listens on 5 GHz too (US channels 36-165, DFS included; receive only), so one sweep takes about 8 s instead of 2.4 s.

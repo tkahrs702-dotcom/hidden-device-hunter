@@ -2,7 +2,7 @@
 Last updated 2026-10-04. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
 
 ## State
-2026-10-18: Phase 2 sniffer also builds for the XIAO ESP32-C5 (2.4 + 5 GHz), not flashed yet. See `docs/worklog/2026-10-18-esp32-c5-sniffer.md`.
+2026-10-18: Phase 2 sniffer runs on the XIAO ESP32-C5 (2.4 + 5 GHz), flashed and verified on HaLjr (needs `CDCOnBoot=cdc`). See `docs/worklog/2026-10-18-esp32-c5-sniffer.md`.
 No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy").
 Firmware (imported 2026-10-04 from a cloud-session bundle, see `docs/worklog/2026-10-04-firmware-import.md`): Phase 1 `firmware/phase1-r4-finder`,
 Phase 2 `firmware/phase2-xiao-sniffer` + `firmware/phase2-r4-display`, `tools/make_oui_table.py` (771-entry maker table). All compile
