@@ -207,12 +207,11 @@ static bool validChannel(uint8_t ch) {
   return ch >= 1 && ch <= 14;
 }
 
-static bool setChannel(uint8_t ch) {
-  if (!validChannel(ch)) return false;
+static esp_err_t setChannel(uint8_t ch) {
+  if (!validChannel(ch)) return ESP_ERR_INVALID_ARG;
   esp_err_t err = esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
-  if (err != ESP_OK) return false;
-  currentCh = ch;
-  return true;
+  if (err == ESP_OK) currentCh = ch;
+  return err;
 }
 
 // Next channel in the sweep. A channel the radio refuses is reported once and skipped after.
@@ -220,7 +219,9 @@ static void hopNext() {
   for (int tries = 0; tries < NUM_CH; tries++) {
     chIndex = (chIndex + 1) % NUM_CH;
     if (chBad[chIndex]) continue;
-    if (setChannel(CHANNELS[chIndex])) return;
+    esp_err_t err = setChannel(CHANNELS[chIndex]);
+    if (err == ESP_OK) return;
+    if (err != ESP_ERR_INVALID_ARG) return;  // temporary failure: try again next hop
     chBad[chIndex] = true;
     Serial.printf("Channel %u not allowed by the radio, skipping it.\n", CHANNELS[chIndex]);
   }
@@ -389,7 +390,7 @@ void setup() {
   WiFi.disconnect();
   esp_wifi_set_country_code("US", false);  // US channel plan (1-11, and 5 GHz on the C5)
 #if SOC_WIFI_SUPPORT_5G
-  if (!WiFi.setBandMode(WIFI_BAND_MODE_AUTO)) Serial.println("WARNING: could not turn on 5 GHz, 2.4 GHz only.");
+  if (esp_wifi_set_band_mode(WIFI_BAND_MODE_AUTO) != ESP_OK) Serial.println("WARNING: could not turn on 5 GHz, 2.4 GHz only.");
 #endif
   wifi_promiscuous_filter_t filt = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA};
   esp_wifi_set_promiscuous_filter(&filt);
