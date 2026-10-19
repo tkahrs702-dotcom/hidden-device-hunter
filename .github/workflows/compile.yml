@@ -18,13 +18,17 @@ jobs:
           - sketch: firmware/phase1-r4-finder
             fqbn: arduino:renesas_uno:unor4wifi
             core: arduino:renesas_uno@1.6.0
+            libs: Arduino_Modulino@0.10.0
           - sketch: firmware/phase2-r4-display
             fqbn: arduino:renesas_uno:unor4wifi
             core: arduino:renesas_uno@1.6.0
           - sketch: firmware/phase2-xiao-sniffer
             fqbn: esp32:esp32:XIAO_ESP32S3
             core: esp32:esp32@3.3.12
-    name: ${{ matrix.sketch }}
+          - sketch: firmware/phase2-xiao-sniffer
+            fqbn: esp32:esp32:XIAO_ESP32C5:CDCOnBoot=cdc
+            core: esp32:esp32@3.3.12
+    name: ${{ matrix.sketch }} (${{ matrix.fqbn }})
     env:
       ESP32_INDEX: https://espressif.github.io/arduino-esp32/package_esp32_index.json
     steps:
@@ -46,6 +50,10 @@ jobs:
         run: |
           arduino-cli core update-index --additional-urls "$ESP32_INDEX"
           arduino-cli core install "${{ matrix.core }}" --additional-urls "$ESP32_INDEX"
+
+      - name: Install libraries
+        if: matrix.libs
+        run: arduino-cli lib install ${{ matrix.libs }}
 
       - name: Compile
         run: arduino-cli compile --fqbn "${{ matrix.fqbn }}" --warnings default "${{ matrix.sketch }}"
