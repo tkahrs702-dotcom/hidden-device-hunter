@@ -1,5 +1,7 @@
 # 01. Phase 1: Wi-Fi finder with buzzer (Uno R4 WiFi)
 
+> **Archived instructions:** this file documents an old passive buzzer on D8. The current Phase 1 hardware uses the Arduino Modulino Buzzer on the R4 Qwiic connector. Do not follow the D8, resistor, breadboard, or passive-buzzer wiring below. Use [`../v2/01-phase1.md`](../v2/01-phase1.md) for the current Phase 1 setup.
+
 Goal: the R4 scans Wi-Fi, you pick a target network, and the buzzer beeps faster (and the LED matrix shows more bars) as the signal
 gets stronger. Handheld on a USB power bank.
 Needs only a buzzer, a resistor, a breadboard and three jumpers. Everything is on the R4's own 5 V side, so there is no level shifter.
