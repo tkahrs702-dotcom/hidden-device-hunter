@@ -709,13 +709,13 @@ def overview():
         s.text(x + w - 33, y + 4, phase, size=10, anchor="middle", weight="bold")
 
     box(60, 110, 280, 150, "Uno R4 WiFi  (5 V)", ["Phase 1: scans Wi-Fi itself, beeps", "Phase 2: beeper + LED bars for the XIAO",
-                                                  "Serial1 on D0/D1, buzzer on D8", "Power: USB-C (computer or power bank)"], C["board_r4"], "Phase 1")
+                                                  "Serial1 on D0/D1, Qwiic Modulino buzzer", "Power: USB-C (computer or power bank)"], C["board_r4"], "Phase 1")
     box(60, 330, 280, 90, "Buzzer + 100 ohm", ["passive piezo on D8", "beeps faster as signal rises"], "#5a3d7a", "Phase 1")
     box(500, 110, 260, 150, "Level shifter (BSS138)", ["5 V <-> 3.3 V, both directions", "ch 1: R4 TX -> XIAO RX", "ch 2: XIAO TX -> R4 RX",
                                                        "ch 3: P4 TX -> R4 RX (opt.)"], C["board_shift"], "Phase 2")
-    box(920, 110, 300, 150, "XIAO ESP32-S3  (3.3 V)", ["monitor mode on ch 1-11, receive only", "maker table tags CAM / IOT",
-                                                       "UART TX D6, RX D7", "Power: 5V pin from R4 (Ph 2) or P4 (Ph 3)"], C["board_xiao"], "Phase 2")
-    box(920, 330, 300, 90, "Alfa APA-M04 panel", ["7 dBi, aim the flat face", "u.FL -> RP-SMA F pigtail"], "#666", "Phase 2")
+    box(920, 110, 300, 150, "Seeed XIAO ESP32-C5  (3.3 V)", ["2.4 + 5 GHz monitor, receive only", "maker table tags CAM / IOT",
+                                                             "UART D6/GPIO11 TX, D7/GPIO12 RX", "Power: own USB-C for bench tests"], C["board_xiao"], "Phase 2")
+    box(920, 330, 300, 90, "Rokland directional antenna", ["2.4/5 GHz, ordered, not delivered", "check RF connector on arrival"], "#666", "Phase 2")
     box(500, 470, 300, 170, "ESP32-P4 4.3\" board  (3.3 V)", ["camera + LVGL heat map + crosshair", "UART to XIAO: GPIO5 RX / GPIO4 TX",
                                                               "I2C GPIO7/8 to BNO085", "Power: USB-C or 3.7 V LiPo (J2)",
                                                               "header 5V feeds the XIAO"], C["board_p4"], "Phase 3")
@@ -744,7 +744,7 @@ def overview():
 
     note(s, 60, 670, 1160, [
         "Voltage rule: the R4 is the only 5 V logic board. Every R4 <-> ESP32 signal goes through the shifter; XIAO <-> P4 and BNO085 <-> P4 are 3.3 V on both ends.",
-        "Grounds: every wire bundle between two boards carries a ground. One power source per board: never the XIAO's USB-C and its 5V pin together.",
+        "Phase 2 bench wiring: separate USB power for R4 and XIAO, shared ground; do not join the 5 V rails. Connect XIAO D6 TX to R4 D0 RX through shifter channel 2.",
     ], warn=True, size=11)
     s.save(os.path.join(OUT, "system-overview.svg"))
 

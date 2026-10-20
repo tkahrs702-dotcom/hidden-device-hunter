@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 760" role="img" aria-labelledby="title desc">
+  <title id="title">Phase 2 functional connection schematic</title>
+  <desc id="desc">Functional schematic of UART and reference-power connections between the UNO R4 WiFi and Seeed Studio XIAO ESP32-C5 using an Adafruit 757 level shifter. Both boards use separate USB power. The shifter receives R4 5V at HV and XIAO 3V3 at LV. Grounds are common.</desc>
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.box{fill:#fff;stroke:#334155;stroke-width:2}.chip{fill:#e2e8f0;stroke:#475569;stroke-width:2}
+      .title{font:700 28px system-ui,sans-serif;fill:#0f172a}.head{font:700 18px system-ui,sans-serif;fill:#0f172a}
+      .txt{font:600 15px system-ui,sans-serif;fill:#1e293b}.small{font:400 13px system-ui,sans-serif;fill:#475569}
+      .r4{fill:none;stroke:#d97706;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .c5{fill:none;stroke:#059669;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .p5{fill:none;stroke:#dc2626;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .p33{fill:none;stroke:#ea580c;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .gnd{fill:none;stroke:#334155;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+      .note{fill:#fff7ed;stroke:#fdba74;stroke-width:2}.warn{font:600 14px system-ui,sans-serif;fill:#9a3412}
+    </style>
+  </defs>
+  <rect class="bg" width="1300" height="760"/>
+  <text class="title" x="55" y="55">Phase 2 connection schematic</text>
+  <text class="small" x="55" y="82">Functional net diagram · level-shifter internal transistor circuit not shown</text>
+
+  <rect class="box" x="55" y="150" width="320" height="380" rx="16"/>
+  <rect class="chip" x="490" y="190" width="320" height="300" rx="16"/>
+  <rect class="box" x="925" y="150" width="320" height="380" rx="16"/>
+  <text class="head" x="215" y="185" text-anchor="middle">U1 · UNO R4 WiFi</text>
+  <text class="head" x="650" y="225" text-anchor="middle">U2 · Adafruit 757</text>
+  <text class="head" x="1085" y="185" text-anchor="middle">U3 · Seeed XIAO ESP32-C5</text>
+  <text class="small" x="215" y="212" text-anchor="middle">5 V logic · Serial1</text>
+  <text class="small" x="650" y="250" text-anchor="middle">BSS138 bidirectional level shifter</text>
+  <text class="small" x="1085" y="212" text-anchor="middle">3.3 V GPIO · UART1 on D6/D7</text>
+
+  <text class="txt" x="85" y="285">D1 / TX</text>
+  <text class="txt" x="85" y="355">D0 / RX</text>
+  <text class="txt" x="85" y="455">5V</text>
+  <text class="txt" x="85" y="500">GND</text>
+  <text class="txt" x="1215" y="285" text-anchor="end">D7 / RX · GPIO12</text>
+  <text class="txt" x="1215" y="355" text-anchor="end">D6 / TX · GPIO11</text>
+  <text class="txt" x="1215" y="455" text-anchor="end">3V3</text>
+  <text class="txt" x="1215" y="500" text-anchor="end">GND</text>
+
+  <text class="txt" x="525" y="295">B1 ↔ A1</text>
+  <text class="txt" x="525" y="365">B2 ↔ A2</text>
+  <text class="txt" x="525" y="425">HV</text>
+  <text class="txt" x="740" y="425" text-anchor="end">LV</text>
+  <text class="txt" x="525" y="470">GND</text>
+  <text class="txt" x="740" y="470" text-anchor="end">GND</text>
+
+  <path class="r4" d="M375 280 H490 V290 H810 V280 H925"/>
+  <path class="c5" d="M925 350 H810 V360 H490 V350 H375"/>
+  <path class="p5" d="M375 450 H490 V420 H525"/>
+  <path class="p33" d="M925 450 H810 V420 H740"/>
+  <path class="gnd" d="M375 495 H490 V465 H525"/>
+  <path class="gnd" d="M740 465 H810 V495 H925"/>
+
+  <text class="small" x="650" y="545" text-anchor="middle">R4 D1 TX → B1/A1 → XIAO D7 RX (reserved; not used by current firmware)</text>
+  <text class="small" x="650" y="568" text-anchor="middle">XIAO D6 TX → A2/B2 → R4 D0 RX (live sniffer data)</text>
+  <text class="small" x="650" y="591" text-anchor="middle">R4 5V → HV only · XIAO 3V3 → LV · both GNDs common</text>
+
+  <rect class="note" x="55" y="635" width="1190" height="78" rx="13"/>
+  <text class="warn" x="80" y="667">Power each board from its own USB-C for bench testing. Do not connect the two 5 V rails.</text>
+  <text class="small" x="80" y="692">All UART paths between the 5 V R4 and 3.3 V XIAO must pass through the level shifter.</text>
+</svg>

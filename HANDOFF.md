@@ -1,9 +1,12 @@
 # Hidden Device Hunter (RF Finder) handoff
-Last updated 2026-10-18. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
+Last updated 2026-10-20. Owner Taelor. Source: Claude Android app docs, copied here by Claude Code on HaL.
+
+## Active scope
+The current project version is **V2: Phase 1 + Phase 2 only**. Use [`docs/v2/README.md`](docs/v2/README.md) for the entry point and [`docs/v2/HANDOFF.md`](docs/v2/HANDOFF.md) for the next steps. Phase 3 and Phase 4 are parked, preserved as reference, and are not current build instructions. Any expansion requires a separate evidence-based research review. The manuals have not passed a complete V2 audit.
 
 ## State
-2026-10-18: Phase 2 sniffer runs on the XIAO ESP32-C5 (2.4 + 5 GHz), flashed and verified on HaLjr (needs `CDCOnBoot=cdc`). See `docs/worklog/2026-10-18-esp32-c5-sniffer.md`.
-No parts ordered (XIAO, antenna, pigtail, shifter, OV5647, BNO085, LiPo all still "Buy").
+2026-10-18: Phase 2 sniffer runs on the Seeed Studio XIAO ESP32-C5 (2.4 + 5 GHz), flashed and verified on HaLjr (needs `CDCOnBoot=cdc`). It received traffic on 2.4 and 5 GHz. The XIAO-to-R4 UART remains untested.
+The Rokland 2.4/5 GHz directional antenna is ordered but not delivered; confirm connector/cable fit on arrival. Pigtail/shifter and Phase 3 parts remain unverified/not assembled.
 Firmware (imported 2026-10-04 from a cloud-session bundle, see `docs/worklog/2026-10-04-firmware-import.md`): Phase 1 `firmware/phase1-r4-finder`,
 Phase 2 `firmware/phase2-xiao-sniffer` + `firmware/phase2-r4-display`, `tools/make_oui_table.py` (771-entry maker table). All compile
 (arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12); only the sniffer has run on hardware (C5, 2026-10-18).
@@ -20,7 +23,8 @@ Known limits: R4 Wi-Fi scan max 10 networks and skips hidden SSIDs; 2.4 GHz only
 2. Setup Guide Sources list still has stale links (7-DSI-TOUCH-A, RPi Camera B); dropped in this copy.
 3. P4 header pins, R4 tone() on D8, shifter and IMU details all verified 2026-10-03 (see `docs/manual/00-overview-and-safety.md`). Left: two bench multimeter checks (header 5V on LiPo, LiPo plug polarity) once the hardware is in hand.
 4. Overlap with existing work: `firmware/ttgo-node` (undeployed anti-spy) and the R4 Wi-Fi/BLE scanner in `~/Projects/sentinel/docs/worklog/2026-09-29-r4-wifi-scanner.md`. Decide whether Phase 1/2 reuse that hub.
-5. Needs Taelor: order parts; confirm go on Phase 1 firmware. Add a half-size breadboard and M-M + M-F jumpers (F-F alone won't plug into the R4).
+5. Phase 2 next: test the level-shifted XIAO D6 TX -> R4 D0 RX UART with the boards separately powered over USB; test button/lock behavior. Check the Rokland antenna connector when it arrives.
+6. Updated Phase 2 wiring and connection schematic are in `docs/manual/phase2-xiao-c5-wiring.svg` and `docs/manual/phase2-xiao-c5-schematic.svg`; see the 2026-10-20 worklog.
 
 ## Claude app copy
 Claude app Project "Hidden Device Hunter" created 2026-10-04 in the Projects tab (https://claude.ai/code/project/chan_01D93rrNRNTZUUnDzP1evSvQ; goal, status summary in Project instructions, and the GitHub repo attached; this Project type has no file upload, so refresh the instructions from this file when it changes). Status doc: https://claude.ai/artifact/JRZNRaVzCsuKZQ8Rz8ohqj (status mirrored from this file; repo is the source of truth, refresh the doc when this changes). Duplicate cloud docs deleted 2026-10-04. Companion docs (renamed 2026-10-04 from "Sentinel RF Finder"): Build Plan https://claude.ai/artifact/PuYyKuxAEt5E7tMc9CCF2e and Setup Guide https://claude.ai/artifact/QAQKwawgR31SS5VzCug1D1. Their in-body titles still say "Sentinel RF Finder"; the gallery list may lag the rename.
