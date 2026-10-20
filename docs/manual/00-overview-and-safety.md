@@ -1,6 +1,6 @@
 # 00. Overview, safety, tools and software
 
-Manual for the Hidden Device Hunter. Read this first, then do Phase 1, 2, 3 in order. Each phase file stands alone:
+Manual for the Hidden Device Hunter. The current V2 build covers Phase 1 and Phase 2. Phase 3 is parked for later research and is not a V2 build step. Each active phase file stands alone:
 parts, wiring diagram and schematic, pin-to-pin wire list, step-by-step assembly, checks before power, flashing, use, test, troubleshooting.
 Status: Phase 1 is uploaded and serial bench-checked. The Seeed Studio XIAO ESP32-C5 Phase 2 firmware has received 2.4/5 GHz traffic; UART to R4 is not tested. The Rokland dual-band directional antenna is ordered but not delivered (see `../../HANDOFF.md`).
 
@@ -9,8 +9,7 @@ Legal: use only on your own home, network and devices. The finder passively list
 ## How the pieces fit
 ![System overview](diagrams/system-overview.svg)
 
-Phase 1 works alone. Phase 2 adds the XIAO as a sharper "RF eye" and turns the R4 into its beeper. Phase 3 moves the display and aiming
-to the P4. Every diagram is listed in [`05-reference.md`](05-reference.md).
+Phase 1 works alone. Phase 2 adds the XIAO as a sharper "RF eye" and turns the R4 into its beeper. Phase 3's P4 camera/display idea is parked for later research; do not build it from the preserved Phase 3 notes as part of V2. Every diagram is listed in [`05-reference.md`](05-reference.md).
 
 ## How to read the diagrams
 - **Wiring diagrams** show connections; most are top views with wire IDs matching that phase's wire list. The current Phase 2 XIAO-C5
@@ -22,7 +21,7 @@ to the P4. Every diagram is listed in [`05-reference.md`](05-reference.md).
   [`05-reference.md`](05-reference.md). Your real jumpers can be any colour.
 - **Jumper ends:** the R4's headers and the breadboard are sockets, so a wire landing there needs a **male** end. The XIAO, the shifter,
   the BNO085 and the P4 header have pins, so a wire landing there needs a **female** end. Each wire list says M-M, M-F or F-F.
-- **Build order** in every phase: parts -> wire with everything unplugged -> continuity checks -> first power -> voltage checks -> firmware.
+- **Build order** for the active phases: parts -> wire with everything unplugged -> continuity checks -> first power -> voltage checks -> firmware.
 
 ## Voltage rule (the one that destroys boards)
 | Board | Logic level |

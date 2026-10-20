@@ -708,17 +708,16 @@ def overview():
         s.rect(x + w - 66, y - 12, 66, 22, fill="white", stroke="#223", sw=1.5, rx=11)
         s.text(x + w - 33, y + 4, phase, size=10, anchor="middle", weight="bold")
 
-    box(60, 110, 280, 150, "Uno R4 WiFi  (5 V)", ["Phase 1: scans Wi-Fi itself, beeps", "Phase 2: beeper + LED bars for the XIAO",
+    box(60, 110, 280, 150, "Uno R4 WiFi  (5 V)", ["Phase 1: scans + Qwiic beeper", "Phase 2: beeper + LED bars for the XIAO",
                                                   "Serial1 on D0/D1, Qwiic Modulino buzzer", "Power: USB-C (computer or power bank)"], C["board_r4"], "Phase 1")
-    box(60, 330, 280, 90, "Buzzer + 100 ohm", ["passive piezo on D8", "beeps faster as signal rises"], "#5a3d7a", "Phase 1")
     box(500, 110, 260, 150, "Level shifter (BSS138)", ["5 V <-> 3.3 V, both directions", "ch 1: R4 TX -> XIAO RX", "ch 2: XIAO TX -> R4 RX",
                                                        "ch 3: P4 TX -> R4 RX (opt.)"], C["board_shift"], "Phase 2")
     box(920, 110, 300, 150, "Seeed XIAO ESP32-C5  (3.3 V)", ["2.4 + 5 GHz monitor, receive only", "maker table tags CAM / IOT",
                                                              "UART D6/GPIO11 TX, D7/GPIO12 RX", "Power: own USB-C for bench tests"], C["board_xiao"], "Phase 2")
     box(920, 330, 300, 90, "Rokland directional antenna", ["2.4/5 GHz, ordered, not delivered", "check RF connector on arrival"], "#666", "Phase 2")
-    box(500, 470, 300, 170, "ESP32-P4 4.3\" board  (3.3 V)", ["camera + LVGL heat map + crosshair", "UART to XIAO: GPIO5 RX / GPIO4 TX",
+    box(500, 470, 300, 170, "ESP32-P4 4.3\" board  (3.3 V)", ["PARKED: camera/display research", "UART to XIAO: GPIO5 RX / GPIO4 TX",
                                                               "I2C GPIO7/8 to BNO085", "Power: USB-C or 3.7 V LiPo (J2)",
-                                                              "header 5V feeds the XIAO"], C["board_p4"], "Phase 3")
+                                                              "header 5V feed requires verification"], C["board_p4"], "Parked")
     box(920, 520, 300, 70, "BNO085 IMU", ["I2C 0x4A on pins 2, 4, 6, 10"], C["board_bno"], "Phase 3")
     box(60, 520, 280, 70, "OV5647 camera", ["CSI, 15-pin 0.5 mm ribbon"], "#2e7d32", "Phase 3")
 
@@ -735,7 +734,6 @@ def overview():
 
     link([(340, 185), (500, 185)], C["5v"], "UART 5 V", (420, 177), both=True)
     link([(760, 185), (920, 185)], "#c25f00", "UART 3.3 V", (840, 177), both=True)
-    link([(200, 260), (200, 330)], C["tone"], "D8 tone", (240, 300))
     link([(1070, 260), (1070, 330)], C["rf"], "coax", (1100, 300))
     link([(1000, 260), (1000, 290), (760, 290), (760, 470)], "#c25f00", "UART 3.3 V direct (Phase 3)", (880, 284), both=True)
     link([(800, 555), (920, 555)], C["sda"], "I2C", (860, 547), both=True)

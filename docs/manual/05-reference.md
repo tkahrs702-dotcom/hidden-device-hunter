@@ -23,8 +23,8 @@ Change a pin in the script, the phase file's wire list and the firmware together
 | orange | 3.3 V power or reference |
 | black | ground |
 | magenta | LiPo + |
-| purple | buzzer tone (R4 D8) |
-| yellow | R4 TX -> XIAO RX (Phase 2); I2C SCL (Phase 3, STEMMA colour) |
+| purple | Archived Phase 1 buzzer signal; do not use for V2 |
+| yellow | R4 TX -> XIAO RX (Phase 2); parked Phase 3 I2C SCL |
 | green | XIAO TX -> R4 or P4 RX |
 | cyan | P4 TX -> XIAO RX |
 | brown | P4 TX -> R4 RX (optional) |
@@ -32,14 +32,9 @@ Change a pin in the script, the phase file's wire list and the firmware together
 | grey | coax / USB cable |
 Dashed = optional. Real jumper colours do not matter; the IDs do.
 
-## Every wire, by ID
+## V2 Phase 2 wires, by ID
 | ID | Phase | From | To | Jumper |
 |---|---|---|---|---|
-| W1 | 1 | R4 D8 | breadboard a10 | M-M |
-| R1 | 1 | 100 ohm: c10 | c14 | - |
-| BZ1 | 1 | buzzer +: e14 | buzzer -: e17 | - |
-| W2 | 1 | R4 GND (top header) | top - rail | M-M |
-| W3 | 1 | breadboard a17 | top - rail | M-M |
 | P1 | 2 | R4 5V | shifter HV only | - |
 | P2 | 2 | XIAO 3V3 | shifter LV | - |
 | P3 | 2 | R4 GND | shifter high-side GND | - |
@@ -49,22 +44,8 @@ Dashed = optional. Real jumper colours do not matter; the IDs do.
 | S3 | 2 | XIAO D6 (TX, GPIO11) | shifter A2/B2 | - |
 | S4 | 2 | shifter B2/A2 | R4 D0 (RX) | - |
 | A1 | 2 | XIAO C5 RF connector | Rokland antenna cable (check connector when delivered) | - |
-| T1 | 3 | P4 pin 1 (5V) | XIAO 5V | F-F |
-| T2 | 3 | P4 pin 5 (GND) | XIAO GND | F-F |
-| T3 | 3 | XIAO D6 (TX) | P4 pin 11 (GPIO5, RX) | F-F |
-| T4 | 3 | P4 pin 14 (GPIO4, TX) | XIAO D7 (RX) | F-F |
-| I1 | 3 | P4 pin 2 (3V3) | BNO085 VIN | F-F |
-| I2 | 3 | P4 pin 4 (GPIO7 SDA) | BNO085 SDA | F-F |
-| I3 | 3 | P4 pin 6 (GPIO8 SCL) | BNO085 SCL | F-F |
-| I4 | 3 | P4 pin 10 (GND) | BNO085 GND | F-F |
-| O1 | 3 opt. | P4 pin 8 (GPIO2) | shifter LV3 | F-F |
-| O2 | 3 opt. | P4 pin 18 (3V3) | shifter LV | F-F |
-| O3 | 3 opt. | P4 pin 13 (GND) | shifter GND (LV side) | F-F |
-| O4 | 3 opt. | shifter HV3 | R4 D0 (RX) | M-F |
-| O5 | 3 opt. | R4 5V | shifter HV | M-F |
-| O6 | 3 opt. | R4 GND | shifter GND (HV side) | M-F |
 R4 and XIAO are powered separately over USB-C for Phase 2 bench tests; their 5 V rails are not connected.
-Jumper count for the whole build: M-M 4, M-F 9, F-F 14 (11 without the optional link). A kit with 40 of each type covers it.
+Phase 1 uses the Qwiic Modulino Buzzer and requires no jumper-wire table. The older D8 passive-buzzer wiring is archived in `01-phase1-finder.md`; it is not current V2 hardware. Phase 3 connections below are preserved design notes only and are not V2 build instructions.
 
 ## Signals between boards
 | Link | Signal | Level | Direction | Wires |
