@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Phase 2 wiring: UNO R4 WiFi to Seeed Studio XIAO ESP32-C5</title>
+  <desc id="desc">The R4 and XIAO C5 share ground and are powered separately over USB. UART signals pass through an Adafruit 757 level shifter: R4 D1 TX to XIAO D7 RX through B1 and A1, and XIAO D6 TX to R4 D0 RX through A2 and B2. The R4 uses a Qwiic Modulino Buzzer. The XIAO uses a dual-band directional antenna when delivered.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f3f6fb; }
+      .card { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; }
+      .board { fill: #13253a; stroke: #0b1725; stroke-width: 2; }
+      .board-text { fill: #f8fafc; font: 700 18px system-ui, sans-serif; }
+      .board-sub { fill: #c7d2e0; font: 500 13px system-ui, sans-serif; }
+      .title { fill: #0f172a; font: 700 32px system-ui, sans-serif; }
+      .subtitle { fill: #475569; font: 400 17px system-ui, sans-serif; }
+      .card-title { fill: #0f172a; font: 700 21px system-ui, sans-serif; }
+      .label { fill: #1e293b; font: 600 15px system-ui, sans-serif; }
+      .small { fill: #475569; font: 400 13px system-ui, sans-serif; }
+      .tiny { fill: #64748b; font: 500 11px system-ui, sans-serif; }
+      .pin { fill: #ffffff; stroke: #64748b; stroke-width: 2; }
+      .power { fill: none; stroke: #dc2626; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .ground { fill: none; stroke: #334155; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .r4tx { fill: none; stroke: #d97706; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .c5tx { fill: none; stroke: #059669; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .ref { fill: none; stroke: #64748b; stroke-width: 3; stroke-dasharray: 7 6; }
+      .warning { fill: #fff7ed; stroke: #fed7aa; stroke-width: 1.5; }
+      .warning-text { fill: #9a3412; font: 600 14px system-ui, sans-serif; }
+      .badge { fill: #e0f2fe; stroke: #7dd3fc; stroke-width: 1; }
+      .badge-text { fill: #075985; font: 700 12px system-ui, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1600" height="1000"/>
+  <text class="title" x="60" y="62">Phase 2 wiring</text>
+  <text class="subtitle" x="60" y="94">UNO R4 WiFi + Seeed Studio XIAO ESP32-C5 · dual-band sniffer</text>
+  <rect class="badge" x="1284" y="44" width="256" height="38" rx="19"/>
+  <text class="badge-text" x="1412" y="68" text-anchor="middle">VERIFIED XIAO C5 PIN LABELS</text>
+
+  <rect class="card" x="60" y="170" width="420" height="590" rx="22"/>
+  <rect class="card" x="610" y="235" width="380" height="450" rx="22"/>
+  <rect class="card" x="1120" y="170" width="420" height="590" rx="22"/>
+
+  <text class="card-title" x="90" y="210">UNO R4 WiFi</text>
+  <text class="small" x="90" y="235">5 V logic · USB-powered</text>
+  <text class="card-title" x="650" y="275">Adafruit 757</text>
+  <text class="small" x="650" y="299">4-channel bidirectional level shifter</text>
+  <text class="card-title" x="1150" y="210">Seeed Studio XIAO ESP32-C5</text>
+  <text class="small" x="1150" y="235">3.3 V GPIO · passive Wi-Fi monitor</text>
+
+  <path class="power" d="M480 330 H550 V400 H650"/>
+  <path class="ground" d="M480 640 H550 V715 H1060 V640 H1120"/>
+  <path class="ground" d="M570 715 V640 H650"/>
+  <path class="ground" d="M1040 715 V640 H950"/>
+  <path class="r4tx" d="M480 430 H545 V450 H650"/>
+  <path class="r4tx" d="M950 450 H1050 V465 H1120"/>
+  <path class="c5tx" d="M1120 550 H1060 V535 H950"/>
+  <path class="c5tx" d="M650 535 H545 V520 H480"/>
+  <path class="ref" d="M1120 380 H1080 V400 H950"/>
+
+  <rect class="board" x="115" y="270" width="280" height="365" rx="18"/>
+  <text class="board-text" x="255" y="325" text-anchor="middle">Arduino</text>
+  <text class="board-text" x="255" y="350" text-anchor="middle">UNO R4 WiFi</text>
+  <text class="board-sub" x="255" y="382" text-anchor="middle">Serial1 on D0 / D1</text>
+  <rect x="200" y="665" width="110" height="46" rx="10" fill="#ecfeff" stroke="#67e8f9" stroke-width="2"/>
+  <text class="label" x="255" y="685" text-anchor="middle">Qwiic</text>
+  <text class="tiny" x="255" y="701" text-anchor="middle">Modulino Buzzer</text>
+  <text class="tiny" x="255" y="735" text-anchor="middle">Built-in LED matrix</text>
+
+  <rect class="board" x="1200" y="270" width="275" height="365" rx="18"/>
+  <text class="board-text" x="1337" y="325" text-anchor="middle">XIAO</text>
+  <text class="board-text" x="1337" y="350" text-anchor="middle">ESP32-C5</text>
+  <text class="board-sub" x="1337" y="382" text-anchor="middle">Seeed Studio board</text>
+  <rect x="1260" y="410" width="155" height="56" rx="10" fill="#1e3a55" stroke="#60a5fa" stroke-width="1.5"/>
+  <text class="board-sub" x="1337" y="434" text-anchor="middle">D6 = GPIO11 TX</text>
+  <text class="board-sub" x="1337" y="453" text-anchor="middle">D7 = GPIO12 RX</text>
+  <rect x="1250" y="530" width="175" height="74" rx="10" fill="#1e3a55" stroke="#94a3b8" stroke-width="1.5"/>
+  <text class="board-sub" x="1337" y="554" text-anchor="middle">RF connector</text>
+  <text class="board-sub" x="1337" y="575" text-anchor="middle">Rokland directional</text>
+  <text class="tiny" x="1337" y="592" text-anchor="middle">2.4/5 GHz · not delivered</text>
+  <rect x="1290" y="612" width="94" height="18" rx="5" fill="#cbd5e1"/>
+  <text class="tiny" x="1337" y="650" text-anchor="middle">USB-C power (separate)</text>
+
+  <text class="label" x="410" y="335" text-anchor="end">5V</text>
+  <circle class="pin" cx="480" cy="330" r="7"/>
+  <text class="label" x="410" y="435" text-anchor="end">D1 TX</text>
+  <circle class="pin" cx="480" cy="430" r="7"/>
+  <text class="label" x="410" y="525" text-anchor="end">D0 RX</text>
+  <circle class="pin" cx="480" cy="520" r="7"/>
+  <text class="label" x="410" y="645" text-anchor="end">GND</text>
+  <circle class="pin" cx="480" cy="640" r="7"/>
+
+  <rect x="650" y="325" width="300" height="285" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <rect x="650" y="325" width="300" height="47" rx="14" fill="#e2e8f0"/>
+  <text class="label" x="800" y="354" text-anchor="middle">5 V HIGH side  |  3.3 V LOW side</text>
+  <text class="label" x="670" y="405">HV</text>
+  <text class="label" x="670" y="450">B1</text>
+  <text class="label" x="670" y="540">B2</text>
+  <text class="label" x="670" y="630">GND</text>
+  <text class="label" x="930" y="405" text-anchor="end">LV</text>
+  <text class="label" x="930" y="450" text-anchor="end">A1</text>
+  <text class="label" x="930" y="540" text-anchor="end">A2</text>
+  <text class="label" x="930" y="630" text-anchor="end">GND</text>
+  <circle cx="650" cy="400" r="6" fill="#dc2626"/>
+  <circle cx="650" cy="450" r="6" fill="#d97706"/>
+  <circle cx="650" cy="535" r="6" fill="#059669"/>
+  <circle cx="650" cy="640" r="6" fill="#334155"/>
+  <circle cx="950" cy="400" r="6" fill="#64748b"/>
+  <circle cx="950" cy="450" r="6" fill="#d97706"/>
+  <circle cx="950" cy="535" r="6" fill="#059669"/>
+  <circle cx="950" cy="640" r="6" fill="#334155"/>
+  <text class="tiny" x="800" y="580" text-anchor="middle">Channel 1: B1 ↔ A1</text>
+  <text class="tiny" x="800" y="598" text-anchor="middle">Channel 2: B2 ↔ A2</text>
+
+  <text class="label" x="1150" y="335" text-anchor="start">5V (no wire)</text>
+  <circle class="pin" cx="1120" cy="330" r="7"/>
+  <text class="label" x="1150" y="385" text-anchor="start">3V3</text>
+  <circle class="pin" cx="1120" cy="380" r="7"/>
+  <text class="label" x="1150" y="455" text-anchor="start">D7 RX</text>
+  <circle class="pin" cx="1120" cy="465" r="7"/>
+  <text class="label" x="1150" y="555" text-anchor="start">D6 TX</text>
+  <circle class="pin" cx="1120" cy="550" r="7"/>
+  <text class="label" x="1150" y="645" text-anchor="start">GND</text>
+  <circle class="pin" cx="1120" cy="640" r="7"/>
+
+  <text class="tiny" x="545" y="415" text-anchor="middle">R4 to C5</text>
+  <text class="tiny" x="1060" y="450" text-anchor="middle">reserved</text>
+  <text class="tiny" x="1060" y="510" text-anchor="middle">live data</text>
+  <text class="tiny" x="1060" y="370" text-anchor="middle">3.3 V ref</text>
+  <text class="tiny" x="715" y="385" text-anchor="end">R4 5V</text>
+  <text class="tiny" x="785" y="125" text-anchor="middle">R4 5V → shifter HV only; XIAO powered from its own USB-C</text>
+
+  <line x1="70" y1="805" x2="125" y2="805" class="power"/>
+  <text class="small" x="138" y="810">5 V power</text>
+  <line x1="265" y1="805" x2="320" y2="805" class="ground"/>
+  <text class="small" x="333" y="810">common ground</text>
+  <line x1="490" y1="805" x2="545" y2="805" class="r4tx"/>
+  <text class="small" x="558" y="810">R4 TX → XIAO RX (reserved)</text>
+  <line x1="835" y1="805" x2="890" y2="805" class="c5tx"/>
+  <text class="small" x="903" y="810">XIAO TX → R4 RX (live)</text>
+  <line x1="1190" y1="805" x2="1245" y2="805" class="ref"/>
+  <text class="small" x="1258" y="810">3.3 V reference</text>
+
+  <rect class="warning" x="60" y="850" width="1480" height="100" rx="16"/>
+  <text class="warning-text" x="88" y="886">POWER SAFETY</text>
+  <text class="small" x="245" y="886">Power the R4 and XIAO separately over USB during bench tests. Do not tie their 5 V rails together.</text>
+  <text class="warning-text" x="88" y="921">NOT SHOWN</text>
+  <text class="small" x="245" y="921">No D8 passive buzzer: Phase 2 uses the Qwiic Modulino Buzzer. Rokland dual-band directional antenna is ordered, not delivered.</text>
+</svg>

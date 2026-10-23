@@ -1,102 +1,62 @@
-# 01. Phase 1: Wi-Fi finder with buzzer (Uno R4 WiFi)
+# 01. Phase 1: Wi-Fi finder with Modulino Buzzer (UNO R4 WiFi)
 
-Goal: R4 scans Wi-Fi, you pick a target network, and the buzzer beeps faster (and the LED matrix shows more bars) as the signal gets stronger. Handheld on a USB power bank.
-Needs only a buzzer and a resistor. Everything on the R4's own 5 V side; no level shifter.
+Phase 1 scans nearby Wi-Fi access points, lets you lock onto one by its scan-list number, and maps its reported RSSI to buzzer timing and LED-matrix bars. On 2026-10-19, the updated firmware was uploaded to the connected UNO R4 WiFi. Serial output confirmed Modulino detection, buzzer-test on/off command handling, and AUTO scan readings. This bench check does not independently confirm audible sound or field-finding performance.
 
-## Parts
-| Part | Spec | Price |
-|---|---|---|
-| Uno R4 WiFi | have | 0 |
-| Passive piezo buzzer | 2-pin passive piezo, or 3-pin passive module (Keyestudio) | 1-4 |
-| Resistor | 100 ohm 1/4 W | <1 |
-| USB power bank | 5 V, with no low-current auto-off | 10-20 |
-| USB-C cable | data-capable | have |
-"Passive" matters: a passive buzzer needs a tone signal (`tone()`); an active one just buzzes at one pitch when given 5 V and will not beep faster in tone.
+## Hardware and wiring
 
-## Pin-to-pin wiring
-| # | From | To | Note |
-|---|---|---|---|
-| 1 | R4 D8 | resistor end 1 | tone signal |
-| 2 | resistor end 2 | buzzer + (longer leg / marked +) | |
-| 3 | buzzer - | R4 GND (any GND pin) | |
-| 4 | power bank USB | R4 USB-C | mobile power |
-3-pin module variant (no resistor): module S -> D8, module + -> R4 5V, module - -> R4 GND.
-Current: R4 pins are rated 8 mA each (60 mA total). A passive piezo draws far less, so the 100 ohm resistor is safe. Do not drive a magnetic buzzer or speaker straight from a pin.
+| Part | Connection |
+|---|---|
+| Arduino UNO R4 WiFi | USB-C data cable for programming/serial, or USB power bank |
+| Arduino Modulino Buzzer (ABX00108) | Connect to the board's Qwiic socket |
 
-## Wiring diagram
+The firmware uses the Modulino Buzzer over the R4's Qwiic I2C bus (`Wire1`). It does **not** use a passive buzzer on D8, an external resistor, or the D8 `tone()` test sketch. Do not wire the Qwiic buzzer to D8 or 5 V; follow the Modulino's connector and board documentation.
+
+## Firmware behavior
+
+- At startup, probes the Modulino Buzzer and reports if it is not detected. The beeper task retries detection.
+- Scans Wi-Fi and lists up to 10 named networks reported by the UNO R4 WiFi's WiFiS3 library.
+- With no saved target, follows the strongest network in each scan. Enter a displayed number followed by newline to lock to that network by BSSID; the selection is saved in EEPROM.
+- A stronger RSSI increases the beep rate and the number of lit matrix bars. A locked target that disappears is silenced on the first missed scan, shows a waiting indicator during the confirmation window, then changes to a slow lost-target click after three misses.
+- The board's scan results are not a measure of exact distance. Wi-Fi multipath, obstructions, and antenna orientation affect RSSI.
+
+## Standalone field use (no computer or keyboard)
+
+Power the UNO R4 WiFi from a USB power bank. The firmware runs on the board; USB serial is not required:
+
+- If a target was saved earlier, the finder starts locked to that network.
+- If there is no saved target, it starts in AUTO mode and follows the strongest named network it detects.
+- Use the buzzer and LED matrix as the field feedback. The `t` buzzer-test command is only an optional serial bench test and is not needed to operate the finder.
+
+With the current hardware there are no buttons or phone-control interface, so choosing or clearing a target manually requires a USB serial connection before field use. The saved target remains in EEPROM after unplugging.
+
+## Serial commands
+
+These optional setup and diagnostic commands require a computer connected over USB. Open the serial monitor at 115200 baud with newline line endings.
+
+| Command | Action |
+|---|---|
+| `<number>` | Lock onto that network from the latest list |
+| `l` | Print the latest network list |
+| `c` | Clear the saved target; does not stop an active buzzer test |
+| `m` | Mute or unmute the buzzer |
+| `t` | Toggle the 100 ms beep / 500 ms interval buzzer test on or off |
+| `h` or `?` | Show help |
+
+The serial port may reset the board when opened. The `t` test reports whether the buzzer was detected when the command was received; a test tone by itself is not proof that Wi-Fi scanning works.
+
+## Known scan limits and diagnostics
+
+- The installed WiFiS3 library returns at most 10 named access points per scan and skips blank/hidden SSIDs.
+- A scan returning zero results does not prove there are no access points: WiFiS3 can also return zero when its lower-level scan command fails. The library API used here does not expose enough information to distinguish those cases.
+- The firmware reports a negative scan result as an error and reports the zero-result ambiguity once until a non-empty scan occurs.
+- Startup checks whether the Wi-Fi module responds and prints the module firmware version. A detected module and successful firmware compile do not verify scan performance.
+
+## Build and verification
+
+Compile for **Arduino UNO R4 WiFi**:
+
+```sh
+arduino-cli compile --fqbn arduino:renesas_uno:unor4wifi --warnings all firmware/phase1-r4-finder
 ```
-        Uno R4 WiFi (top view, USB-C at left)
-   +---------------------------------------------+
-   |                                [D13 ... D8 ... D0]   digital header
-   |  USB-C <== power bank          |       |
-   +--------------------------------|-------|-----+
-                                    |       |
-                          GND header|       |D8
-                                    |       +----[ 100 ohm ]----( + )
-                                    |                             BUZZER
-                                    +-----------------------------( - )
-```
-Same as a schematic:
-```
- D8 ----/\/\/\---- (+) BUZZER (-) ---- GND
-        100 ohm
-```
 
-## Assembly
-1. Unplug the R4 from everything.
-2. Push the resistor and buzzer legs into a small breadboard (or twist and solder). Put the resistor in series on the + leg.
-3. Run jumper D8 -> resistor, buzzer - -> GND. Double-check D8 goes through the resistor and not straight to the buzzer.
-4. Plug the USB-C cable into the HaL/HaLjr for programming first; move to the power bank later.
-
-## Software
-Install the toolchain from `00-overview-and-safety.md`. Select board **Arduino UNO R4 WiFi**.
-
-### Test 1: buzzer (3 beeps)
-```cpp
-void setup() {
-  for (int i = 0; i < 3; i++) { tone(8, 2000, 150); delay(300); }
-}
-void loop() {}
-```
-Expect three short beeps after upload. If silent: swap the buzzer legs (piezos mostly don't care) and re-check the resistor.
-`tone()` works on D8: the R4 core drives it from a hardware timer interrupt that toggles any digital pin, so PWM capability is not needed
-(verified in `ArduinoCore-renesas/cores/arduino/Tone.cpp`, 2026-10-03). The board's "PWM pin" markings do not apply.
-
-### Test 2: Wi-Fi scan with signal strength (serial monitor, 115200)
-```cpp
-#include <WiFiS3.h>
-void setup() { Serial.begin(115200); while (!Serial) {} }
-void loop() {
-  int n = WiFi.scanNetworks();
-  for (int i = 0; i < n; i++) {
-    byte b[6]; WiFi.BSSID(i, b);
-    char mac[18]; snprintf(mac, sizeof mac, "%02X:%02X:%02X:%02X:%02X:%02X", b[5], b[4], b[3], b[2], b[1], b[0]);
-    Serial.print(WiFi.SSID(i)); Serial.print("  "); Serial.print(mac);
-    Serial.print("  RSSI "); Serial.print(WiFi.RSSI(i)); Serial.print(" dBm  ch "); Serial.println(WiFi.channel(i));
-  }
-  Serial.println("---"); delay(2000);
-}
-```
-If the MAC bytes print reversed, flip the order in the `snprintf`. Each scan takes a few seconds.
-
-### Finder firmware (not written yet)
-Behavior to build, in order:
-1. Scan, list networks on Serial with an index.
-2. Serial command (or button on a spare pin, pulled to GND) picks the target by MAC.
-3. Loop: scan, read the target's RSSI, map -90 dBm (slow beep, 1 bar) to -30 dBm (continuous beep, all bars).
-4. Draw bars on the 12x8 LED matrix (`Arduino_LED_Matrix`).
-Scan-based RSSI updates every few seconds, so walk slowly. Phase 2 removes that limit.
-
-## Field test
-1. Phone hotspot on, in another room, 2.4 GHz band.
-2. Select it as target. Walk toward it; beeps should speed up near it.
-3. Walk past and away; beeps slow down.
-
-## Troubleshooting (Phase 1)
-| Symptom | Check first | Then |
-|---|---|---|
-| No beep | polarity, resistor seated, pin D8 | run Test 1; check the buzzer is passive; try a 3-pin module |
-| Board not in port list | data-capable cable, other USB port | `arduino-cli board list`, dialout group |
-| Scan shows nothing | R4 WiFi firmware on the ESP32-S3 module | update via Arduino IDE firmware updater |
-| Power bank shuts off | low-current auto-off | bank with always-on mode, or add a small load |
-| Beep rate jumps around | walls and bodies reflect 2.4 GHz | average the last few readings; hold the R4 away from your body |
+The source compiled successfully with warnings enabled and was uploaded to `/dev/ttyACM0`. Live serial output showed the updated `t` on/off responses and AUTO readings for detected networks. Audible sound and finding a selected hotspot while walking remain unverified.

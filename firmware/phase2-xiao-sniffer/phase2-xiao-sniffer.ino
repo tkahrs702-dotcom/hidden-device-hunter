@@ -1,16 +1,16 @@
-// Hidden Device Hunter - Phase 2: Wi-Fi sniffer + directional antenna
-// Board: Seeed XIAO ESP32-S3 (Arduino board "XIAO_ESP32S3", esp32 core 3.x)
-// Antenna: u.FL -> RP-SMA pigtail -> Alfa APA-M04 panel (aim the flat face)
-// Link to the R4: D6 (TX) -> level shifter A2 ... B2 -> R4 D0 (RX)
-//                 D7 (RX) <- level shifter A1 ... B1 <- R4 D1 (TX)   (not used yet, wired for later)
+// Hidden Device Hunter - Phase 2: ESP32 sniffer + directional antenna
+// Supported boards: Seeed XIAO ESP32-S3 (2.4 GHz), XIAO ESP32-C5 (2.4/5 GHz),
+// and a generic ESP32-C5 carrier (2.4/5 GHz).
+// The XIAO C5 uses its board-labelled D6/D7 UART pins; a generic C5 uses RX1/TX1.
+// Link to the R4: C5 TX -> level shifter -> R4 D0 (RX); R4 D1 (TX) -> shifter -> C5 RX.
 //
 // What it does
-//   Listens on every 2.4 GHz channel (receive only, it never transmits) and records every
+//   Listens on the configured channels and records every
 //   radio it hears: routers, phones, cameras, plugs. Each one gets its signal strength,
 //   channel, packet count and, from the first half of its MAC address, its maker.
 //   Makers of cameras/doorbells are tagged CAM; Wi-Fi chips used in cheap cameras and
 //   smart gadgets are tagged IOT.
-//   Lock onto one device and the XIAO stays on its channel and streams its signal to the
+//   Lock onto one device and the ESP32 stays on its channel and streams its signal to the
 //   R4, which beeps and shows bars. Point the panel antenna around: the signal peaks when
 //   the flat face points at the device.
 //
@@ -21,24 +21,41 @@
 //   m <MAC>    lock onto a MAC typed in full, e.g.  m 24:0A:C4:12:34:56
 //   u          unlock (go back to scanning all channels)
 //   h          help
-// BOOT button on the XIAO (works away from the computer):
+// BOOT button on XIAO boards (works away from the computer):
 //   short press = lock the next suspect (CAM first, then IOT, then strongest)
 //   hold 1 s    = unlock
 // The lock is saved, so the XIAO picks it up again after a power cycle.
 
 #include <WiFi.h>
 #include <Preferences.h>
+#include <atomic>
 #include "esp_wifi.h"
 #include "oui_table.h"
 
 // ---------- settings you can change ----------
-static const uint8_t CHANNELS[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};  // US channels
+#if CONFIG_IDF_TARGET_ESP32C5
+static const uint8_t CHANNELS[] = {
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    36, 40, 44, 48, 149, 153, 157, 161, 165
+};  // US non-DFS 2.4/5 GHz channels
+#if defined(ARDUINO_XIAO_ESP32C5)
+static const int BUTTON_PIN = 28;  // Seeed XIAO ESP32-C5 BOOT button.
+static const int LINK_RX = D7;     // GPIO12 on the XIAO C5.
+static const int LINK_TX = D6;     // GPIO11 on the XIAO C5.
+#else
+static const int BUTTON_PIN = -1;  // C5 carrier-board button pin is board-specific.
+static const int LINK_RX = RX1;
+static const int LINK_TX = TX1;
+#endif
+#else
+static const uint8_t CHANNELS[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};  // US 2.4 GHz channels
+static const int BUTTON_PIN = 0;             // XIAO-S3 BOOT button
+static const int LINK_RX = D7;
+static const int LINK_TX = D6;
+#endif
 static const uint32_t HOP_MS = 220;          // time on each channel while scanning
 static const uint32_t LOST_MS = 4000;        // locked target silent this long -> search all channels
 static const uint32_t LIST_AGE_MS = 60000;   // "recent" = heard in the last 60 s
-static const int BUTTON_PIN = 0;             // BOOT button
-static const int LINK_RX = D7;
-static const int LINK_TX = D6;
 static const uint32_t LINK_BAUD = 115200;
 // ---------------------------------------------
 
@@ -71,6 +88,8 @@ static const int MAX_DEVS = 160;
 static Dev devs[MAX_DEVS];
 static QueueHandle_t pktQueue;
 static Preferences prefs;
+static std::atomic<uint32_t> droppedPackets{0};
+static bool prefsReady = false;
 
 static bool locked = false;
 static uint8_t lockMac[6];
@@ -118,7 +137,7 @@ static void sniff(void *buf, wifi_promiscuous_pkt_type_t type) {
       k.kind = K_PROBE_REQ;           // a phone/gadget asking "is my network here?"
     }
   }
-  xQueueSend(pktQueue, &k, 0);
+  if (xQueueSend(pktQueue, &k, 0) != pdTRUE) droppedPackets.fetch_add(1, std::memory_order_relaxed);
 }
 
 // ---------- helpers ----------
@@ -180,9 +199,23 @@ static int addDev(const uint8_t *mac) {
 }
 
 static void setChannel(uint8_t ch) {
-  if (ch < 1 || ch > 14) return;
+  bool supported = false;
+  for (uint8_t candidate : CHANNELS) {
+    if (candidate == ch) {
+      supported = true;
+      break;
+    }
+  }
+  if (!supported) {
+    Serial.printf("ERROR: refusing unsupported channel %u.\n", ch);
+    return;
+  }
+  esp_err_t err = esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+  if (err != ESP_OK) {
+    Serial.printf("ERROR: could not tune to channel %u: %s\n", ch, esp_err_to_name(err));
+    return;
+  }
   currentCh = ch;
-  esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
 }
 
 // ---------- link to the R4 ----------
@@ -202,7 +235,7 @@ static void lockOn(const uint8_t *mac) {
   lockIdx = findDev(mac);
   lockLastHeard = millis();
   lockAvgValid = false;
-  prefs.putBytes("lock", lockMac, 6);
+  if (prefsReady) prefs.putBytes("lock", lockMac, 6);
   if (lockIdx >= 0 && devs[lockIdx].ch) setChannel(devs[lockIdx].ch);
   char m[18];
   macStr(lockMac, m);
@@ -216,7 +249,7 @@ static void lockOn(const uint8_t *mac) {
 static void unlock() {
   locked = false;
   lockIdx = -1;
-  prefs.remove("lock");
+  if (prefsReady) prefs.remove("lock");
   Serial1.print("U\n");
   Serial.println("UNLOCKED. Scanning all channels.");
 }
@@ -274,7 +307,11 @@ static void printList(bool suspectsOnly) {
 
 static void printHelp() {
   Serial.println("\nCommands: l = list all   c = suspects only   <number> = lock   m <MAC> = lock MAC   u = unlock   h = help");
+#if CONFIG_IDF_TARGET_ESP32C5
+  Serial.println("Target locks are saved. Use USB serial to select a target; board button is not configured.");
+#else
   Serial.println("BOOT button: short press = next suspect, hold 1 s = unlock");
+#endif
 }
 
 static void handleUsb() {
@@ -309,6 +346,7 @@ static void handleUsb() {
 
 // BOOT button: short press = next suspect, hold = unlock
 static void handleButton() {
+  if (BUTTON_PIN < 0) return;
   static bool wasDown = false;
   static uint32_t downAt = 0;
   static bool longDone = false;
@@ -337,27 +375,60 @@ static void handleButton() {
 void setup() {
   Serial.begin(115200);
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  if (BUTTON_PIN >= 0) pinMode(BUTTON_PIN, INPUT_PULLUP);
   uint32_t t0 = millis();
   while (!Serial && millis() - t0 < 1500) {}
 
   pktQueue = xQueueCreate(128, sizeof(Pkt));
-  prefs.begin("hdh", false);
+  if (!pktQueue) {
+    Serial.println("FATAL: could not allocate the packet queue.");
+    while (true) delay(1000);
+  }
+  prefsReady = prefs.begin("hdh", false);
+  if (!prefsReady) Serial.println("WARNING: preferences unavailable; target lock will not persist.");
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
+#if CONFIG_IDF_TARGET_ESP32C5
+  esp_err_t countryErr = esp_wifi_set_country_code("US", true);
+  if (countryErr != ESP_OK) {
+    Serial.printf("FATAL: could not set US Wi-Fi regulatory domain: %s\n", esp_err_to_name(countryErr));
+    while (true) delay(1000);
+  }
+  esp_err_t bandErr = esp_wifi_set_band_mode(WIFI_BAND_MODE_AUTO);
+  if (bandErr != ESP_OK) {
+    Serial.printf("FATAL: C5 dual-band mode unavailable: %s\n", esp_err_to_name(bandErr));
+    while (true) delay(1000);
+  }
+#endif
   wifi_promiscuous_filter_t filt = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA};
-  esp_wifi_set_promiscuous_filter(&filt);
-  esp_wifi_set_promiscuous_rx_cb(&sniff);
-  esp_wifi_set_promiscuous(true);
+  esp_err_t err = esp_wifi_set_promiscuous_filter(&filt);
+  if (err == ESP_OK) err = esp_wifi_set_promiscuous_rx_cb(&sniff);
+  if (err == ESP_OK) err = esp_wifi_set_promiscuous(true);
+  if (err != ESP_OK) {
+    Serial.printf("FATAL: could not start promiscuous receive mode: %s\n", esp_err_to_name(err));
+    while (true) delay(1000);
+  }
   setChannel(CHANNELS[0]);
 
-  Serial.println("\n=== Hidden Device Hunter - Phase 2 sniffer (XIAO ESP32-S3) ===");
-  Serial.printf("Maker list: %u entries. Receive-only: this board never transmits.\n", OUI_COUNT);
+  Serial.printf("\n=== Hidden Device Hunter - Phase 2 sniffer (%s) ===\n",
+#if CONFIG_IDF_TARGET_ESP32C5
+                "ESP32-C5 dual-band"
+#else
+                "XIAO ESP32-S3 2.4 GHz"
+#endif
+  );
+  Serial.printf("Maker list: %u entries. Listening on %u channels.\n", OUI_COUNT, (unsigned)sizeof(CHANNELS));
+#if CONFIG_IDF_TARGET_ESP32C5
+  Serial.printf("C5 UART1: RX GPIO%d, TX GPIO%d. Verify these pins are exposed on the carrier board.\n", LINK_RX, LINK_TX);
+  Serial.println("C5 scanning 2.4 GHz channels 1-11 and US non-DFS 5 GHz channels 36-48, 149-165.");
+#else
+  Serial.println("XIAO BOOT button: short press selects the next suspect; hold 1 s to unlock.");
+#endif
   printHelp();
 
   uint8_t saved[6];
-  if (prefs.getBytes("lock", saved, 6) == 6) {
+  if (prefsReady && prefs.getBytes("lock", saved, 6) == 6) {
     Serial.print("Saved lock found. ");
     lockOn(saved);
   } else {
@@ -369,6 +440,7 @@ void loop() {
   uint32_t now = millis();
   Pkt k;
   static uint32_t lastT = 0;
+  static uint32_t reportedDrops = 0;
   bool targetHeard = false;
   int8_t targetRssi = 0;
 
@@ -436,7 +508,12 @@ void loop() {
       if (devs[i].flags & F_HIDDEN) hidden++;
     }
     Serial1.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
-    if (locked && now - lockLastHeard > LOST_MS) Serial.println("TARGET not heard - searching all channels...");
+    if (locked && now - lockLastHeard > LOST_MS) Serial.println("TARGET not heard - searching all configured channels...");
+    uint32_t drops = droppedPackets.load(std::memory_order_relaxed);
+    if (drops != reportedDrops) {
+      Serial.printf("WARNING: packet queue has dropped %lu frames total.\n", (unsigned long)drops);
+      reportedDrops = drops;
+    }
   }
 
   handleUsb();

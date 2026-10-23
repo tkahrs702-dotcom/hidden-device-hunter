@@ -3,6 +3,7 @@
 Goal: the built-in 4.3 in screen shows a live camera image with a heat-map overlay (red = strong signal) and a crosshair readout. An IMU tells the P4 where the antenna is pointing;
 the XIAO sends signal strength; the P4 paints the readings onto the image at the matching position. Requires Phases 1-2 working.
 All signals on the P4 side are 3.3 V, so the XIAO connects directly (no shifter). The R4 can stay as the proximity beeper.
+This is the original XIAO wiring plan. Phase 2 now targets an ESP32-C5 instead; reusing it here requires confirming the C5 carrier-board GPIO access, antenna connector, and power path before changing this plan.
 
 ## Parts
 | Part | Spec | Price |
