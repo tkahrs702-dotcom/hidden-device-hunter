@@ -47,7 +47,8 @@ static const uint8_t CHANNELS[] = {
 };
 static const uint8_t NUM_CH = sizeof(CHANNELS);
 static const uint32_t HOP_MS = 220;          // time on each channel while scanning
-static const uint32_t LOST_MS = 4000;        // locked target silent this long -> search all channels
+static const uint32_t LOST_MS = 4000;        // locked target silent this long -> "not heard" (R4 shows X)
+static const uint32_t RESWEEP_MS = 30000;    // silent this long on its last channel -> search all channels
 static const uint32_t LIST_AGE_MS = 60000;   // "recent" = heard in the last 60 s
 #if CONFIG_IDF_TARGET_ESP32C5
 static const int BUTTON_PIN = 28;            // BOOT button
@@ -394,6 +395,9 @@ static void updateLed(uint32_t now, bool isLocked, bool heard) {
 // ---------- main ----------
 void setup() {
   Serial.begin(115200);
+#if ARDUINO_USB_CDC_ON_BOOT
+  Serial.setTxTimeoutMs(0);  // no computer reading the USB port: drop text instead of stalling the loop
+#endif
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifdef LED_BUILTIN
@@ -484,8 +488,13 @@ void loop() {
     }
   }
 
-  // Channel control: hop while scanning; stay put on a locked target unless it goes quiet.
-  bool searching = !locked || (now - lockLastHeard > LOST_MS);
+  // Channel control: hop while scanning; stay put on a locked target. Plugs and cameras only
+  // talk every few seconds and never change channel on their own, so a quiet target keeps its
+  // channel for RESWEEP_MS before the full sweep (8+ s per pass on the C5) starts again.
+  bool knownCh = lockIdx >= 0 && devs[lockIdx].ch;
+  uint32_t quiet = now - lockLastHeard;
+  bool heardRecently = locked && quiet <= LOST_MS;
+  bool searching = !locked || (quiet > LOST_MS && (!knownCh || quiet > RESWEEP_MS));
   if (searching) {
     if (now - lastHop >= HOP_MS) {
       lastHop = now;
@@ -508,11 +517,12 @@ void loop() {
       if (devs[i].flags & F_HIDDEN) hidden++;
     }
     Serial1.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
-    if (locked && now - lockLastHeard > LOST_MS) Serial.println("TARGET not heard - searching all channels...");
+    if (locked && !heardRecently)
+      Serial.println(searching ? "TARGET not heard - searching all channels..." : "TARGET quiet - waiting on its channel...");
   }
 
   handleUsb();
   handleButton();
-  updateLed(now, locked, !searching);
+  updateLed(now, locked, heardRecently);
   delay(2);
 }
