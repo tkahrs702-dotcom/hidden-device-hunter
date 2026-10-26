@@ -14,6 +14,7 @@
 #pragma once
 #include <Arduino.h>
 #include <WiFiS3.h>
+#include <stdarg.h>
 
 namespace Web {
 
@@ -23,7 +24,7 @@ static const int HIST = 120;                 // graph points, one per 0.5 s = 1 
 static const int NEAR_MAX = 60;
 static const int NEAR_SHORT = 6;  // quick table; the full list is under "All devices"
 
-struct Near { char mac[18]; char maker[24]; char name[21]; uint8_t cat; int8_t avg; uint8_t ch; };
+struct Near { char mac[18]; char maker[16]; char name[17]; uint8_t cat; int8_t avg; uint8_t ch; };
 
 static WiFiServer server(80);
 static bool up = false;
@@ -37,7 +38,7 @@ static int8_t hist[HIST];
 static int histN = 0;
 static Near nearList[NEAR_MAX];
 static int nearN = 0;
-static char out[5800];  // one JSON reply, built whole and sent in a few big writes (each WiFi write is slow)
+static char out[768];  // JSON is built in pieces and written when this fills (the R4 has little RAM)
 
 static const char PAGE[] =
   "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'><title>Finder</title>"
@@ -161,6 +162,23 @@ static void sendAll(WiFiClient &c, const char *p, size_t len) {
   }
 }
 
+static int outN = 0;
+static void emit(WiFiClient &c, const char *fmt, ...) {  // small pieces into `out`, written when it fills
+  char tmp[200];
+  va_list ap;
+  va_start(ap, fmt);
+  int n = vsnprintf(tmp, sizeof(tmp), fmt, ap);
+  va_end(ap);
+  if (n < 0) return;
+  if (n > (int)sizeof(tmp) - 1) n = sizeof(tmp) - 1;
+  if (outN + n > (int)sizeof(out)) { sendAll(c, out, outN); outN = 0; }
+  memcpy(out + outN, tmp, n);
+  outN += n;
+}
+static void flushOut(WiFiClient &c) { if (outN) sendAll(c, out, outN); outN = 0; }
+
+static const char JSON_HEAD[] = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
+
 inline void poll() {
   if (!up) return;
   WiFiClient c = server.available();
@@ -174,32 +192,28 @@ inline void poll() {
     if (b == '\n') break;
     if (n < sizeof(req) - 1) req[n++] = b;
   }
+  outN = 0;
   if (strstr(req, "GET /s") != nullptr) {
     uint32_t age = lastSignal ? millis() - lastSignal : 99999;
-    int o = snprintf(out, sizeof(out),
-                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n"
-                     "{\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,"
-                     "\"s\":[%d,%d,%d,%d],\"h\":[",
-                     haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age,
-                     stTotal, stCams, stIot, stHidden);
-    for (int i = 0; i < histN && o < (int)sizeof(out) - 700; i++)
-      o += snprintf(out + o, sizeof(out) - o, "%s%d", i ? "," : "", (int)hist[i]);
-    o += snprintf(out + o, sizeof(out) - o, "],\"d\":[");
-    for (int i = 0; i < nearN && i < NEAR_SHORT && o < (int)sizeof(out) - 100; i++)
-      o += snprintf(out + o, sizeof(out) - o, "%s[\"%s\",%u,%d,%u,\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat,
-                    (int)nearList[i].avg, nearList[i].ch, nearList[i].maker);
-    o += snprintf(out + o, sizeof(out) - o, "]}");
-    if (o > (int)sizeof(out) - 1) o = sizeof(out) - 1;
-    sendAll(c, out, o);
+    emit(c, "%s", JSON_HEAD);
+    emit(c, "{\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,",
+         haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age);
+    emit(c, "\"s\":[%d,%d,%d,%d],\"h\":[", stTotal, stCams, stIot, stHidden);
+    for (int i = 0; i < histN; i++) emit(c, "%s%d", i ? "," : "", (int)hist[i]);
+    emit(c, "],\"d\":[");
+    for (int i = 0; i < nearN && i < NEAR_SHORT; i++)
+      emit(c, "%s[\"%s\",%u,%d,%u,\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat, (int)nearList[i].avg,
+           nearList[i].ch, nearList[i].maker);
+    emit(c, "]}");
+    flushOut(c);
   } else if (strstr(req, "GET /d") != nullptr) {
-    int o = snprintf(out, sizeof(out),
-                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{\"m\":\"%s\",\"d\":[", mac);
-    for (int i = 0; i < nearN && o < (int)sizeof(out) - 120; i++)
-      o += snprintf(out + o, sizeof(out) - o, "%s[\"%s\",%u,%d,%u,\"%s\",\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat,
-                    (int)nearList[i].avg, nearList[i].ch, nearList[i].maker, nearList[i].name);
-    o += snprintf(out + o, sizeof(out) - o, "]}");
-    if (o > (int)sizeof(out) - 1) o = sizeof(out) - 1;
-    sendAll(c, out, o);
+    emit(c, "%s", JSON_HEAD);
+    emit(c, "{\"m\":\"%s\",\"d\":[", mac);
+    for (int i = 0; i < nearN; i++)
+      emit(c, "%s[\"%s\",%u,%d,%u,\"%s\",\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat, (int)nearList[i].avg,
+           nearList[i].ch, nearList[i].maker, nearList[i].name);
+    emit(c, "]}");
+    flushOut(c);
   } else {
     const char *head = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n";
     sendAll(c, head, strlen(head));
