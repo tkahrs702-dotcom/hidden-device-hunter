@@ -6,7 +6,6 @@ GitHub (`tkahrs702-dotcom/hidden-device-hunter`, private) is the source of truth
 ## Layout (same on both)
 ```
 ~/Projects/hidden-device-hunter/     this repo
-~/Projects/sentinel/                 SENTINEL, a separate repo: never mix the two
 ~/esp/esp-idf-v5.5.5/                ESP-IDF, Phase 3 (P4) only
 ~/.arduino15/                        arduino-cli config and board cores
 ```
@@ -41,13 +40,13 @@ If it says `dialout` is missing: `sudo usermod -aG dialout $USER`, log out, log 
 |---|---|---|
 | arduino-cli + cores | installed 2026-10-05 (arduino-cli 1.3.1 in `~/.local/bin`, renesas_uno 1.6.0, esp32 3.3.12) | installed (arduino-cli 1.3.1, renesas_uno 1.6.0, esp32 3.3.12) |
 | ESP-IDF v5.5.5 (Phase 3 only) | not needed until Phase 3 | installed at `~/esp/esp-idf-v5.5.5` |
-| SENTINEL boards also plugged in | possibly | yes: SENTINEL P4 and TTGOs |
+| Other projects' boards also plugged in | possibly | possibly |
 
 ## Every session
 1. `cd ~/Projects/hidden-device-hunter && git pull`
-2. Read `HANDOFF.md` (state and next step).
+2. Read the README's "Where we left off" (state and next step).
 3. Plug in boards, then `arduino-cli board list`.
-4. Work. Log what you did and what you saw in `docs/worklog/YYYY-MM-DD-topic.md`; update `HANDOFF.md` if the state or next step changed.
+4. Work. Log what you did and what you saw in `docs/worklog/YYYY-MM-DD-topic.md`; update the README's "Where we left off" if the state or next step changed.
 5. `git add -A && git commit -m "..." && git push` before switching computers.
 
 ## Which board is which
@@ -63,7 +62,7 @@ ls -l /dev/serial/by-id/                    # stable names that include the seri
 | XIAO ESP32-S3 | Espressif USB JTAG/serial (unknown board in the list is normal) | `esp32:esp32:XIAO_ESP32S3` |
 | ESP32-P4 (this project's, Phase 3) | CH343 serial | ESP-IDF, not arduino-cli |
 Write each board's serial number into the table below the first time you plug it in, then flash by `/dev/serial/by-id/...` path
-instead of `ttyACM*`. Do not flash the SENTINEL P4 or TTGOs by mistake: if a port's serial number is not in this table, unplug it.
+instead of `ttyACM*`. Do not flash another project's board by mistake: if a port's serial number is not in this table, unplug it.
 
 | Board | Serial number | Noted on |
 |---|---|---|

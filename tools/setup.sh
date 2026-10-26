@@ -2,7 +2,7 @@
 # Hidden Device Hunter: set up (or re-check) a computer for building and flashing. Safe to run again.
 # Used on HaL and HaLjr (Linux). Usage, from the repo root:  tools/setup.sh          (setup + compile check)
 #                                                             tools/setup.sh --check  (report only, change nothing)
-# Tested toolchain (HANDOFF.md): arduino-cli 1.3.1, arduino:renesas_uno 1.6.0, esp32:esp32 3.3.12.
+# Tested toolchain (README): arduino-cli 1.3.1, arduino:renesas_uno 1.6.0, esp32:esp32 3.3.12.
 set -euo pipefail
 
 CHECK_ONLY=0

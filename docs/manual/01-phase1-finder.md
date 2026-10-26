@@ -94,7 +94,7 @@ Toolchain (once): see [`00-overview-and-safety.md`](00-overview-and-safety.md) s
 FQBN `arduino:renesas_uno:unor4wifi`.
 
 1. Plug the R4 into the computer with the data-capable USB-C cable. The on-board power LED lights.
-2. Find its port by serial number, not by `ttyACM` order (the SENTINEL P4 and TTGOs may be plugged in too):
+2. Find its port by serial number, not by `ttyACM` order (other projects' boards may be plugged in too):
    ```
    arduino-cli board list
    ```
