@@ -274,7 +274,7 @@ static void unlock() {
 // camera makers first, then IoT chips, then the strongest. Does not touch the typed-number list.
 //   B,<count>                         starts a batch
 //   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>     ("-" when maker or name is empty)
-static const int NEARBY_MAX = 40;
+static const int NEARBY_MAX = 60;
 static void cleanText(const char *src, char *dst, size_t n) {  // one comma-free printable-ASCII word
   size_t i = 0;
   for (; src[i] && i < n - 1; i++) dst[i] = (src[i] < 32 || src[i] > 126 || src[i] == ',') ? '?' : src[i];
@@ -439,7 +439,7 @@ void setup() {
 #if ARDUINO_USB_CDC_ON_BOOT
   Serial.setTxTimeoutMs(0);  // no computer reading the USB port: drop text instead of stalling the loop
 #endif
-  Serial1.setTxBufferSize(4096);  // the 40-device list goes out in one burst; don't stall the loop
+  Serial1.setTxBufferSize(6144);  // the 60-device list goes out in one burst; don't stall the loop
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifdef LED_BUILTIN

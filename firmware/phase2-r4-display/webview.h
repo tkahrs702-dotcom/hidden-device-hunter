@@ -20,7 +20,7 @@ namespace Web {
 static const char *WEB_SSID = "HDH-Finder";
 static const char *WEB_PASS = "hunter2026";  // 8+ characters; change it if you like
 static const int HIST = 120;                 // graph points, one per 0.5 s = 1 minute
-static const int NEAR_MAX = 40;
+static const int NEAR_MAX = 60;
 static const int NEAR_SHORT = 6;  // quick table; the full list is under "All devices"
 
 struct Near { char mac[18]; char maker[24]; char name[21]; uint8_t cat; int8_t avg; uint8_t ch; };
@@ -37,7 +37,7 @@ static int8_t hist[HIST];
 static int histN = 0;
 static Near nearList[NEAR_MAX];
 static int nearN = 0;
-static char out[4200];  // one JSON reply, built whole and sent in a few big writes (each WiFi write is slow)
+static char out[5800];  // one JSON reply, built whole and sent in a few big writes (each WiFi write is slow)
 
 static const char PAGE[] =
   "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'><title>Finder</title>"
