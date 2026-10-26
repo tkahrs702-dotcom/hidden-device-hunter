@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="860" viewBox="0 0 1300 860" role="img" aria-labelledby="t d">
+<title id="t">Phase 3 schematic</title>
+<desc id="d">P4, XIAO, BNO085, camera, battery and the optional R4 link as a schematic.</desc>
+<rect x="0" y="0" width="1300" height="860" fill="#ffffff"/>
+<text x="24" y="34" font-family="Helvetica, Arial, sans-serif" font-size="20" text-anchor="start" font-weight="bold" fill="#111111">Phase 3 schematic (planned)</text>
+<text x="24" y="56" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" font-weight="normal" fill="#555555">All logic on this page is 3.3 V except the optional R4 link, which goes through shifter channel 3.</text>
+<rect x="470" y="120" width="280" height="520" rx="6" fill="#f4f7fb" stroke="#345" stroke-width="2"/>
+<text x="610.0" y="142" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" font-weight="bold" fill="#111111">U4  ESP32-P4 board</text>
+<text x="610.0" y="158" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#555555">Waveshare 4.3&quot;, header pins shown</text>
+<line x1="440" y1="190" x2="470" y2="190" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="476" y="194" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">1 5V</text>
+<line x1="440" y1="230" x2="470" y2="230" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="476" y="234" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">5 GND</text>
+<line x1="440" y1="290" x2="470" y2="290" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="476" y="294" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">11 GPIO5 RX</text>
+<line x1="440" y1="340" x2="470" y2="340" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="476" y="344" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">14 GPIO4 TX</text>
+<line x1="750" y1="190" x2="780" y2="190" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="744" y="194" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">2 3V3</text>
+<line x1="750" y1="250" x2="780" y2="250" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="744" y="254" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">4 GPIO7 SDA</text>
+<line x1="750" y1="300" x2="780" y2="300" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="744" y="304" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">6 GPIO8 SCL</text>
+<line x1="750" y1="350" x2="780" y2="350" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="744" y="354" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">10 GND</text>
+<line x1="530" y1="640" x2="530" y2="670" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="530" y="632" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">8 GPIO2</text>
+<line x1="610" y1="640" x2="610" y2="670" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="610" y="632" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">18 3V3</text>
+<line x1="690" y1="640" x2="690" y2="670" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="690" y="632" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">13 GND</text>
+<text x="490" y="420.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">CSI: OV5647 (MIPI 2-lane)</text>
+<text x="490" y="433.5" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">J2: LiPo 3.7 V (pin 1 BAT+)</text>
+<text x="490" y="447.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">USB-C: flash, console, charge</text>
+<text x="490" y="460.5" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">I2C bus GPIO7/8 is shared with</text>
+<text x="490" y="474.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">touch (GT911), audio codec,</text>
+<text x="490" y="487.5" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">camera control</text>
+<rect x="80" y="120" width="200" height="300" rx="6" fill="#f4f7fb" stroke="#345" stroke-width="2"/>
+<text x="180.0" y="142" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" font-weight="bold" fill="#111111">U3  XIAO ESP32-S3</text>
+<text x="180.0" y="158" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#555555">3.3 V, monitor mode</text>
+<line x1="280" y1="190" x2="310" y2="190" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="274" y="194" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">5V</text>
+<line x1="280" y1="230" x2="310" y2="230" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="274" y="234" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">GND</text>
+<line x1="280" y1="290" x2="310" y2="290" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="274" y="294" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">D7 RX</text>
+<line x1="280" y1="340" x2="310" y2="340" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="274" y="344" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="end" font-weight="normal" fill="#111111">D6 TX</text>
+<line x1="180" y1="420" x2="180" y2="450" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="180" y="412" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">ANT</text>
+<rect x="980" y="120" width="200" height="220" rx="6" fill="#f4f7fb" stroke="#345" stroke-width="2"/>
+<text x="1080.0" y="142" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" font-weight="bold" fill="#111111">U5  BNO085</text>
+<text x="1080.0" y="158" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#555555">I2C 0x4A</text>
+<line x1="950" y1="190" x2="980" y2="190" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="986" y="194" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">VIN</text>
+<line x1="950" y1="250" x2="980" y2="250" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="986" y="254" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">SDA</text>
+<line x1="950" y1="300" x2="980" y2="300" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="986" y="304" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="start" font-weight="normal" fill="#111111">SCL</text>
+<line x1="1080" y1="340" x2="1080" y2="370" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="1080" y="332" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">GND</text>
+<path d="M 310 190 L 440 190" fill="none" stroke="#d62728" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="440" y="184" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#d62728">+5V (T1)</text>
+<path d="M 310 230 L 440 230" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="440" y="224" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#1a1a1a">GND (T2)</text>
+<path d="M 310 290 L 340 290 L 410 340 L 440 340" fill="none" stroke="#17becf" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 310 340 L 340 340 L 410 290 L 440 290" fill="none" stroke="#2ca02c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="375" y="268" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#555555">TX -&gt; RX crossover</text>
+<text x="375" y="380" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#2ca02c">T3 (green): XIAO D6 TX -&gt; P4 GPIO5 RX</text>
+<text x="375" y="394" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#0f7f8a">T4 (cyan): P4 GPIO4 TX -&gt; XIAO D7 RX</text>
+<path d="M 780 190 L 900 190 L 900 190 L 950 190" fill="none" stroke="#ff7f0e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="860" y="184" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#ff7f0e">+3V3 (I1)</text>
+<path d="M 780 250 L 950 250" fill="none" stroke="#1f77b4" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="950" y="244" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#1f77b4">SDA (I2)</text>
+<path d="M 780 300 L 950 300" fill="none" stroke="#e6b800" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="950" y="294" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#7a6100">SCL (I3)</text>
+<path d="M 780 350 L 860 350 L 860 410 L 1080 410 L 1080 370" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="960" y="404" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#1a1a1a">GND (I4)</text>
+<text x="1000" y="460.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">Board pull-ups: the BNO085 breakout</text>
+<text x="1000" y="473.5" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">has 10k on SDA/SCL; the P4 bus has</text>
+<text x="1000" y="487.0" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="start" font-weight="normal" fill="#555555">its own. No extra resistors.</text>
+<line x1="180" y1="500" x2="330" y2="500" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M 190 493 L 320 493 M 190 507 L 320 507" fill="none" stroke="#111111" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3"/>
+<text x="255.0" y="486" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#111111">pigtail</text>
+<line x1="180" y1="450" x2="180" y2="500" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="330" y1="500" x2="330" y2="460" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M 314 434 L 330 460 L 346 434" fill="none" stroke="#111111" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="330" y1="460" x2="330" y2="434" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="352" y="446" font-family="Helvetica, Arial, sans-serif" font-size="11" text-anchor="start" font-weight="bold" fill="#111111">ANT1 APA-M04</text>
+<rect x="60" y="700" width="1180" height="130" rx="8" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="8 5"/>
+<text x="75" y="720" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="start" font-weight="bold" fill="#111111">Optional R4 beeper link</text>
+<rect x="560" y="730" width="160" height="80" rx="6" fill="#f4f7fb" stroke="#345" stroke-width="2"/>
+<text x="640.0" y="752" font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle" font-weight="bold" fill="#111111"></text>
+<line x1="590" y1="700" x2="590" y2="730" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="590" y="746" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">LV3</text>
+<line x1="640" y1="700" x2="640" y2="730" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="640" y="746" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">LV</text>
+<line x1="690" y1="700" x2="690" y2="730" stroke="#111111" stroke-width="1.5" stroke-linecap="round"/>
+<text x="690" y="746" font-family="Menlo, Consolas, 'DejaVu Sans Mono', monospace" font-size="11" text-anchor="middle" font-weight="normal" fill="#111111">GND</text>
+<text x="640" y="792" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#111111">U2 shifter, ch 3</text>
+<path d="M 610 670 L 610 680 L 640 680 L 640 700" fill="none" stroke="#ff7f0e" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 530 670 L 530 690 L 590 690 L 590 700" fill="none" stroke="#8c564b" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 690 670 L 690 700 L 690 700 L 690 700" fill="none" stroke="#1a1a1a" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="720" y1="770" x2="900" y2="770" stroke="#8c564b" stroke-width="2" stroke-linecap="round"/>
+<text x="810" y="764" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="bold" fill="#8c564b">HV3 -&gt; R4 D0 RX</text>
+<rect x="900" y="740" width="200" height="70" rx="6" fill="#eef7f7" stroke="#0f7c80" stroke-width="2"/>
+<text x="1000" y="766" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle" font-weight="bold" fill="#111111">U1 Uno R4 WiFi</text>
+<text x="1000" y="784" font-family="Helvetica, Arial, sans-serif" font-size="10" text-anchor="middle" font-weight="normal" fill="#555555">HV = R4 5V, GND = R4 GND</text>
+</svg>

@@ -1,9 +1,10 @@
 // Hidden Device Hunter - Phase 1: Wi-Fi finder with buzzer
-// Board: Arduino Uno R4 WiFi        Buzzer: D8 -> 100 ohm -> piezo + ; piezo - -> GND
+// Board: Arduino Uno R4 WiFi        Buzzer: Modulino Buzzer on the Qwiic socket
 //
 // What it does
 //   1. Scans the Wi-Fi networks around you every few seconds.
-//   2. You pick one from the list in the Serial Monitor (type its number, press Enter).
+//   2. With no network picked it follows the strongest one (AUTO). To follow one network,
+//      type its number in the Serial Monitor and press Enter.
 //   3. The buzzer beeps faster and the LED matrix bars rise as you walk toward it.
 //   The pick is saved, so it keeps working on a power bank away from the computer.
 //
@@ -26,7 +27,7 @@
 #include "meter.h"
 
 // ---------- settings you can change ----------
-const uint8_t BUZZER_PIN = 8;
+// Buzzer: Modulino Buzzer on the Qwiic socket (see beeper.h). No pin to set.
 const int RSSI_FAR = -90;       // dBm at or below this = 0 % strength
 const int RSSI_NEAR = -35;      // dBm at or above this = 100 % strength
 const int MISSES_BEFORE_LOST = 3;
@@ -100,7 +101,7 @@ void loadTarget() {
 }
 
 void printHelp() {
-  Serial.println(F("\nCommands: <number> = lock target   l = list   c = clear target   m = mute   h = help"));
+  Serial.println(F("\nCommands: <number> = lock target   l = list   c = clear target   m = mute   t = test buzzer   h = help"));
 }
 
 void printTable() {
@@ -117,7 +118,7 @@ void printTable() {
   }
   if (lastCount == WIFI_MAX_SSID_COUNT)
     Serial.println(F("(The R4 lists only the 10 strongest networks. Move closer if yours is missing.)"));
-  if (!hasTarget) Serial.println(F("Type a number and press Enter to lock onto that network."));
+  if (!hasTarget) Serial.println(F("AUTO mode: beeping for the strongest network. Type a number and press Enter to lock onto one."));
 }
 
 void handleSerial() {
@@ -145,6 +146,10 @@ void handleSerial() {
       Meter::question();
       Serial.println(F("Target cleared."));
       printList = true;
+    } else if (buf[0] == 't' || buf[0] == 'T') {
+      Serial.println(Beeper::found ? F("Buzzer found. Test beeps playing; type c to stop.")
+                                   : F("Buzzer NOT found on the Qwiic port. Check the cable."));
+      Beeper::set(500, 100);
     } else if (buf[0] == 'm' || buf[0] == 'M') {
       muted = !muted;
       Beeper::mute(muted);
@@ -181,7 +186,7 @@ void setup() {
 
   Meter::begin();
   Meter::question();
-  if (!Beeper::begin(BUZZER_PIN)) Serial.println(F("WARNING: no free hardware timer for the buzzer."));
+  if (!Beeper::begin()) Serial.println(F("WARNING: Modulino Buzzer not found. Check the Qwiic cable."));
 
   Serial.println(F("\n=== Hidden Device Hunter - Phase 1 (Uno R4 WiFi) ==="));
   if (WiFi.status() == WL_NO_MODULE) {
@@ -195,10 +200,7 @@ void setup() {
   if (fv < WIFI_FIRMWARE_LATEST_VERSION)
     Serial.println(F("  (Older than this library expects. Update it with the Arduino IDE's Firmware Updater.)"));
 
-  // Startup chirp so you know the buzzer is wired right.
-  Beeper::set(150, 60);
-  delay(450);
-  Beeper::set(0, 0);
+  // The beeper plays a 3-beep startup chirp once the tasks start.
 
   loadTarget();
   if (hasTarget) {
@@ -211,12 +213,13 @@ void setup() {
   }
   printHelp();
   Serial.println(F("Scanning..."));
+  Beeper::runLoopAsTask();  // loop() runs as a task from here on
 }
 
 void loop() {
   handleSerial();
 
-  int n = WiFi.scanNetworks();  // blocks a few seconds; the timer keeps the beeps going
+  int n = WiFi.scanNetworks();  // blocks a few seconds; the beeper task keeps the beeps going
   handleSerial();
   if (n < 0) n = 0;
 
@@ -234,14 +237,28 @@ void loop() {
     lastCount++;
   }
 
+  // No locked target: follow the strongest network heard (hot/cold for the nearest
+  // router or hotspot), so the finder works on a power bank with no computer.
+  static uint8_t autoBssid[6];
   if (!hasTarget) {
     if (printList) {
       printTable();
       printList = false;
     }
-    Meter::waiting(waitStep++);
-    return;
+    if (lastCount == 0) {
+      Beeper::set(0, 0);
+      Meter::waiting(waitStep++);
+      return;
+    }
+    found = 0;
+    for (int i = 1; i < lastCount; i++)
+      if (lastList[i].rssi > lastList[found].rssi) found = i;
+    if (memcmp(autoBssid, lastList[found].bssid, 6) != 0) {  // new strongest: restart the average
+      memcpy(autoBssid, lastList[found].bssid, 6);
+      avgValid = false;
+    }
   }
+  const char *name = hasTarget ? target.ssid : lastList[found >= 0 ? found : 0].ssid;
 
   if (found >= 0) {
     misses = 0;
@@ -256,8 +273,8 @@ void loop() {
     Meter::bars((pct * 12 + 50) / 100);
 
     char line[120];
-    snprintf(line, sizeof(line), "TARGET %-20.20s ch%-2u now %4d dBm  avg %4d dBm  strength %3d%%  %s",
-             target.ssid, lastList[found].ch, r, (int)avgRssi, pct,
+    snprintf(line, sizeof(line), "%s %-20.20s ch%-2u now %4d dBm  avg %4d dBm  strength %3d%%  %s",
+             hasTarget ? "TARGET" : "AUTO  ", name, lastList[found].ch, r, (int)avgRssi, pct,
              gap == 0 ? "STEADY TONE" : "");
     Serial.print(line);
     if (gap) {

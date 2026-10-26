@@ -1,74 +1,110 @@
-// beeper.h - background beeper for the Arduino Uno R4 WiFi.
+// beeper.h - Modulino Buzzer beeper for the Arduino Uno R4 WiFi.
 //
-// Why a timer: WiFi.scanNetworks() blocks loop() for a few seconds. If loop() made the
-// beeps, they would stop during every scan. Here a hardware timer ticks 5000 times a
-// second and toggles the buzzer pin itself, so the beeping never pauses.
+// Buzzer: Arduino Modulino Buzzer (ABX00108) on the R4's Qwiic socket (Wire1, 3.3 V).
+// The Modulino plays each tone by itself; the R4 only tells it when to start a beep.
 //
-// Tone: the pin flips every tick, so a passive piezo plays about 2.5 kHz.
-// Usage:  Beeper::begin(8);          // buzzer on D8 (through 100 ohm)
-//         Beeper::set(500, 40);      // a 40 ms beep every 500 ms
-//         Beeper::set(0, 0);         // silent
-//         Beeper::continuous();      // steady tone (target is right in front of you)
+// Why a FreeRTOS task: WiFi.scanNetworks() blocks for a few seconds, and I2C can't be
+// driven from a timer interrupt. A separate, higher-priority task sends the beeps, so
+// they keep their rhythm during scans. The sketch's loop() runs in its own task.
+//
+// Usage:  Beeper::begin();            // in setup(); plays a 3-beep startup chirp (4 kHz, 100 ms)
+//         Beeper::set(500, 40);       // a 40 ms beep every 500 ms
+//         Beeper::set(0, 0);          // silent
+//         Beeper::continuous();       // steady tone (target is right in front of you)
+//         Beeper::mute(true);         // mute / unmute
+//         Beeper::runLoopAsTask();    // last line of setup(); starts the tasks
 #pragma once
 #include <Arduino.h>
-#include "FspTimer.h"
+#include <Arduino_FreeRTOS.h>
+#include <Modulino.h>
 
 namespace Beeper {
 
-static FspTimer timer;
-static volatile uint8_t pin = 8;
-static volatile uint32_t periodTicks = 0;  // ticks from one beep start to the next; 0 = silent
-static volatile uint32_t onTicks = 0;      // beep length in ticks
-static volatile uint32_t tick = 0;
-static volatile bool level = false;
-static const uint32_t TICKS_PER_MS = 5;    // 5000 Hz tick
+static ModulinoBuzzer buzzer;
+static volatile uint32_t periodMs = 0;   // beep start to next beep start; 0 = silent
+static volatile uint32_t onMs = 0;       // beep length
+static volatile uint32_t gen = 0;        // changes on every new setting
 static volatile bool muted = false;
+static volatile bool found = false;
+static const uint32_t FREQ_HZ = 4000;  // the Modulino's piezo is loudest at 4 kHz
+static TaskHandle_t beepTask = nullptr;
+static TaskHandle_t loopTask = nullptr;
 
-static void isr(timer_callback_args_t *) {
-  uint32_t p = periodTicks;
-  if (p == 0 || muted) {
-    if (level) { level = false; digitalWrite(pin, LOW); }
-    tick = 0;
-    return;
+static void play(uint32_t ms) { if (found) buzzer.tone(FREQ_HZ, ms); }
+static void quiet() { if (found) buzzer.noTone(); }
+
+// Try to find the buzzer on Wire1. Only begin() and the beeper task touch Wire1.
+static bool probe(int tries) {
+  for (int i = 0; i < tries; i++) {
+    if (buzzer.begin()) return true;
+    delay(100);
   }
-  if (tick >= p) tick = 0;
-  if (tick < onTicks) {
-    level = !level;
-    digitalWrite(pin, level ? HIGH : LOW);
-  } else if (level) {
-    level = false;
-    digitalWrite(pin, LOW);
-  }
-  tick++;
+  return false;
 }
 
-inline bool begin(uint8_t buzzerPin) {
-  pin = buzzerPin;
-  pinMode(pin, OUTPUT);
-  digitalWrite(pin, LOW);
-  uint8_t type = 0;
-  int8_t ch = FspTimer::get_available_timer(type);
-  if (ch < 0) {
-    FspTimer::force_use_of_pwm_reserved_timer();
-    ch = FspTimer::get_available_timer(type, true);
+static void beepThread(void *) {
+  while (!found) {  // keep looking if it was missed at power-up
+    found = probe(1);
+    if (!found) vTaskDelay(pdMS_TO_TICKS(900));
   }
-  if (ch < 0) return false;
-  if (!timer.begin(TIMER_MODE_PERIODIC, type, ch, 5000.0f, 0.0f, isr)) return false;
-  timer.setup_overflow_irq();
-  timer.open();
-  timer.start();
-  return true;
+  for (int i = 0; i < 3; i++) { play(100); vTaskDelay(pdMS_TO_TICKS(200)); }  // startup chirp
+  bool sounding = false;
+  for (;;) {
+    uint32_t p = periodMs, on = onMs, g = gen;
+    if (p == 0 || muted) {
+      if (sounding) { quiet(); sounding = false; }
+      vTaskDelay(pdMS_TO_TICKS(20));
+      continue;
+    }
+    if (on >= p) {  // steady tone: keep refreshing it before it runs out
+      play(400);
+      sounding = true;
+      for (int t = 0; t < 30 && g == gen && !muted; t++) vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+    play(on);
+    sounding = true;
+    for (uint32_t t = 0; t < p && g == gen && !muted; t += 10) vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
+static void loopThread(void *) { for (;;) loop(); }
+
+inline bool begin(uint8_t /*unused*/ = 0) {
+  Modulino.begin();
+  found = probe(5);
+  if (xTaskCreate(beepThread, "beep", 320, nullptr, 2, &beepTask) != pdPASS) {
+    Serial.println(F("WARNING: not enough memory for the beeper task."));
+    return false;
+  }
+  return found;
 }
 
 // intervalMs = time from one beep start to the next, lengthMs = how long each beep lasts.
 inline void set(uint32_t intervalMs, uint32_t lengthMs) {
-  noInterrupts();
-  periodTicks = intervalMs * TICKS_PER_MS;
-  onTicks = lengthMs * TICKS_PER_MS;
-  interrupts();
+  if (intervalMs == periodMs && lengthMs == onMs) return;
+  taskENTER_CRITICAL();
+  onMs = lengthMs;
+  periodMs = intervalMs;
+  gen = gen + 1;
+  taskEXIT_CRITICAL();
 }
 
 inline void continuous() { set(1000, 1000); }
 inline void mute(bool m) { muted = m; }
+
+// Runs loop() as a task and starts the scheduler. Never returns if it succeeds.
+inline void runLoopAsTask() {
+  if (xTaskCreate(loopThread, "loop", 1100, nullptr, 1, &loopTask) != pdPASS) {
+    Serial.println(F("WARNING: not enough memory for the loop task; buzzer will stay silent."));
+    return;
+  }
+  size_t left = xPortGetFreeHeapSize();  // the scheduler still needs about 1.5 KB
+  Serial.print(F("RTOS heap left: "));
+  Serial.println(left);
+  if (left < 1600) Serial.println(F("WARNING: too little heap left; the scheduler may not start."));
+  Serial.flush();
+  vTaskStartScheduler();
+}
 
 }  // namespace Beeper

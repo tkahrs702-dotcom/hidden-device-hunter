@@ -1,11 +1,13 @@
 // Hidden Device Hunter - Phase 2: Wi-Fi sniffer + directional antenna
-// Board: Seeed XIAO ESP32-S3 (Arduino board "XIAO_ESP32S3", esp32 core 3.x)
+// Board: Seeed XIAO ESP32-C5 (FQBN esp32:esp32:XIAO_ESP32C5), XIAO ESP32-C3 or XIAO ESP32-S3,
+//        esp32 core 3.3.x. The same D6/D7 pins and wiring work on all three.
 // Antenna: u.FL -> RP-SMA pigtail -> Alfa APA-M04 panel (aim the flat face)
 // Link to the R4: D6 (TX) -> level shifter A2 ... B2 -> R4 D0 (RX)
 //                 D7 (RX) <- level shifter A1 ... B1 <- R4 D1 (TX)   (not used yet, wired for later)
 //
 // What it does
-//   Listens on every 2.4 GHz channel (receive only, it never transmits) and records every
+//   Listens on every 2.4 GHz channel, and on the C5 every 5 GHz channel too (receive only,
+//   it never transmits), and records every
 //   radio it hears: routers, phones, cameras, plugs. Each one gets its signal strength,
 //   channel, packet count and, from the first half of its MAC address, its maker.
 //   Makers of cameras/doorbells are tagged CAM; Wi-Fi chips used in cheap cameras and
@@ -21,7 +23,7 @@
 //   m <MAC>    lock onto a MAC typed in full, e.g.  m 24:0A:C4:12:34:56
 //   u          unlock (go back to scanning all channels)
 //   h          help
-// BOOT button on the XIAO (works away from the computer):
+// BOOT button on the XIAO (works away from the computer; GPIO28 on the C5, GPIO0 on the S3):
 //   short press = lock the next suspect (CAM first, then IOT, then strongest)
 //   hold 1 s    = unlock
 // The lock is saved, so the XIAO picks it up again after a power cycle.
@@ -32,11 +34,29 @@
 #include "oui_table.h"
 
 // ---------- settings you can change ----------
-static const uint8_t CHANNELS[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};  // US channels
+// US channels. On a dual-band chip (ESP32-C5) the 5 GHz ones are added. 52-144 are DFS
+// channels; listening there is fine (the board never transmits). Delete them to sweep faster.
+static const uint8_t CHANNELS[] = {
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+#if SOC_WIFI_SUPPORT_5G
+  36, 40, 44, 48, 149, 153, 157, 161, 165,                                // 5 GHz
+  52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144,  // 5 GHz DFS
+#endif
+};
+static const uint8_t NUM_CH = sizeof(CHANNELS);
 static const uint32_t HOP_MS = 220;          // time on each channel while scanning
 static const uint32_t LOST_MS = 4000;        // locked target silent this long -> search all channels
 static const uint32_t LIST_AGE_MS = 60000;   // "recent" = heard in the last 60 s
-static const int BUTTON_PIN = 0;             // BOOT button
+#if CONFIG_IDF_TARGET_ESP32C5
+static const int BUTTON_PIN = 28;            // BOOT button
+static const char *BOARD_NAME = "XIAO ESP32-C5";
+#elif CONFIG_IDF_TARGET_ESP32C3
+static const int BUTTON_PIN = 9;
+static const char *BOARD_NAME = "XIAO ESP32-C3";
+#else
+static const int BUTTON_PIN = 0;
+static const char *BOARD_NAME = "XIAO ESP32-S3";
+#endif
 static const int LINK_RX = D7;
 static const int LINK_TX = D6;
 static const uint32_t LINK_BAUD = 115200;
@@ -80,6 +100,7 @@ static float lockAvg = 0;
 static bool lockAvgValid = false;
 
 static uint8_t chIndex = 0;
+static bool chBad[NUM_CH];                   // channels the radio refused (skipped while hopping)
 static uint32_t lastHop = 0;
 static uint8_t currentCh = 1;
 
@@ -179,10 +200,31 @@ static int addDev(const uint8_t *mac) {
   return slot;
 }
 
-static void setChannel(uint8_t ch) {
-  if (ch < 1 || ch > 14) return;
-  currentCh = ch;
-  esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+static bool validChannel(uint8_t ch) {
+#if SOC_WIFI_SUPPORT_5G
+  if (ch >= 32 && ch <= 177) return true;
+#endif
+  return ch >= 1 && ch <= 14;
+}
+
+static esp_err_t setChannel(uint8_t ch) {
+  if (!validChannel(ch)) return ESP_ERR_INVALID_ARG;
+  esp_err_t err = esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+  if (err == ESP_OK) currentCh = ch;
+  return err;
+}
+
+// Next channel in the sweep. A channel the radio refuses is reported once and skipped after.
+static void hopNext() {
+  for (int tries = 0; tries < NUM_CH; tries++) {
+    chIndex = (chIndex + 1) % NUM_CH;
+    if (chBad[chIndex]) continue;
+    esp_err_t err = setChannel(CHANNELS[chIndex]);
+    if (err == ESP_OK) return;
+    if (err != ESP_ERR_INVALID_ARG) return;  // temporary failure: try again next hop
+    chBad[chIndex] = true;
+    Serial.printf("Channel %u not allowed by the radio, skipping it.\n", CHANNELS[chIndex]);
+  }
 }
 
 // ---------- link to the R4 ----------
@@ -252,8 +294,8 @@ static void printList(bool suspectsOnly) {
   uint32_t now = millis();
   Serial.println(suspectsOnly ? "\nSuspects (camera makers, IoT chips, hidden networks) heard in the last 60 s:"
                               : "\nAll devices heard in the last 60 s, strongest first:");
-  Serial.println(" #  MAC                type    maker           ch  avg dBm  pkts  seen  name / notes");
-  Serial.println("--  -----------------  ------  --------------  --  -------  ----  ----  -------------");
+  Serial.println(" #  MAC                type    maker            ch  avg dBm  pkts  seen  name / notes");
+  Serial.println("--  -----------------  ------  --------------  ---  -------  ----  ----  -------------");
   for (int k = 0; k < n; k++) {
     Dev &d = devs[lastList[k]];
     char m[18];
@@ -265,7 +307,7 @@ static void printList(bool suspectsOnly) {
     char notes[48] = "";
     if (d.flags & F_HIDDEN) snprintf(notes, sizeof(notes), "HIDDEN network");
     else if (d.ssid[0]) snprintf(notes, sizeof(notes), "\"%s\"", d.ssid);
-    Serial.printf("%2d  %s  %-6s  %-14.14s  %2u  %7d  %4lu  %3lus  %s\n", k + 1, m, type, maker, d.ch, (int)d.avg,
+    Serial.printf("%2d  %s  %-6s  %-14.14s  %3u  %7d  %4lu  %3lus  %s\n", k + 1, m, type, maker, d.ch, (int)d.avg,
                   (unsigned long)d.pkts, (unsigned long)((now - d.lastSeen) / 1000), notes);
   }
   if (n == 0) Serial.println("(nothing yet - give it 10-20 seconds)");
@@ -346,13 +388,21 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
+  esp_wifi_set_country_code("US", false);  // US channel plan (1-11, and 5 GHz on the C5)
+#if SOC_WIFI_SUPPORT_5G
+  if (esp_wifi_set_band_mode(WIFI_BAND_MODE_AUTO) != ESP_OK) Serial.println("WARNING: could not turn on 5 GHz, 2.4 GHz only.");
+#endif
   wifi_promiscuous_filter_t filt = {.filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA};
   esp_wifi_set_promiscuous_filter(&filt);
   esp_wifi_set_promiscuous_rx_cb(&sniff);
   esp_wifi_set_promiscuous(true);
   setChannel(CHANNELS[0]);
 
-  Serial.println("\n=== Hidden Device Hunter - Phase 2 sniffer (XIAO ESP32-S3) ===");
+  Serial.printf("\n=== Hidden Device Hunter - Phase 2 sniffer (%s) ===\n", BOARD_NAME);
+#if SOC_WIFI_SUPPORT_5G
+  Serial.printf("Listening on %u channels, 2.4 + 5 GHz (one sweep about %lu s).\n", NUM_CH,
+                (unsigned long)((NUM_CH * HOP_MS + 500) / 1000));
+#endif
   Serial.printf("Maker list: %u entries. Receive-only: this board never transmits.\n", OUI_COUNT);
   printHelp();
 
@@ -416,8 +466,7 @@ void loop() {
   if (searching) {
     if (now - lastHop >= HOP_MS) {
       lastHop = now;
-      chIndex = (chIndex + 1) % sizeof(CHANNELS);
-      setChannel(CHANNELS[chIndex]);
+      hopNext();
     }
   } else if (lockIdx >= 0 && devs[lockIdx].ch && devs[lockIdx].ch != currentCh) {
     setChannel(devs[lockIdx].ch);
