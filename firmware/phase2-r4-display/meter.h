@@ -15,7 +15,9 @@ inline void clear() { memset(frame, 0, sizeof(frame)); }
 inline void show() { matrix.renderBitmap(frame, 8, 12); }
 
 // Signal bars: 0..12 columns lit, each column taller than the one before (like phone bars).
-inline void bars(int lit) {
+// peak > 0 also lights one dot on the top row over the best column reached since the lock
+// (the closest approach), so the result can be read after walking away from the target.
+inline void bars(int lit, int peak = 0) {
   clear();
   if (lit < 0) lit = 0;
   if (lit > 12) lit = 12;
@@ -23,6 +25,8 @@ inline void bars(int lit) {
     int h = 1 + (c * 7) / 11;  // 1 .. 8 rows
     for (int r = 0; r < h; r++) frame[7 - r][c] = 1;
   }
+  if (peak > 12) peak = 12;
+  if (peak > 0) frame[0][peak - 1] = 1;
   show();
 }
 
