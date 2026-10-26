@@ -324,14 +324,14 @@ static void handleUsb() {
   static uint8_t len = 0;
   while (Serial.available()) {
     char c = Serial.read();
-    if (c == '\r') continue;
-    if (c != '\n') {
+    // Enter arrives as \r (arduino-cli monitor), \n or \r\n; any of them ends the line.
+    if (c != '\r' && c != '\n') {
       if (len < sizeof(buf) - 1) buf[len++] = c;
       continue;
     }
     buf[len] = 0;
     len = 0;
-    if (!buf[0]) continue;
+    if (!buf[0]) continue;  // the \n of a \r\n pair
     char c0 = tolower(buf[0]);
     if (c0 == 'h' || c0 == '?') printHelp();
     else if (c0 == 'l') printList(false);
