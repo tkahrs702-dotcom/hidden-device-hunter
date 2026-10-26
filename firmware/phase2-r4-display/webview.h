@@ -57,13 +57,15 @@ static const char PAGE[] =
   "<div class=c id=rec>...</div>"
   "<div class='c r'><div><b id=s0>-</b>devices</div><div><b id=s1>-</b>camera makers</div>"
   "<div><b id=s2>-</b>IoT chips</div><div><b id=s3>-</b>hidden nets</div></div>"
-  "<div class=c><b>Nearby suspects</b> <span class=m>(press BOOT on the C5 to lock the next one)</span>"
+  "<div class=c><b>Nearby suspects</b> <span class=m>(BOOT column = presses of the C5's BOOT button to lock it; hold BOOT 1 s first to unlock)</span>"
   "<table id=tb></table></div>"
   "<details class=c id=allbox><summary><b>All devices</b> <span class=m id=alln></span></summary><table id=ta></table></details>"
   "<script>"
   "var g=cv.getContext('2d');"
   "function pct(d){return Math.max(0,Math.min(100,(d+90)*100/60))}"
   "function col(p){return p>75?'#4c8':p>40?'#fc4':'#f66'}"
+  "function sus(x){return x[1]>0||x[4]=='hidden net'}"
+  "function boot(d){var k=0,r=[];d.forEach(x=>{if(sus(x)){k++;r.push(k)}else r.push('')});return r}"
   "function trend(h){if(h.length<12)return 0;var n=h.length,a=0,b=0;for(var i=0;i<6;i++){a+=h[n-1-i];b+=h[n-7-i]}return (a-b)/6}"
   "function tick(){fetch('/s').then(r=>r.json()).then(j=>{"
   "var heard=j.l&&j.n&&j.age<3000,lost=j.l&&!heard;"
@@ -77,7 +79,7 @@ static const char PAGE[] =
   "g.clearRect(0,0,600,170);g.strokeStyle='#333';for(var y=0;y<=170;y+=34){g.beginPath();g.moveTo(0,y);g.lineTo(600,y);g.stroke()}"
   "g.strokeStyle='#4c8';g.lineWidth=2;g.beginPath();j.h.forEach((v,i)=>{var x=i*600/119,y=170-pct(v)*1.7;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();"
   "var d=trend(j.h),m;"
-  "if(!j.l){var top=j.d[0];m=top?'Not locked. Strongest suspect: '+top[0]+(top[4]?' ('+top[4]+')':'')+' at '+top[2]+' dBm. Press BOOT on the C5 to lock it.':'Not locked. Nothing heard yet: wait 10-20 seconds.'}"
+  "if(!j.l){var top=j.d[0];m=top?'Not locked. Top suspect: '+top[0]+(top[4]?' ('+top[4]+')':'')+' at '+top[2]+' dBm. '+(sus(top)?'Press BOOT on the C5 to lock it, then walk toward the rising signal.':'Nothing flagged yet; strongest device shown.'):'Not locked. Nothing heard yet: wait 10-20 seconds.'}"
   "else if(lost)m='The target is quiet. Plugs and cameras talk every few seconds: hold still, then move closer.';"
   "else if(j.a>-40)m='Very close. Look and feel within arm\\'s reach, behind and under things.';"
   "else if(d>2)m='Getting warmer ('+d.toFixed(1)+' dB). Keep going this way.';"
@@ -85,13 +87,13 @@ static const char PAGE[] =
   "else m='Signal steady. Sweep the antenna slowly left and right and walk toward the strongest side.';"
   "rec.textContent=m;"
   "s0.textContent=j.s[0];s1.textContent=j.s[1];s2.textContent=j.s[2];s3.textContent=j.s[3];"
-  "var t='<tr class=m><td>MAC<td>maker<td>dBm<td>ch</tr>';"
-  "j.d.forEach(x=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':'')+'>'+(x[4]||'-')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
+  "var t='<tr class=m><td>BOOT<td>MAC<td>maker<td>dBm<td>ch</tr>',bk=boot(j.d);"
+  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
   "tb.innerHTML=t;"
   "}).catch(e=>{st.textContent='no connection';st.style.color='#f66'})}"
   "function all(){if(!allbox.open)return;fetch('/d').then(r=>r.json()).then(j=>{alln.textContent='('+j.d.length+' heard in the last minute)';"
-  "var t='<tr class=m><td>MAC<td>maker<td>name<td>dBm<td>ch</tr>';"
-  "j.d.forEach(x=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':'')+'>'+(x[4]||'-')+'<td>'+(x[5]||'')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
+  "var t='<tr class=m><td>BOOT<td>MAC<td>maker<td>name<td>dBm<td>ch</tr>',bk=boot(j.d);"
+  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+(x[5]||'')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
   "ta.innerHTML=t}).catch(e=>{})}"
   "setInterval(tick,500);tick();setInterval(all,2000);"
   "</script>";
@@ -149,6 +151,7 @@ inline void nearby(int n, const char *m, int cat, int a, int c, const char *k, c
   for (int i = 0; i < 6; i++) d.mac[i] = (uint8_t)v[i];
   copyClean(d.maker, (k[0] == '-' && !k[1]) ? "" : k, sizeof(d.maker));
   copyClean(d.name, (name[0] == '-' && !name[1]) ? "" : name, sizeof(d.name));
+  if (!d.maker[0] && !strcmp(name, "(hidden)")) strcpy(d.maker, "hidden net");  // flagged like a maker match
   d.cat = cat;
   d.avg = a;
   d.ch = c;
