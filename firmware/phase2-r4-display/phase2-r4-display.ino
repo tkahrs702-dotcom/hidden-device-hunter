@@ -6,6 +6,7 @@
 // The ESP32 sniffer does all the listening. This sketch only turns its numbers into sound and bars:
 //   locked target heard   -> beeps speed up with signal, bars rise, steady tone when right on it
 //   target is a CAM maker -> camera picture flashes for 1.5 s when the lock starts
+//   phone page            -> join Wi-Fi HDH-Finder, open http://192.168.4.1 (see webview.h)
 //   top-row dot           -> closest approach since the lock (best bar reached)
 //   target gone quiet     -> X on the matrix, one quiet click every 2 s
 //   nothing locked        -> moving dot, silent; a steady top-right dot means the sniffer is connected
@@ -19,6 +20,7 @@
 
 #include "beeper.h"
 #include "meter.h"
+#include "webview.h"
 
 // ---------- settings you can change ----------
 // Buzzer: Modulino Buzzer on the Qwiic socket (see beeper.h). No pin to set.
@@ -48,15 +50,16 @@ int strengthPct(float rssi) {
 
 void onLine(char *line) {
   Serial.println(line);  // log everything
-  char *f[6] = {0};
+  char *f[8] = {0};
   int n = 0;
-  for (char *tok = strtok(line, ","); tok && n < 6; tok = strtok(nullptr, ",")) f[n++] = tok;
+  for (char *tok = strtok(line, ","); tok && n < 8; tok = strtok(nullptr, ",")) f[n++] = tok;
   if (n == 0) return;
 
   if (f[0][0] == 'L' && n >= 3) {
     locked = true;
     lastT = millis();
     peakBars = 0;
+    Web::locked(f[1], n >= 4 ? f[3] : "");
     strncpy(lockMac, f[1], sizeof(lockMac) - 1);
     strncpy(lockMaker, n >= 4 ? f[3] : "", sizeof(lockMaker) - 1);
     if (atoi(f[2]) == 1) {
@@ -69,22 +72,29 @@ void onLine(char *line) {
     }
   } else if (f[0][0] == 'U') {
     locked = false;
+    Web::unlocked();
     Beeper::set(0, 0);
   } else if (f[0][0] == 'T' && n >= 3) {
     lastT = millis();
     locked = true;
     if (millis() < camUntil) return;  // let the camera picture show first
     int avg = atoi(f[2]);
+    Web::signal(atoi(f[1]), avg, n >= 4 ? atoi(f[3]) : 0);
     int pct = strengthPct(avg);
     if (pct >= 97) Beeper::continuous();
     else Beeper::set(1200 - (uint32_t)pct * 11, 40);
     int lit = (pct * 12 + 50) / 100;
     if (lit > peakBars) peakBars = lit;
     Meter::bars(lit, peakBars);
+  } else if (f[0][0] == 'B' && n >= 2) {
+    Web::nearbyStart(atoi(f[1]));
+  } else if (f[0][0] == 'D' && n >= 6) {
+    Web::nearby(atoi(f[1]), f[2], atoi(f[3]), atoi(f[4]), atoi(f[5]), n >= 7 ? f[6] : "");
   } else if (f[0][0] == 'S' && n >= 6) {
     // The once-a-second status also carries the lock state, so a lock (or unlock) whose
     // L/U line was missed, e.g. because the sniffer booted first, still shows up here.
     lastS = millis();
+    Web::stats(atoi(f[1]), atoi(f[2]), atoi(f[3]), atoi(f[4]));
     bool snifferLocked = atoi(f[5]) == 1;
     if (snifferLocked && !locked) {
       locked = true;
@@ -101,6 +111,7 @@ void setup() {
   Serial.begin(115200);
   Serial1.begin(115200);  // D0/D1 to the ESP32 sniffer through the level shifter
   Meter::begin();
+  Web::begin();  // phone readout: Wi-Fi "HDH-Finder", page at http://192.168.4.1
   if (!Beeper::begin()) Serial.println(F("WARNING: Modulino Buzzer not found. Check the Qwiic cable."));
   Serial.println(F("\n=== Hidden Device Hunter - Phase 2 display (Uno R4 WiFi) ==="));
   Serial.println(F("Waiting for the ESP32 sniffer..."));
@@ -108,6 +119,7 @@ void setup() {
 }
 
 void loop() {
+  Web::poll();
   static char buf[96];
   static uint8_t len = 0;
   while (Serial1.available()) {

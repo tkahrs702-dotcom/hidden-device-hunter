@@ -6,3 +6,4 @@
 - Flash failures ("Failed to start stub flasher", "No serial data received") come from the USB reset into download mode, not the sketch. Hold BOOT while plugging the C5 in, then upload.
 - Not run on hardware in this session; CI compiles it.
 - PRs #9 and #10 merged. Added a peak marker on the R4: a dot on the top row over the best bar reached since the lock, so the closest approach can be read after walking away. Resets on a new lock.
+- Phone dashboard (JS syntax-checked, C++ compiled by CI only, not run on hardware): the R4 makes Wi-Fi "HDH-Finder" and serves http://192.168.4.1 with the monitored target, live dBm, closest approach, graph, warmer/colder recommendation, sniffer counts and the 6 nearby suspects (`webview.h`; the C5 now sends B/D lines every 2 s).
