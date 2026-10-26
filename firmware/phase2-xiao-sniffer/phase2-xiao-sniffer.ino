@@ -27,6 +27,8 @@
 //   short press = lock the next suspect (CAM first, then IOT, then strongest)
 //   hold 1 s    = unlock
 // The lock is saved, so the XIAO picks it up again after a power cycle.
+// Status LED (C5 only): one short blink every 2 s = scanning, fast blinking = locked target heard,
+// blink every 0.5 s = locked but target not heard.
 
 #include <WiFi.h>
 #include <Preferences.h>
@@ -375,11 +377,24 @@ static void handleButton() {
   wasDown = down;
 }
 
+// ---------- status LED ----------
+// Blink patterns only (never steady), so they read the same whether the LED is active-low or -high.
+static void updateLed(uint32_t now, bool isLocked, bool heard) {
+#ifdef LED_BUILTIN
+  uint32_t period = !isLocked ? 2000 : (heard ? 200 : 500);
+  uint32_t on = !isLocked ? 60 : period / 2;
+  digitalWrite(LED_BUILTIN, (now % period) < on ? LOW : HIGH);
+#endif
+}
+
 // ---------- main ----------
 void setup() {
   Serial.begin(115200);
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+#ifdef LED_BUILTIN
+  pinMode(LED_BUILTIN, OUTPUT);
+#endif
   uint32_t t0 = millis();
   while (!Serial && millis() - t0 < 1500) {}
 
@@ -490,5 +505,6 @@ void loop() {
 
   handleUsb();
   handleButton();
+  updateLed(now, locked, !searching);
   delay(2);
 }

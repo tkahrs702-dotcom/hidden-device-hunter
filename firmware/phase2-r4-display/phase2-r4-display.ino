@@ -7,7 +7,7 @@
 //   locked target heard   -> beeps speed up with signal, bars rise, steady tone when right on it
 //   target is a CAM maker -> camera picture flashes for 1.5 s when the lock starts
 //   target gone quiet     -> X on the matrix, one quiet click every 2 s
-//   nothing locked        -> moving dot, silent
+//   nothing locked        -> moving dot, silent; a steady top-right dot means the sniffer is connected
 // Everything received is also copied to the USB Serial Monitor (115200) for logging.
 //
 // Messages from the ESP32 sniffer (one per line):
@@ -33,6 +33,7 @@ uint32_t lastT = 0;
 uint32_t camUntil = 0;
 uint8_t waitStep = 0;
 uint32_t lastAnim = 0;
+uint32_t lastS = 0;  // last status line from the sniffer; proves the wire works
 char lockMac[18] = "";
 char lockMaker[24] = "";
 
@@ -75,8 +76,20 @@ void onLine(char *line) {
     if (pct >= 97) Beeper::continuous();
     else Beeper::set(1200 - (uint32_t)pct * 11, 40);
     Meter::bars((pct * 12 + 50) / 100);
+  } else if (f[0][0] == 'S' && n >= 6) {
+    // The once-a-second status also carries the lock state, so a lock (or unlock) whose
+    // L/U line was missed, e.g. because the sniffer booted first, still shows up here.
+    lastS = millis();
+    bool snifferLocked = atoi(f[5]) == 1;
+    if (snifferLocked && !locked) {
+      locked = true;
+      lastT = millis();
+      Meter::bars(0);
+    } else if (!snifferLocked && locked) {
+      locked = false;
+      Beeper::set(0, 0);
+    }
   }
-  // 'S' lines are only logged.
 }
 
 void setup() {
@@ -116,7 +129,7 @@ void loop() {
     // already showing the X
   } else if (!locked && now - lastAnim > 150) {
     lastAnim = now;
-    Meter::waiting(waitStep++);
+    Meter::waiting(waitStep++, lastS && now - lastS < 2500);
   } else if (locked && camUntil && now >= camUntil) {
     camUntil = 0;
     Beeper::set(0, 0);
