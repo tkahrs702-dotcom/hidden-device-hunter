@@ -6,6 +6,7 @@
 // The ESP32 sniffer does all the listening. This sketch only turns its numbers into sound and bars:
 //   locked target heard   -> beeps speed up with signal, bars rise, steady tone when right on it
 //   target is a CAM maker -> camera picture flashes for 1.5 s when the lock starts
+//   top-row dot           -> closest approach since the lock (best bar reached)
 //   target gone quiet     -> X on the matrix, one quiet click every 2 s
 //   nothing locked        -> moving dot, silent; a steady top-right dot means the sniffer is connected
 // Everything received is also copied to the USB Serial Monitor (115200) for logging.
@@ -36,6 +37,7 @@ uint32_t lastAnim = 0;
 uint32_t lastS = 0;  // last status line from the sniffer; proves the wire works
 char lockMac[18] = "";
 char lockMaker[24] = "";
+int peakBars = 0;  // best bar count since the lock = closest approach
 
 int strengthPct(float rssi) {
   float p = (rssi - RSSI_FAR) * 100.0f / (RSSI_NEAR - RSSI_FAR);
@@ -54,6 +56,7 @@ void onLine(char *line) {
   if (f[0][0] == 'L' && n >= 3) {
     locked = true;
     lastT = millis();
+    peakBars = 0;
     strncpy(lockMac, f[1], sizeof(lockMac) - 1);
     strncpy(lockMaker, n >= 4 ? f[3] : "", sizeof(lockMaker) - 1);
     if (atoi(f[2]) == 1) {
@@ -75,7 +78,9 @@ void onLine(char *line) {
     int pct = strengthPct(avg);
     if (pct >= 97) Beeper::continuous();
     else Beeper::set(1200 - (uint32_t)pct * 11, 40);
-    Meter::bars((pct * 12 + 50) / 100);
+    int lit = (pct * 12 + 50) / 100;
+    if (lit > peakBars) peakBars = lit;
+    Meter::bars(lit, peakBars);
   } else if (f[0][0] == 'S' && n >= 6) {
     // The once-a-second status also carries the lock state, so a lock (or unlock) whose
     // L/U line was missed, e.g. because the sniffer booted first, still shows up here.
