@@ -89,7 +89,7 @@ void onLine(char *line) {
   } else if (f[0][0] == 'B' && n >= 2) {
     Web::nearbyStart(atoi(f[1]));
   } else if (f[0][0] == 'D' && n >= 6) {
-    Web::nearby(atoi(f[1]), f[2], atoi(f[3]), atoi(f[4]), atoi(f[5]), n >= 7 ? f[6] : "");
+    Web::nearby(atoi(f[1]), f[2], atoi(f[3]), atoi(f[4]), atoi(f[5]), n >= 7 ? f[6] : "-", n >= 8 ? f[7] : "-");
   } else if (f[0][0] == 'S' && n >= 6) {
     // The once-a-second status also carries the lock state, so a lock (or unlock) whose
     // L/U line was missed, e.g. because the sniffer booted first, still shows up here.
@@ -120,7 +120,7 @@ void setup() {
 
 void loop() {
   Web::poll();
-  static char buf[96];
+  static char buf[110];
   static uint8_t len = 0;
   while (Serial1.available()) {
     char c = Serial1.read();

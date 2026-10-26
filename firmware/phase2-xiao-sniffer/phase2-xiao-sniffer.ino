@@ -270,14 +270,22 @@ static void unlock() {
   Serial.println("UNLOCKED. Scanning all channels.");
 }
 
-// Every 2 s, tell the R4 (and its phone page) the 6 devices worth looking at: camera makers
-// first, then IoT chips, then the strongest. Does not touch the typed-number list.
+// Every 2 s, tell the R4 (and its phone page) every device heard lately, up to NEARBY_MAX:
+// camera makers first, then IoT chips, then the strongest. Does not touch the typed-number list.
 //   B,<count>                         starts a batch
-//   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>
+//   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>     ("-" when maker or name is empty)
+static const int NEARBY_MAX = 60;
+static void cleanText(const char *src, char *dst, size_t n) {  // one comma-free printable-ASCII word
+  size_t i = 0;
+  for (; src[i] && i < n - 1; i++) dst[i] = (src[i] < 32 || src[i] > 126 || src[i] == ',') ? '?' : src[i];
+  dst[i] = 0;
+  if (!dst[0]) strcpy(dst, "-");
+}
+
 static void sendNearby(uint32_t now) {
-  int picked[6];
+  int picked[NEARBY_MAX];
   int n = 0;
-  for (; n < 6; n++) {
+  for (; n < NEARBY_MAX; n++) {
     int best = -1;
     float bestScore = -1e9f;
     for (int i = 0; i < MAX_DEVS; i++) {
@@ -296,7 +304,10 @@ static void sendNearby(uint32_t now) {
     Dev &d = devs[picked[k]];
     char m[18];
     macStr(d.mac, m);
-    Serial1.printf("D,%d,%s,%u,%d,%u,%s\n", k, m, d.cat, (int)d.avg, d.ch, d.cat ? OUI_LABELS[d.label] : "");
+    char maker[24], name[21];
+    cleanText(d.cat ? OUI_LABELS[d.label] : "", maker, sizeof(maker));
+    cleanText((d.flags & F_HIDDEN) ? "(hidden)" : d.ssid, name, sizeof(name));
+    Serial1.printf("D,%d,%s,%u,%d,%u,%s,%s\n", k, m, d.cat, (int)d.avg, d.ch, maker, name);
   }
 }
 
@@ -428,6 +439,7 @@ void setup() {
 #if ARDUINO_USB_CDC_ON_BOOT
   Serial.setTxTimeoutMs(0);  // no computer reading the USB port: drop text instead of stalling the loop
 #endif
+  Serial1.setTxBufferSize(6144);  // the 60-device list goes out in one burst; don't stall the loop
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifdef LED_BUILTIN
