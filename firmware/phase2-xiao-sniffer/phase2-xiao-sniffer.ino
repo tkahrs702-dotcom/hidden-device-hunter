@@ -270,6 +270,36 @@ static void unlock() {
   Serial.println("UNLOCKED. Scanning all channels.");
 }
 
+// Every 2 s, tell the R4 (and its phone page) the 6 devices worth looking at: camera makers
+// first, then IoT chips, then the strongest. Does not touch the typed-number list.
+//   B,<count>                         starts a batch
+//   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>
+static void sendNearby(uint32_t now) {
+  int picked[6];
+  int n = 0;
+  for (; n < 6; n++) {
+    int best = -1;
+    float bestScore = -1e9f;
+    for (int i = 0; i < MAX_DEVS; i++) {
+      if (!devs[i].used || now - devs[i].lastSeen > LIST_AGE_MS) continue;
+      bool taken = false;
+      for (int j = 0; j < n; j++) taken |= (picked[j] == i);
+      if (taken) continue;
+      float sc = devs[i].avg + (devs[i].cat == 1 ? 200 : (devs[i].cat == 2 ? 100 : 0));
+      if (sc > bestScore) { bestScore = sc; best = i; }
+    }
+    if (best < 0) break;
+    picked[n] = best;
+  }
+  Serial1.printf("B,%d\n", n);
+  for (int k = 0; k < n; k++) {
+    Dev &d = devs[picked[k]];
+    char m[18];
+    macStr(d.mac, m);
+    Serial1.printf("D,%d,%s,%u,%d,%u,%s\n", k, m, d.cat, (int)d.avg, d.ch, d.cat ? OUI_LABELS[d.label] : "");
+  }
+}
+
 // ---------- lists ----------
 static int buildList(bool suspectsOnly) {
   uint32_t now = millis();
@@ -517,6 +547,8 @@ void loop() {
       if (devs[i].flags & F_HIDDEN) hidden++;
     }
     Serial1.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
+    static uint8_t nearbyTick = 0;
+    if ((nearbyTick++ & 1) == 0) sendNearby(now);
     if (locked && !heardRecently)
       Serial.println(searching ? "TARGET not heard - searching all channels..." : "TARGET quiet - waiting on its channel...");
   }

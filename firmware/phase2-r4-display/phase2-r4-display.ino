@@ -50,9 +50,9 @@ int strengthPct(float rssi) {
 
 void onLine(char *line) {
   Serial.println(line);  // log everything
-  char *f[6] = {0};
+  char *f[8] = {0};
   int n = 0;
-  for (char *tok = strtok(line, ","); tok && n < 6; tok = strtok(nullptr, ",")) f[n++] = tok;
+  for (char *tok = strtok(line, ","); tok && n < 8; tok = strtok(nullptr, ",")) f[n++] = tok;
   if (n == 0) return;
 
   if (f[0][0] == 'L' && n >= 3) {
@@ -79,17 +79,22 @@ void onLine(char *line) {
     locked = true;
     if (millis() < camUntil) return;  // let the camera picture show first
     int avg = atoi(f[2]);
-    Web::signal(avg, n >= 4 ? atoi(f[3]) : 0);
+    Web::signal(atoi(f[1]), avg, n >= 4 ? atoi(f[3]) : 0);
     int pct = strengthPct(avg);
     if (pct >= 97) Beeper::continuous();
     else Beeper::set(1200 - (uint32_t)pct * 11, 40);
     int lit = (pct * 12 + 50) / 100;
     if (lit > peakBars) peakBars = lit;
     Meter::bars(lit, peakBars);
+  } else if (f[0][0] == 'B' && n >= 2) {
+    Web::nearbyStart(atoi(f[1]));
+  } else if (f[0][0] == 'D' && n >= 6) {
+    Web::nearby(atoi(f[1]), f[2], atoi(f[3]), atoi(f[4]), atoi(f[5]), n >= 7 ? f[6] : "");
   } else if (f[0][0] == 'S' && n >= 6) {
     // The once-a-second status also carries the lock state, so a lock (or unlock) whose
     // L/U line was missed, e.g. because the sniffer booted first, still shows up here.
     lastS = millis();
+    Web::stats(atoi(f[1]), atoi(f[2]), atoi(f[3]), atoi(f[4]));
     bool snifferLocked = atoi(f[5]) == 1;
     if (snifferLocked && !locked) {
       locked = true;
