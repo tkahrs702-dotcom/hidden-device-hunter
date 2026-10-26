@@ -59,6 +59,8 @@ bool avgValid = false;
 int misses = 0;
 uint8_t waitStep = 0;
 bool muted = false;
+bool buzzerTestMode = false;
+bool scanZeroReported = false;
 
 // ---------- helpers ----------
 void macToStr(const uint8_t *m, char *out) {
@@ -101,7 +103,7 @@ void loadTarget() {
 }
 
 void printHelp() {
-  Serial.println(F("\nCommands: <number> = lock target   l = list   c = clear target   m = mute   t = test buzzer   h = help"));
+  Serial.println(F("\nCommands: <number> = lock target   l = list   c = clear target   m = mute   t = toggle buzzer test   h = help"));
 }
 
 void printTable() {
@@ -142,14 +144,20 @@ void handleSerial() {
       hasTarget = false;
       target.magic = 0;
       EEPROM.put(0, target);
-      Beeper::set(0, 0);
+      if (!buzzerTestMode) Beeper::set(0, 0);
       Meter::question();
       Serial.println(F("Target cleared."));
       printList = true;
     } else if (buf[0] == 't' || buf[0] == 'T') {
-      Serial.println(Beeper::found ? F("Buzzer found. Test beeps playing; type c to stop.")
-                                   : F("Buzzer NOT found on the Qwiic port. Check the cable."));
-      Beeper::set(500, 100);
+      buzzerTestMode = !buzzerTestMode;
+      if (buzzerTestMode) {
+        Serial.println(Beeper::found ? F("Buzzer test on; type t again to stop.")
+                                     : F("Buzzer not found yet; checking the Qwiic port. Type t again to stop."));
+        Beeper::set(500, 100);
+      } else {
+        Serial.println(F("Buzzer test off."));
+        Beeper::set(0, 0);
+      }
     } else if (buf[0] == 'm' || buf[0] == 'M') {
       muted = !muted;
       Beeper::mute(muted);
@@ -221,7 +229,17 @@ void loop() {
 
   int n = WiFi.scanNetworks();  // blocks a few seconds; the beeper task keeps the beeps going
   handleSerial();
-  if (n < 0) n = 0;
+  if (n < 0) {
+    Serial.print(F("ERROR: Wi-Fi scan returned "));
+    Serial.print(n);
+    Serial.println(F("."));
+    n = 0;
+  } else if (n == 0 && !scanZeroReported) {
+    Serial.println(F("Wi-Fi scan returned 0 networks. WiFiS3 also reports some scan-command failures as 0, so this does not prove the air is empty."));
+    scanZeroReported = true;
+  } else if (n > 0) {
+    scanZeroReported = false;
+  }
 
   lastCount = 0;
   int found = -1;
@@ -246,7 +264,8 @@ void loop() {
       printList = false;
     }
     if (lastCount == 0) {
-      Beeper::set(0, 0);
+      if (!buzzerTestMode) Beeper::set(0, 0);
+      avgValid = false;
       Meter::waiting(waitStep++);
       return;
     }
@@ -268,8 +287,10 @@ void loop() {
     avgValid = true;
     int pct = strengthPct(avgRssi);
     uint32_t gap = beepIntervalMs(pct);
-    if (gap == 0) Beeper::continuous();
-    else Beeper::set(gap, 40);
+    if (!buzzerTestMode) {
+      if (gap == 0) Beeper::continuous();
+      else Beeper::set(gap, 40);
+    }
     Meter::bars((pct * 12 + 50) / 100);
 
     char line[120];
@@ -285,8 +306,15 @@ void loop() {
     Serial.println();
   } else {
     misses++;
+    if (misses == 1) {
+      avgValid = false;
+      if (!buzzerTestMode) {
+        Beeper::set(0, 0);
+        Meter::waiting(waitStep++);
+      }
+    }
     if (misses >= MISSES_BEFORE_LOST) {
-      Beeper::set(2000, 15);  // one quiet click every 2 s = "not heard"
+      if (!buzzerTestMode) Beeper::set(2000, 15);  // one quiet click every 2 s = "not heard"
       Meter::lost();
       avgValid = false;
       Serial.print(F("TARGET not heard for "));

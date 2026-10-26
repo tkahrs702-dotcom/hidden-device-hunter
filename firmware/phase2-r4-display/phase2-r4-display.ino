@@ -1,17 +1,16 @@
-// Hidden Device Hunter - Phase 2: R4 beeper + LED meter fed by the XIAO sniffer
+// Hidden Device Hunter - Phase 2: R4 beeper + LED meter fed by the ESP32 sniffer
 // Board: Arduino Uno R4 WiFi
-// Wiring: R4 D0 (RX) <- level shifter B2 <- A2 <- XIAO D6 (TX)
-//         R4 D1 (TX) -> level shifter B1 -> A1 -> XIAO D7 (RX)   (reserved for later)
+// Wiring: R4 D0 (RX) <- level shifter <- ESP32 UART TX
 //         Buzzer: Modulino Buzzer on the Qwiic socket, same as Phase 1.
 //
-// The XIAO does all the listening. This sketch only turns its numbers into sound and bars:
+// The ESP32 sniffer does all the listening. This sketch only turns its numbers into sound and bars:
 //   locked target heard   -> beeps speed up with signal, bars rise, steady tone when right on it
 //   target is a CAM maker -> camera picture flashes for 1.5 s when the lock starts
 //   target gone quiet     -> X on the matrix, one quiet click every 2 s
 //   nothing locked        -> moving dot, silent
 // Everything received is also copied to the USB Serial Monitor (115200) for logging.
 //
-// Messages from the XIAO (one per line):
+// Messages from the ESP32 sniffer (one per line):
 //   L,<MAC>,<cat>,<maker>   locked (cat 0 = unknown, 1 = camera maker, 2 = IoT chip)
 //   U                       unlocked
 //   T,<now>,<avg>,<ch>      target signal in dBm, about 10 per second
@@ -82,11 +81,11 @@ void onLine(char *line) {
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(115200);  // D0/D1 to the XIAO through the level shifter
+  Serial1.begin(115200);  // D0/D1 to the ESP32 sniffer through the level shifter
   Meter::begin();
   if (!Beeper::begin()) Serial.println(F("WARNING: Modulino Buzzer not found. Check the Qwiic cable."));
   Serial.println(F("\n=== Hidden Device Hunter - Phase 2 display (Uno R4 WiFi) ==="));
-  Serial.println(F("Waiting for the XIAO..."));
+  Serial.println(F("Waiting for the ESP32 sniffer..."));
   Beeper::runLoopAsTask();  // loop() runs as a task from here on
 }
 
