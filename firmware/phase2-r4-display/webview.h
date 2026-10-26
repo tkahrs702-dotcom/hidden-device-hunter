@@ -10,7 +10,7 @@
 //         Web::locked(mac, maker);  Web::unlocked();
 //         Web::signal(now, avg, channel);     // each T line
 //         Web::stats(total, cams, iot, hidden);          // each S line
-//         Web::nearbyStart(count);  Web::nearby(n, mac, cat, avg, ch, maker);   // B and D lines
+//         Web::nearbyStart(count);  Web::nearby(n, mac, cat, avg, ch, maker, name);   // B and D lines
 #pragma once
 #include <Arduino.h>
 #include <WiFiS3.h>
@@ -20,9 +20,10 @@ namespace Web {
 static const char *WEB_SSID = "HDH-Finder";
 static const char *WEB_PASS = "hunter2026";  // 8+ characters; change it if you like
 static const int HIST = 120;                 // graph points, one per 0.5 s = 1 minute
-static const int NEAR_MAX = 6;
+static const int NEAR_MAX = 40;
+static const int NEAR_SHORT = 6;  // quick table; the full list is under "All devices"
 
-struct Near { char mac[18]; char maker[24]; uint8_t cat; int8_t avg; uint8_t ch; };
+struct Near { char mac[18]; char maker[24]; char name[21]; uint8_t cat; int8_t avg; uint8_t ch; };
 
 static WiFiServer server(80);
 static bool up = false;
@@ -36,7 +37,7 @@ static int8_t hist[HIST];
 static int histN = 0;
 static Near nearList[NEAR_MAX];
 static int nearN = 0;
-static char out[1500];  // one JSON reply, sent in a single write (each WiFi write is slow)
+static char out[4200];  // one JSON reply, built whole and sent in a few big writes (each WiFi write is slow)
 
 static const char PAGE[] =
   "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'><title>Finder</title>"
@@ -57,6 +58,7 @@ static const char PAGE[] =
   "<div><b id=s2>-</b>IoT chips</div><div><b id=s3>-</b>hidden nets</div></div>"
   "<div class=c><b>Nearby suspects</b> <span class=m>(press BOOT on the C5 to lock the next one)</span>"
   "<table id=tb></table></div>"
+  "<details class=c id=allbox><summary><b>All devices</b> <span class=m id=alln></span></summary><table id=ta></table></details>"
   "<script>"
   "var g=cv.getContext('2d');"
   "function pct(d){return Math.max(0,Math.min(100,(d+90)*100/60))}"
@@ -86,7 +88,11 @@ static const char PAGE[] =
   "j.d.forEach(x=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':'')+'>'+(x[4]||'-')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
   "tb.innerHTML=t;"
   "}).catch(e=>{st.textContent='no connection';st.style.color='#f66'})}"
-  "setInterval(tick,500);tick();"
+  "function all(){if(!allbox.open)return;fetch('/d').then(r=>r.json()).then(j=>{alln.textContent='('+j.d.length+' heard in the last minute)';"
+  "var t='<tr class=m><td>MAC<td>maker<td>name<td>dBm<td>ch</tr>';"
+  "j.d.forEach(x=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':'')+'>'+(x[4]||'-')+'<td>'+(x[5]||'')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
+  "ta.innerHTML=t}).catch(e=>{})}"
+  "setInterval(tick,500);tick();setInterval(all,2000);"
   "</script>";
 
 static void copyClean(char *dst, const char *src, size_t n) {  // keeps JSON valid
@@ -134,11 +140,12 @@ inline void stats(int total, int cams, int iot, int hidden) {
 
 inline void nearbyStart(int count) { nearN = constrain(count, 0, NEAR_MAX); }
 
-inline void nearby(int n, const char *m, int cat, int a, int c, const char *k) {
+inline void nearby(int n, const char *m, int cat, int a, int c, const char *k, const char *name) {
   if (n < 0 || n >= NEAR_MAX) return;
   Near &d = nearList[n];
   copyClean(d.mac, m, sizeof(d.mac));
-  copyClean(d.maker, k, sizeof(d.maker));
+  copyClean(d.maker, (k[0] == '-' && !k[1]) ? "" : k, sizeof(d.maker));
+  copyClean(d.name, (name[0] == '-' && !name[1]) ? "" : name, sizeof(d.name));
   d.cat = cat;
   d.avg = a;
   d.ch = c;
@@ -178,9 +185,18 @@ inline void poll() {
     for (int i = 0; i < histN && o < (int)sizeof(out) - 700; i++)
       o += snprintf(out + o, sizeof(out) - o, "%s%d", i ? "," : "", (int)hist[i]);
     o += snprintf(out + o, sizeof(out) - o, "],\"d\":[");
-    for (int i = 0; i < nearN && o < (int)sizeof(out) - 100; i++)
+    for (int i = 0; i < nearN && i < NEAR_SHORT && o < (int)sizeof(out) - 100; i++)
       o += snprintf(out + o, sizeof(out) - o, "%s[\"%s\",%u,%d,%u,\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat,
                     (int)nearList[i].avg, nearList[i].ch, nearList[i].maker);
+    o += snprintf(out + o, sizeof(out) - o, "]}");
+    if (o > (int)sizeof(out) - 1) o = sizeof(out) - 1;
+    sendAll(c, out, o);
+  } else if (strstr(req, "GET /d") != nullptr) {
+    int o = snprintf(out, sizeof(out),
+                     "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{\"m\":\"%s\",\"d\":[", mac);
+    for (int i = 0; i < nearN && o < (int)sizeof(out) - 120; i++)
+      o += snprintf(out + o, sizeof(out) - o, "%s[\"%s\",%u,%d,%u,\"%s\",\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat,
+                    (int)nearList[i].avg, nearList[i].ch, nearList[i].maker, nearList[i].name);
     o += snprintf(out + o, sizeof(out) - o, "]}");
     if (o > (int)sizeof(out) - 1) o = sizeof(out) - 1;
     sendAll(c, out, o);
