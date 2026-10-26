@@ -27,6 +27,8 @@
 //   short press = lock the next suspect (CAM first, then IOT, then strongest)
 //   hold 1 s    = unlock
 // The lock is saved, so the XIAO picks it up again after a power cycle.
+// Status LED (C5 only): one short blink every 2 s = scanning, fast blinking = locked target heard,
+// blink every 0.5 s = locked but target not heard.
 
 #include <WiFi.h>
 #include <Preferences.h>
@@ -60,6 +62,10 @@ static const char *BOARD_NAME = "XIAO ESP32-S3";
 static const int LINK_RX = D7;
 static const int LINK_TX = D6;
 static const uint32_t LINK_BAUD = 115200;
+// Target to lock on the first boot after flashing, so no typing is needed in the field.
+// Set to "" to start unlocked. Change DEFAULT_LOCK_VER whenever you change the MAC, so it applies once.
+static const char *DEFAULT_LOCK = "10:5A:17:6C:02:4D";  // Taelor's Tuya device
+static const uint8_t DEFAULT_LOCK_VER = 1;
 // ---------------------------------------------
 
 enum Kind : uint8_t { K_OTHER = 0, K_BEACON = 1, K_PROBE_REQ = 2, K_PROBE_RESP = 3 };
@@ -324,14 +330,14 @@ static void handleUsb() {
   static uint8_t len = 0;
   while (Serial.available()) {
     char c = Serial.read();
-    if (c == '\r') continue;
-    if (c != '\n') {
+    // Enter arrives as \r (arduino-cli monitor), \n or \r\n; any of them ends the line.
+    if (c != '\r' && c != '\n') {
       if (len < sizeof(buf) - 1) buf[len++] = c;
       continue;
     }
     buf[len] = 0;
     len = 0;
-    if (!buf[0]) continue;
+    if (!buf[0]) continue;  // the \n of a \r\n pair
     char c0 = tolower(buf[0]);
     if (c0 == 'h' || c0 == '?') printHelp();
     else if (c0 == 'l') printList(false);
@@ -375,11 +381,24 @@ static void handleButton() {
   wasDown = down;
 }
 
+// ---------- status LED ----------
+// Blink patterns only (never steady), so they read the same whether the LED is active-low or -high.
+static void updateLed(uint32_t now, bool isLocked, bool heard) {
+#ifdef LED_BUILTIN
+  uint32_t period = !isLocked ? 2000 : (heard ? 200 : 500);
+  uint32_t on = !isLocked ? 60 : period / 2;
+  digitalWrite(LED_BUILTIN, (now % period) < on ? LOW : HIGH);
+#endif
+}
+
 // ---------- main ----------
 void setup() {
   Serial.begin(115200);
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+#ifdef LED_BUILTIN
+  pinMode(LED_BUILTIN, OUTPUT);
+#endif
   uint32_t t0 = millis();
   while (!Serial && millis() - t0 < 1500) {}
 
@@ -407,7 +426,11 @@ void setup() {
   printHelp();
 
   uint8_t saved[6];
-  if (prefs.getBytes("lock", saved, 6) == 6) {
+  if (DEFAULT_LOCK[0] && prefs.getUChar("deflock", 0) != DEFAULT_LOCK_VER && parseMac(DEFAULT_LOCK, saved)) {
+    prefs.putUChar("deflock", DEFAULT_LOCK_VER);  // once per DEFAULT_LOCK_VER; B and u still change it later
+    Serial.print("Default lock from this build. ");
+    lockOn(saved);
+  } else if (prefs.getBytes("lock", saved, 6) == 6) {
     Serial.print("Saved lock found. ");
     lockOn(saved);
   } else {
@@ -490,5 +513,6 @@ void loop() {
 
   handleUsb();
   handleButton();
+  updateLed(now, locked, !searching);
   delay(2);
 }

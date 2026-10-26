@@ -54,10 +54,12 @@ inline void camera() {
   drawRows(cam);
 }
 
-// A moving dot along the bottom row = waiting for data
-inline void waiting(uint8_t step) {
+// A moving dot along the bottom row = waiting for a target.
+// linkUp adds a steady dot in the top-right corner: the sniffer's status lines are arriving.
+inline void waiting(uint8_t step, bool linkUp) {
   clear();
   frame[7][step % 12] = 1;
+  if (linkUp) frame[0][11] = 1;
   show();
 }
 

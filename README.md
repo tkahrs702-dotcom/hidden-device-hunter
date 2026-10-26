@@ -10,7 +10,8 @@ Phase 3 (P4 camera) and Phase 4 (optional add-ons) are parked for later research
 
 Updated 2026-10-26. V2 (Phase 1 + Phase 2) is being built and bench-tested; Phases 3 and 4 are parked.
 - State: Phase 1 (UNO R4 WiFi + Modulino Buzzer) is uploaded and bench-checked; field test pending. The Phase 2 sniffer on the XIAO ESP32-C5 (needs `CDCOnBoot=cdc`) heard 2.4 and 5 GHz traffic. CI compiles every sketch on each PR and push to main. The Rokland 2.4/5 GHz directional antenna is ordered, not delivered.
-- Next: bench-test the level-shifted XIAO D6 TX -> R4 D0 RX link with both boards on USB, then the BOOT-button lock and saved-lock recovery. Steps: [`docs/v2/HANDOFF.md`](docs/v2/HANDOFF.md).
+- 2026-10-26 bench test: R4 runs Phase 2 (3 chirps); the C5 lists 2.4 and 5 GHz devices. Small power banks switch off under the C5's load; use the 2-port bank. Until PR #9 is flashed, press Ctrl+J instead of Enter in `arduino-cli monitor`. Details: [`docs/worklog/2026-10-26-phase2-bench-test.md`](docs/worklog/2026-10-26-phase2-bench-test.md).
+- The D6 TX -> R4 D0 link works: tapping B on the C5 makes the R4 react. Next: lock a device in range and field-test bars and beeps on one 2-port power bank. Steps: [`docs/v2/HANDOFF.md`](docs/v2/HANDOFF.md).
 - Open questions: does the antenna's connector and cable fit when it arrives? Two meter checks (header 5 V on LiPo, LiPo plug polarity) wait for the hardware. Phase 3, if resumed, needs this project's own ESP32-P4.
 
 ## Quick start (HaL or HaLjr)
