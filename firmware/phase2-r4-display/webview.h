@@ -24,13 +24,13 @@ static const int HIST = 120;                 // graph points, one per 0.5 s = 1 
 static const int NEAR_MAX = 60;
 static const int NEAR_SHORT = 6;  // quick table; the full list is under "All devices"
 
-struct Near { char mac[18]; char maker[16]; char name[17]; uint8_t cat; int8_t avg; uint8_t ch; };
+struct Near { uint8_t mac[6]; char maker[13]; char name[14]; uint8_t cat; int8_t avg; uint8_t ch; };  // 36 bytes: the R4 has little RAM
 
 static WiFiServer server(80);
 static bool up = false;
 static bool haveLock = false;
 static char mac[18] = "";
-static char maker[24] = "";
+static char maker[16] = "";
 static int raw = -100, avg = -100, ch = 0, peak = -100;
 static int stTotal = 0, stCams = 0, stIot = 0, stHidden = 0;
 static uint32_t lastSignal = 0, lastPush = 0, lockedAt = 0;
@@ -38,7 +38,7 @@ static int8_t hist[HIST];
 static int histN = 0;
 static Near nearList[NEAR_MAX];
 static int nearN = 0;
-static char out[768];  // JSON is built in pieces and written when this fills (the R4 has little RAM)
+static char out[512];  // JSON is built in pieces and written when this fills (the R4 has little RAM)
 
 static const char PAGE[] =
   "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'><title>Finder</title>"
@@ -144,7 +144,9 @@ inline void nearbyStart(int count) { nearN = constrain(count, 0, NEAR_MAX); }
 inline void nearby(int n, const char *m, int cat, int a, int c, const char *k, const char *name) {
   if (n < 0 || n >= NEAR_MAX) return;
   Near &d = nearList[n];
-  copyClean(d.mac, m, sizeof(d.mac));
+  unsigned v[6] = {0};
+  sscanf(m, "%x:%x:%x:%x:%x:%x", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+  for (int i = 0; i < 6; i++) d.mac[i] = (uint8_t)v[i];
   copyClean(d.maker, (k[0] == '-' && !k[1]) ? "" : k, sizeof(d.maker));
   copyClean(d.name, (name[0] == '-' && !name[1]) ? "" : name, sizeof(d.name));
   d.cat = cat;
@@ -160,6 +162,12 @@ static void sendAll(WiFiClient &c, const char *p, size_t len) {
     p += k;
     len -= k;
   }
+}
+
+static const char *macText(const uint8_t *m) {
+  static char t[18];
+  snprintf(t, sizeof(t), "%02X:%02X:%02X:%02X:%02X:%02X", m[0], m[1], m[2], m[3], m[4], m[5]);
+  return t;
 }
 
 static int outN = 0;
@@ -202,16 +210,16 @@ inline void poll() {
     for (int i = 0; i < histN; i++) emit(c, "%s%d", i ? "," : "", (int)hist[i]);
     emit(c, "],\"d\":[");
     for (int i = 0; i < nearN && i < NEAR_SHORT; i++)
-      emit(c, "%s[\"%s\",%u,%d,%u,\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat, (int)nearList[i].avg,
-           nearList[i].ch, nearList[i].maker);
+      emit(c, "%s[\"%s\",%u,%d,%u,\"%s\"]", i ? "," : "", macText(nearList[i].mac), nearList[i].cat,
+           (int)nearList[i].avg, nearList[i].ch, nearList[i].maker);
     emit(c, "]}");
     flushOut(c);
   } else if (strstr(req, "GET /d") != nullptr) {
     emit(c, "%s", JSON_HEAD);
     emit(c, "{\"m\":\"%s\",\"d\":[", mac);
     for (int i = 0; i < nearN; i++)
-      emit(c, "%s[\"%s\",%u,%d,%u,\"%s\",\"%s\"]", i ? "," : "", nearList[i].mac, nearList[i].cat, (int)nearList[i].avg,
-           nearList[i].ch, nearList[i].maker, nearList[i].name);
+      emit(c, "%s[\"%s\",%u,%d,%u,\"%s\",\"%s\"]", i ? "," : "", macText(nearList[i].mac), nearList[i].cat,
+           (int)nearList[i].avg, nearList[i].ch, nearList[i].maker, nearList[i].name);
     emit(c, "]}");
     flushOut(c);
   } else {
