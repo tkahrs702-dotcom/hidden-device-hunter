@@ -2,6 +2,8 @@
 
 Date: 2026-10-17. Design only. No firmware written, nothing flashed.
 
+> **Superseded 2026-10-26.** Taelor decided this project stays fully separate from SENTINEL, so option C (borrowing SENTINEL's receiver TTGO) and the build order below are dropped. A handheld screen and button need a board that belongs to this project. The rest is kept as the record of what was considered.
+
 ## The short answer
 
 Right now there is no way to pick a target on the finder itself. The only input is typing a number into a computer. The fix is to give it one button and a small screen. You already own a board with both: a TTGO LoRa32. The R4's own Wi-Fi radio is too weak to be a good finder anyway.

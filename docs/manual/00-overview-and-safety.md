@@ -50,7 +50,7 @@ Never connect an R4 pin straight to an ESP32 pin. R4 <-> ESP32 goes through the 
 | Plate (plywood/acrylic ~20 x 15 cm), zip ties, hot glue or M2.5 standoffs | handheld mounting, strain relief for the coax |
 
 ## Software install (once, on HaL or HaLjr)
-HaLjr already has ESP-IDF v5.5.5 (`~/esp/esp-idf-v5.5.5`) and `arduino-cli` (see `~/Projects/sentinel/HANDOFF.md` sec. 4).
+HaLjr already has ESP-IDF v5.5.5 (`~/esp/esp-idf-v5.5.5`) and `arduino-cli` (`tools/setup.sh` checks them).
 1. Arduino IDE 2.x, or `arduino-cli`.
 2. Install core **Arduino UNO R4 Boards** (`arduino:renesas_uno`): includes WiFiS3 and Arduino_LED_Matrix.
 3. Add board URL `https://espressif.github.io/arduino-esp32/package_esp32_index.json`, install **esp32 by Espressif Systems** v3.x. Phase 2 board: `XIAO_ESP32C5`; enable USB CDC on boot for the USB serial console.

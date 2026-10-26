@@ -1,4 +1,4 @@
-# Sentinel RF Finder: Setup Guide
+# Hidden Device Hunter: Setup Guide
 Copied 2026-10-03 from the Claude Docs original (https://claude.ai/artifact/QAQKwawgR31SS5VzCug1D1). Prices checked online on that date; they move.
 Condensed: pin tables, steps, rules and troubleshooting kept; sources trimmed.
 
@@ -33,7 +33,7 @@ Arduino IDE for R4 + XIAO, ESP-IDF for P4.
 XIAO first flash: hold BOOT, plug USB-C, release BOOT (only if port missing).
 
 ESP-IDF (P4): Waveshare recommends ESP-IDF over Arduino for the P4. HaLjr already has ESP-IDF v5.5.5 at `~/esp/esp-idf-v5.5.5`
-(see HANDOFF.md); use the version Waveshare's ESP-IDF guide names if it differs. Flash Waveshare's camera and display demos first to prove hardware.
+(see the README); use the version Waveshare's ESP-IDF guide names if it differs. Flash Waveshare's camera and display demos first to prove hardware.
 Windows only: CH343 USB-serial driver if the P4 UART port is missing.
 Bench: soldering iron (XIAO, BNO085 headers), multimeter, flush cutters, heat-shrink.
 

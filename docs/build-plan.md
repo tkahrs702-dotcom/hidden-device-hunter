@@ -1,4 +1,4 @@
-# Sentinel RF Finder: Build Plan
+# Hidden Device Hunter: Build Plan
 Copied 2026-10-03 from the Claude Docs original (https://claude.ai/artifact/PuYyKuxAEt5E7tMc9CCF2e).
 
 Goal: handheld finder for hidden Wi-Fi and Bluetooth devices, four phases that each reuse the last.
@@ -7,7 +7,7 @@ Goal: handheld finder for hidden Wi-Fi and Bluetooth devices, four phases that e
 | Device | Role |
 |---|---|
 | Arduino Uno R4 WiFi | Phase 1 brain; later beeper, LED alarm, Wi-Fi scanner streaming over USB |
-| LILYGO T3 (LoRa) | Runs Sentinel today; freed for LoRa remote nodes (Phase 4) |
+| LILYGO T3 (LoRa) | Dropped 2026-10-26: that board belongs to SENTINEL. Phase 4 LoRa nodes would need their own boards |
 | XIAO ESP32-S3 (to buy) | RF eye: monitor mode, BLE, external directional antenna |
 | Waveshare ESP32-P4 | Phase 3 RF camera: camera, screen, heat-map overlay |
 | HaL / HaLjr | Flash firmware, logging, BT scanning over USB |
