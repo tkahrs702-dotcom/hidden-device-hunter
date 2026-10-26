@@ -263,6 +263,7 @@ static void lockOn(const uint8_t *mac) {
 }
 
 static void unlock() {
+  cycleCursor = -1;  // the next BOOT press starts again at the top suspect
   locked = false;
   lockIdx = -1;
   prefs.remove("lock");
@@ -293,7 +294,8 @@ static void sendNearby(uint32_t now) {
       bool taken = false;
       for (int j = 0; j < n; j++) taken |= (picked[j] == i);
       if (taken) continue;
-      float sc = devs[i].avg + (devs[i].cat == 1 ? 200 : (devs[i].cat == 2 ? 100 : 0));
+      // same order as the BOOT button: camera makers, IoT chips, hidden networks, then the rest
+      float sc = devs[i].avg + (devs[i].cat == 1 ? 300 : (devs[i].cat == 2 ? 200 : ((devs[i].flags & F_HIDDEN) ? 100 : 0)));
       if (sc > bestScore) { bestScore = sc; best = i; }
     }
     if (best < 0) break;
