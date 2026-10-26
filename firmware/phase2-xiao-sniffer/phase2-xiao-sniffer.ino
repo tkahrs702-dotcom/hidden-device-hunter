@@ -62,6 +62,10 @@ static const char *BOARD_NAME = "XIAO ESP32-S3";
 static const int LINK_RX = D7;
 static const int LINK_TX = D6;
 static const uint32_t LINK_BAUD = 115200;
+// Target to lock on the first boot after flashing, so no typing is needed in the field.
+// Set to "" to start unlocked. Change DEFAULT_LOCK_VER whenever you change the MAC, so it applies once.
+static const char *DEFAULT_LOCK = "10:5A:17:6C:02:4D";  // Taelor's Tuya device
+static const uint8_t DEFAULT_LOCK_VER = 1;
 // ---------------------------------------------
 
 enum Kind : uint8_t { K_OTHER = 0, K_BEACON = 1, K_PROBE_REQ = 2, K_PROBE_RESP = 3 };
@@ -422,7 +426,11 @@ void setup() {
   printHelp();
 
   uint8_t saved[6];
-  if (prefs.getBytes("lock", saved, 6) == 6) {
+  if (DEFAULT_LOCK[0] && prefs.getUChar("deflock", 0) != DEFAULT_LOCK_VER && parseMac(DEFAULT_LOCK, saved)) {
+    prefs.putUChar("deflock", DEFAULT_LOCK_VER);  // once per DEFAULT_LOCK_VER; B and u still change it later
+    Serial.print("Default lock from this build. ");
+    lockOn(saved);
+  } else if (prefs.getBytes("lock", saved, 6) == 6) {
     Serial.print("Saved lock found. ");
     lockOn(saved);
   } else {
