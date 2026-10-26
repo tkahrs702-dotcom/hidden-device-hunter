@@ -8,11 +8,10 @@ Phase 3 (P4 camera) and Phase 4 (optional add-ons) are parked for later research
 
 ## Where we left off
 
-Updated 2026-10-26. V2 (Phase 1 + Phase 2) is being built and bench-tested; Phases 3 and 4 are parked.
-- State: Phase 1 (UNO R4 WiFi + Modulino Buzzer) is uploaded and bench-checked; field test pending. The Phase 2 sniffer on the XIAO ESP32-C5 (needs `CDCOnBoot=cdc`) heard 2.4 and 5 GHz traffic. CI compiles every sketch on each PR and push to main. The Rokland 2.4/5 GHz directional antenna is ordered, not delivered.
-- 2026-10-26 bench test: R4 runs Phase 2 (3 chirps); the C5 lists 2.4 and 5 GHz devices. Small power banks switch off under the C5's load; use the 2-port bank. Until PR #9 is flashed, press Ctrl+J instead of Enter in `arduino-cli monitor`. Details: [`docs/worklog/2026-10-26-phase2-bench-test.md`](docs/worklog/2026-10-26-phase2-bench-test.md).
-- The D6 TX -> R4 D0 link works: tapping B on the C5 makes the R4 react. The C5 now holds a quiet target's channel for 30 s; hold BOOT while plugging in to flash ([review](docs/worklog/2026-10-26-c5-firmware-review.md)). Next: lock a device in range and field-test bars and beeps on one 2-port power bank. Steps: [`docs/v2/HANDOFF.md`](docs/v2/HANDOFF.md).
-- Open questions: does the antenna's connector and cable fit when it arrives? Two meter checks (header 5 V on LiPo, LiPo plug polarity) wait for the hardware. Phase 3, if resumed, needs this project's own ESP32-P4.
+Updated 2026-10-26. V2 (Phase 1 + Phase 2) is built and bench-tested; Phases 3 and 4 are parked. Session note: [`docs/sessions/2026-10-26-01YKZUS1.md`](docs/sessions/2026-10-26-01YKZUS1.md).
+- State: the XIAO ESP32-C5 sniffer locks the default Tuya plug on boot and the UNO R4 WiFi shows bars, a peak dot (closest approach) and beeps. The R4 also serves a phone page (Wi-Fi `HDH-Finder`, `http://192.168.4.1`) with live dBm, a graph, a recommendation and up to 60 devices; hidden networks rank with the suspects and the page shows the BOOT presses that lock each. PRs #9 to #14 are merged and CI compiles every sketch. The phone page has not run on hardware yet. Details: [`docs/worklog/2026-10-26-c5-firmware-review.md`](docs/worklog/2026-10-26-c5-firmware-review.md).
+- Next: Taelor's walk test with the phone page, then the Phase 1 field test. Flash the C5 by holding BOOT while plugging it in, using its `/dev/serial/by-id` path; power both boards from one 2-port bank. Steps: [`docs/v2/HANDOFF.md`](docs/v2/HANDOFF.md).
+- Open questions: the Rokland 2.4/5 GHz antenna has not arrived; does its connector and cable fit? Two meter checks (header 5 V on LiPo, LiPo plug polarity) wait for the hardware. Phase 3, if resumed, needs this project's own ESP32-P4.
 
 ## Quick start (HaL or HaLjr)
 ```
