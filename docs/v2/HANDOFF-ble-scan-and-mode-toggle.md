@@ -45,6 +45,6 @@ Taelor has no serial-monitor workflow, is low on credits, and dislikes long comm
 
 ## Status update (2026-10-27): scan and toggle written, not yet tested on hardware
 - C5: passive BLE scan (`AdvCb`, `bleScanSet`) feeds the same device table (flag 16 = Bluetooth, channel 0 shown as "BLE"). Maker comes from the public-address OUI or a small company-code table (`bleCompany`).
-- Mode: `M,<0|1|2>` from the phone (0 Wi-Fi, 1 Bluetooth, 2 both, default 2, saved). C5 replies `M,<n>`. BOOT hold 1-3 s = unlock, 3 s+ = next mode. USB key `b` also cycles.
+- Mode: `M,<0|1|2>` from the phone (0 Wi-Fi, 1 Bluetooth, 2 both, default 0 (Wi-Fi only, same as before), saved). C5 replies `M,<n>`. BOOT hold 1-3 s = unlock, 3 s+ = next mode. USB key `b` also cycles.
 - Page (`tools/finder/finder.html`): "Scan for" switch, BLE shown in type/channel.
 - Not done: R4 matrix flash of the mode, volume/Track hardware check, hosting the page over https.

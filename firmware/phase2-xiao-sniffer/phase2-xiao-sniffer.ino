@@ -261,7 +261,7 @@ static void sniff(void *buf, wifi_promiscuous_pkt_type_t type) {
 
 // ---------- Bluetooth LE scan and mode ----------
 // Mode: 0 = Wi-Fi only, 1 = Bluetooth only, 2 = both. Receive-only in every mode (passive scan).
-static uint8_t mode = 2;
+static uint8_t mode = 0;
 static const char *MODE_NAMES[] = {"Wi-Fi", "Bluetooth", "Wi-Fi + Bluetooth"};
 
 static const char *bleCompany(uint16_t id) {
@@ -679,7 +679,7 @@ void setup() {
 #endif
   Serial.printf("Maker list: %u entries. Receive-only: this board never transmits.\n", OUI_COUNT);
   bleBegin();
-  applyMode(prefs.getUChar("mode", 2));
+  applyMode(prefs.getUChar("mode", 0));
   printHelp();
 
   uint8_t saved[6];
