@@ -170,6 +170,7 @@ $('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)r
 $('unlock').onclick=function(){send('U')};
 
 $('conn').onclick=async function(){
+  if(demoTimer){clearInterval(demoTimer);demoTimer=null}
   if(!navigator.bluetooth){$('link').textContent='This browser has no Web Bluetooth. Use Chrome on Android.';$('link').style.color='var(--bad)';return}
   try{
     $('link').textContent='Choose HDH-Finder in the list...';
@@ -185,7 +186,7 @@ $('conn').onclick=async function(){
 };
 
 // Demo mode: fake data so the page can be tried without the finder.
-function demoCmd(s){if(s.charAt(0)=='K'){feed('L,'+s.slice(2)+',1,Hikvision\n')}else if(s=='U'){feed('U\n')}}
+function demoCmd(s){if(s.charAt(0)=='K'){feed('L,'+s.slice(2)+',1,Hikvision\n')}else if(s=='U'){feed('U\n')}else if(s.charAt(0)=='M'){feed(s+'\n')}}
 $('demo').onclick=function(){
   if(demoTimer){clearInterval(demoTimer);demoTimer=null;$('link').textContent='Demo stopped.';return}
   var n=0;
