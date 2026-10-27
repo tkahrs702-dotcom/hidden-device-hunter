@@ -24,3 +24,13 @@ Taelor asked for (1) volume control on the Arduino and (2) a way to check each d
 2. Volume (small, R4 only).
 3. Device detail card (read only).
 4. Track button after the return wire is confirmed.
+
+## Rethink (2026-10-27): where should the dashboard live?
+Hardware lessons from today: the R4's Wi-Fi chip is slow (page took long to load, serial lines lost while it sends), the R4 has little RAM (60-device list overflowed it), the R4 to C5 return wire is not guaranteed, and wiring mistakes cost the most time. Building more features on the R4 page keeps hitting those limits.
+
+Options
+- A. Keep the R4 Wi-Fi page and add volume and Track on it. Needs the R4 D1 to C5 D7 return wire and still has the RAM and speed limits.
+- B. Move the dashboard to the C5 over Bluetooth LE. The C5 already has all the data and 5 GHz hearing, plenty of RAM, and BLE works alongside sniffing. The phone talks only to the C5 (Web Bluetooth in Android Chrome, page hosted on https); the phone can pick any device to track, ask for the detail of any device, and set volume. The C5 forwards the volume to the R4 over the existing one-way link (C5 TX to R4 RX), so no return wire is needed. The R4 goes back to being a simple beeper and bars box (and can keep its Wi-Fi page as an optional extra). Limit: Web Bluetooth does not work on iPhone.
+- C. Both: B as the main dashboard, A kept as a fallback.
+
+Recommendation: B (or C). It removes the weakest parts (R4 Wi-Fi, return wire) and gives full control from the phone. Needs Taelor's phone type (Android or iPhone) before building.
