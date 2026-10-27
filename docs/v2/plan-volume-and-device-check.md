@@ -34,3 +34,6 @@ Options
 - C. Both: B as the main dashboard, A kept as a fallback.
 
 Recommendation: B (or C). It removes the weakest parts (R4 Wi-Fi, return wire) and gives full control from the phone. Needs Taelor's phone type (Android or iPhone) before building.
+
+## Decision and build status (2026-10-27)
+Taelor chose the C5 Bluetooth dashboard (Android). Built: BLE service on the C5 (Nordic UART style UUIDs, device name HDH-Finder), commands K/U/V, 40-device list with detail fields, buzzer volume levels on the R4, and `tools/finder/finder.html`. The return wire is not needed. Open: the page must be opened in a secure context (Web Bluetooth needs https or a local file); try the file from the phone's Downloads in Chrome first, host it on a private https page only if that fails.

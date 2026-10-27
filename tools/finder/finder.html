@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hidden Device Hunter</title>
+<style>
+:root{--bg:#111;--card:#1c1c1c;--card2:#262626;--tx:#eee;--mut:#999;--ok:#4c8;--warn:#fc4;--bad:#f66;--line:#333}
+*{box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--tx);margin:0;padding:12px 16px 40px;max-width:640px}
+h1{font-size:18px;margin:0 0 8px}
+.c{background:var(--card);border-radius:10px;padding:12px;margin:10px 0}
+.m{color:var(--mut);font-size:13px}
+.big{font-size:60px;font-weight:bold;line-height:1.1}
+.bar{background:var(--line);height:24px;border-radius:6px;overflow:hidden}.bar div{height:24px;width:0;transition:width .3s}
+button{background:var(--card2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:15px;margin:2px}
+button.on{border-color:var(--ok);color:var(--ok)}button.go{background:#164;border-color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stats{display:flex;gap:8px;text-align:center}.stats div{flex:1;background:var(--card2);border-radius:8px;padding:8px;font-size:12px;color:var(--mut)}.stats b{display:block;font-size:22px;color:var(--tx)}
+table{width:100%;border-collapse:collapse;font-size:13px}td{padding:7px 3px;border-top:1px solid var(--line)}
+tr.d{cursor:pointer}tr.t td{color:var(--ok)}.cam{color:var(--bad)}.iot{color:var(--warn)}
+canvas{width:100%;height:150px;background:var(--card2);border-radius:6px}
+#rec{font-size:17px;border-left:4px solid var(--ok)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0}dt{color:var(--mut)}dd{margin:0}
+</style>
+</head>
+<body>
+<h1>Hidden Device Hunter</h1>
+<div class="c">
+  <div class="row"><button id="conn" class="go">Connect to the finder</button><button id="demo">Demo</button></div>
+  <div id="link" class="m" style="margin-top:6px">Not connected. Needs Chrome on Android with Bluetooth on.</div>
+</div>
+
+<div class="c" id="target">
+  <div id="st" style="font-size:17px">Not locked</div>
+  <div class="m" id="tg"></div>
+  <div class="big" id="big">--</div>
+  <div class="m" id="sub"></div><br>
+  <div class="bar"><div id="bar"></div></div>
+  <p id="pk"></p>
+  <canvas id="cv" width="600" height="150"></canvas>
+  <div class="m">Last minute. -30 dBm is touching it, -90 is far.</div>
+  <div class="row" style="margin-top:8px"><button id="unlock">Unlock</button></div>
+</div>
+
+<div class="c" id="rec">Connect to start.</div>
+
+<div class="c">
+  <b>Buzzer volume</b>
+  <div class="row" id="vol"><button data-v="3">Loud</button><button data-v="2">Medium</button><button data-v="1">Quiet</button><button data-v="0">Mute</button></div>
+</div>
+
+<div class="c"><div class="stats">
+  <div><b id="s0">-</b>devices</div><div><b id="s1">-</b>camera makers</div><div><b id="s2">-</b>IoT chips</div><div><b id="s3">-</b>hidden nets</div>
+</div></div>
+
+<div class="c" id="detail" style="display:none"></div>
+
+<div class="c">
+  <b>Devices</b> <span class="m" id="count"></span>
+  <div class="row" id="flt"><button data-f="all" class="on">All</button><button data-f="sus">Suspects</button><button data-f="hid">Hidden</button></div>
+  <div class="m">Tap a device to check it and track it.</div>
+  <table id="tb"></table>
+</div>
+
+<script>
+var SERVICE='6e400001-b5a3-f393-e0a9-e50e24dcca9e',TXC='6e400003-b5a3-f393-e0a9-e50e24dcca9e',RXC='6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+var $=function(i){return document.getElementById(i)};
+var S={lock:null,now:null,avg:null,ch:0,peak:-100,hist:[],lastT:0,lastLine:0,stats:[0,0,0,0],devs:[],tmp:[],tmpN:-1,sel:null,filter:'all',sentAt:0,rx:null,buf:''};
+var demoTimer=null;
+
+function pct(d){return Math.max(0,Math.min(100,(d+90)*100/60))}
+function col(p){return p>75?'var(--ok)':p>40?'var(--warn)':'var(--bad)'}
+function sus(d){return d.cat>0||(d.flags&4)>0}
+function kind(d){return d.cat==1?'camera maker':d.cat==2?'IoT chip':(d.flags&4)?'hidden network':''}
+function typ(d){return (d.flags&4)?'hidden network':(d.flags&1)?'access point':(d.flags&2)?'phone or gadget':'device'}
+function band(ch){return ch>14?'5 GHz':'2.4 GHz'}
+
+function feed(text){
+  S.buf+=text;
+  var i;
+  while((i=S.buf.indexOf('\n'))>=0){var l=S.buf.slice(0,i).replace('\r','');S.buf=S.buf.slice(i+1);if(l)line(l)}
+}
+function line(l){
+  var f=l.split(','),t=f[0];S.lastLine=Date.now();
+  if(t=='L'){S.lock={mac:f[1],cat:+f[2],maker:f.slice(3).join(',')};S.peak=-100;S.hist=[];S.now=null;S.avg=null}
+  else if(t=='U'){S.lock=null}
+  else if(t=='T'){S.now=+f[1];S.avg=+f[2];S.ch=+f[3];S.lastT=Date.now();if(S.avg>S.peak)S.peak=S.avg}
+  else if(t=='S'){S.stats=[+f[1],+f[2],+f[3],+f[4]]}
+  else if(t=='B'){S.tmp=[];S.tmpN=+f[1];if(S.tmpN==0){S.devs=[];}}
+  else if(t=='D'){
+    var d={mac:f[2],cat:+f[3],avg:+f[4],ch:+f[5],maker:f[6]=='-'?'':f[6],name:f[7]=='-'?'':f[7],pkts:+f[8],seen:+f[9],flags:+f[10],at:Date.now()};
+    S.tmp.push(d);if(S.tmp.length>=S.tmpN){S.devs=S.tmp}
+  }
+}
+setInterval(function(){if(S.avg!==null&&Date.now()-S.lastT<3000){S.hist.push(S.avg);if(S.hist.length>120)S.hist.shift()}},500);
+
+function trend(h){if(h.length<12)return 0;var n=h.length,a=0,b=0;for(var i=0;i<6;i++){a+=h[n-1-i];b+=h[n-7-i]}return(a-b)/6}
+function send(s){
+  if(demoTimer){demoCmd(s);return}
+  if(!S.rx)return;
+  var enc=new TextEncoder().encode(s+'\n'),p=Promise.resolve();
+  for(var o=0;o<enc.length;o+=20){(function(ch){p=p.then(function(){return S.rx.writeValueWithoutResponse(ch)})})(enc.slice(o,o+20))}
+  return p;
+}
+
+function render(){
+  var heard=S.lock&&S.avg!==null&&Date.now()-S.lastT<3000,lost=S.lock&&!heard;
+  $('st').textContent=!S.lock?'Not locked: scanning all channels':(lost?'Target not heard':'Tracking target');
+  $('st').style.color=!S.lock?'var(--warn)':(lost?'var(--bad)':'var(--ok)');
+  $('tg').textContent=S.lock?S.lock.mac+'  '+(S.lock.maker||'no maker match')+(S.ch?'  channel '+S.ch:''):'Tap a device below and press Track.';
+  $('big').textContent=heard?S.avg+' dBm':'--';
+  $('sub').textContent=heard?'now '+S.now+' dBm   '+Math.round(pct(S.avg))+'% strength':'';
+  $('bar').style.width=(heard?pct(S.avg):0)+'%';$('bar').style.background=col(pct(S.avg||-100));
+  $('pk').textContent=(S.lock&&S.peak>-100)?'Closest so far: '+S.peak+' dBm ('+Math.round(pct(S.peak))+'%)':'';
+  var g=$('cv').getContext('2d');g.clearRect(0,0,600,150);g.strokeStyle='#333';
+  for(var y=0;y<=150;y+=30){g.beginPath();g.moveTo(0,y);g.lineTo(600,y);g.stroke()}
+  g.strokeStyle='#4c8';g.lineWidth=2;g.beginPath();
+  S.hist.forEach(function(v,i){var x=i*600/119,yy=150-pct(v)*1.5;i?g.lineTo(x,yy):g.moveTo(x,yy)});g.stroke();
+  $('unlock').style.display=S.lock?'':'none';
+  // recommendation
+  var d=trend(S.hist),m,top=S.devs.filter(sus)[0]||S.devs[0];
+  if(!S.lock){m=top?'Not locked. Top suspect: '+top.mac+(top.maker?' ('+top.maker+')':'')+(top.name?' "'+top.name+'"':'')+' at '+top.avg+' dBm. '+(sus(top)?'Tap it below and press Track, then walk toward the rising signal.':'Nothing flagged yet; strongest device shown.'):'Nothing heard yet: wait 10-20 seconds.'}
+  else if(lost)m='The target is quiet. Plugs and cameras talk every few seconds: hold still, then move closer.';
+  else if(S.avg>-40)m='Very close. Look and feel within arm\'s reach, behind and under things.';
+  else if(d>2)m='Getting warmer ('+d.toFixed(1)+' dB). Keep going this way.';
+  else if(d<-2)m='Getting colder ('+d.toFixed(1)+' dB). Turn around or try another direction.';
+  else m='Signal steady. Sweep the antenna slowly left and right and walk toward the strongest side.';
+  if(S.rx||demoTimer)$('rec').textContent=m;
+  for(var k=0;k<4;k++)$('s'+k).textContent=S.stats[k];
+  // device table
+  var list=S.devs.filter(function(x){return S.filter=='all'||(S.filter=='sus'&&sus(x))||(S.filter=='hid'&&(x.flags&4))});
+  $('count').textContent='('+list.length+' of '+S.devs.length+')';
+  var t='<tr class="m"><td>MAC<td>maker / name<td>dBm<td>ch</tr>';
+  list.forEach(function(x){
+    t+='<tr class="d'+(S.lock&&x.mac==S.lock.mac?' t':'')+'" data-mac="'+x.mac+'"><td>'+x.mac.slice(9)+'<td class="'+(x.cat==1?'cam':sus(x)?'iot':'')+'">'+(x.maker||(x.flags&4?'hidden net':''))+' '+(x.name&&x.name!='(hidden)'?x.name:'')+'<td>'+x.avg+'<td>'+x.ch+'</tr>'});
+  $('tb').innerHTML=t;
+  // detail card
+  var dv=S.devs.filter(function(x){return x.mac==S.sel})[0],dc=$('detail');
+  if(!dv){dc.style.display='none'}else{
+    var ago=dv.seen+Math.round((Date.now()-dv.at)/1000),me=S.lock&&S.lock.mac==dv.mac;
+    dc.style.display='';
+    dc.innerHTML='<b>'+dv.mac+'</b> <span class="m">'+kind(dv)+'</span><dl>'
+      +'<dt>Type<dd>'+typ(dv)+((dv.flags&8)?' (random address)':'')
+      +'<dt>Maker<dd>'+(dv.maker||'unknown')
+      +'<dt>Network name<dd>'+(dv.name||'none')
+      +'<dt>Channel<dd>'+dv.ch+' ('+band(dv.ch)+')'
+      +'<dt>Signal<dd>'+dv.avg+' dBm ('+Math.round(pct(dv.avg))+'%)'
+      +'<dt>Packets heard<dd>'+dv.pkts
+      +'<dt>Last heard<dd>'+ago+' s ago</dl>'
+      +'<div class="row">'+(me?'<span class="m">Currently tracking this device.</span><button id="dun">Unlock</button>':'<button class="go" id="trk">Track this device</button>')+'<button id="dcl">Close</button></div>'
+      +((dv.flags&8)?'<div class="m">Random addresses change often, so tracking may not hold.</div>':'');
+    var a=$('trk');if(a)a.onclick=function(){send('K,'+dv.mac)};
+    a=$('dun');if(a)a.onclick=function(){send('U')};
+    $('dcl').onclick=function(){S.sel=null;render()};
+  }
+  // link line
+  if(S.rx||demoTimer){var age=Date.now()-S.lastLine;$('link').textContent=(demoTimer?'Demo data. ':'Connected. ')+(age<6000?'Receiving from the finder.':'No data from the finder for '+Math.round(age/1000)+' s: check the C5 is powered.');$('link').style.color=age<6000?'var(--ok)':'var(--bad)'}
+}
+setInterval(render,500);
+
+$('tb').onclick=function(e){var tr=e.target.closest('tr.d');if(tr){S.sel=tr.getAttribute('data-mac');render();$('detail').scrollIntoView({behavior:'smooth',block:'nearest'})}};
+$('flt').onclick=function(e){var f=e.target.getAttribute('data-f');if(!f)return;S.filter=f;[].forEach.call($('flt').children,function(b){b.className=b.getAttribute('data-f')==f?'on':''});render()};
+$('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)return;send('V,'+v);[].forEach.call($('vol').children,function(b){b.className=b.getAttribute('data-v')==v?'on':''})};
+$('unlock').onclick=function(){send('U')};
+
+$('conn').onclick=async function(){
+  if(!navigator.bluetooth){$('link').textContent='This browser has no Web Bluetooth. Use Chrome on Android.';$('link').style.color='var(--bad)';return}
+  try{
+    $('link').textContent='Choose HDH-Finder in the list...';
+    var dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'HDH'}],optionalServices:[SERVICE]});
+    dev.addEventListener('gattserverdisconnected',function(){S.rx=null;$('link').textContent='Disconnected. Press Connect again.';$('link').style.color='var(--bad)'});
+    $('link').textContent='Connecting...';
+    var srv=await dev.gatt.connect(),svc=await srv.getPrimaryService(SERVICE);
+    var tx=await svc.getCharacteristic(TXC);S.rx=await svc.getCharacteristic(RXC);
+    tx.addEventListener('characteristicvaluechanged',function(e){feed(new TextDecoder().decode(e.target.value))});
+    await tx.startNotifications();
+    S.lastLine=Date.now();render();
+  }catch(err){$('link').textContent='Could not connect: '+err.message;$('link').style.color='var(--bad)'}
+};
+
+// Demo mode: fake data so the page can be tried without the finder.
+function demoCmd(s){if(s.charAt(0)=='K'){feed('L,'+s.slice(2)+',1,Hikvision\n')}else if(s=='U'){feed('U\n')}}
+$('demo').onclick=function(){
+  if(demoTimer){clearInterval(demoTimer);demoTimer=null;$('link').textContent='Demo stopped.';return}
+  var n=0;
+  demoTimer=setInterval(function(){
+    n++;
+    if(n%8==1){feed('S,18,2,3,1,'+(S.lock?1:0)+'\nB,4\nD,0,24:0A:C4:12:34:56,1,-52,6,Hikvision,Cam-01,120,1,1\nD,1,10:5A:17:6C:02:4D,2,-61,11,Tuya,SmartPlug,80,2,1\nD,2,AA:BB:CC:00:11:22,0,-70,36,-,-,40,0,4\nD,3,00:11:22:33:44:55,0,-66,1,-,HomeNet,300,0,1\n')}
+    if(S.lock){var v=Math.round(-70+30*Math.abs(Math.sin(n/40)));feed('T,'+v+','+v+',6\n')}
+  },100);
+  feed('B,0\n');
+};
+</script>
+</body>
+</html>
