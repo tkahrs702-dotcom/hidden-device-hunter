@@ -60,8 +60,11 @@ static const char *BOARD_NAME = "XIAO ESP32-C3";
 static const int BUTTON_PIN = 0;
 static const char *BOARD_NAME = "XIAO ESP32-S3";
 #endif
-static const int LINK_RX = D7;
-static const int LINK_TX = D6;
+// Taelor's wires to the level shifter are crossed (TX on D7, RX on D6), so the pins are swapped here
+// instead of rewiring. Set LINK_CROSSED to false if the wires are put back as D6 = TX, D7 = RX.
+static const bool LINK_CROSSED = true;
+static const int LINK_RX = LINK_CROSSED ? D6 : D7;
+static const int LINK_TX = LINK_CROSSED ? D7 : D6;
 static const uint32_t LINK_BAUD = 115200;
 // Target to lock on the first boot after flashing, so no typing is needed in the field.
 // Set to "" to start unlocked. Change DEFAULT_LOCK_VER whenever you change the MAC, so it applies once.
