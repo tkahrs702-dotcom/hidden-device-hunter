@@ -33,7 +33,7 @@ static char mac[18] = "";
 static char maker[16] = "";
 static int raw = -100, avg = -100, ch = 0, peak = -100;
 static int stTotal = 0, stCams = 0, stIot = 0, stHidden = 0;
-static uint32_t lastSignal = 0, lastPush = 0, lockedAt = 0;
+static uint32_t lastSignal = 0, lastPush = 0, lockedAt = 0, lastStats = 0;
 static int8_t hist[HIST];
 static int histN = 0;
 static Near nearList[NEAR_MAX];
@@ -50,6 +50,7 @@ static const char PAGE[] =
   ".r b{display:block;font-size:22px}table{width:100%;border-collapse:collapse;font-size:14px}"
   "td{padding:5px 3px;border-top:1px solid #333}.t{color:#4c8}.cam{color:#f66}.iot{color:#fc4}"
   "#rec{font-size:18px;border-left:4px solid #4c8}</style>"
+  "<div class=c id=lk style='font-weight:bold'>checking the C5 link...</div>"
   "<div class=c><div id=st>connecting...</div><div class=m id=tg></div></div>"
   "<div class=c><div class=big id=big>--</div><div class=m id=sub></div><br><div class=bar><div id=bar></div></div>"
   "<p id=pk></p><canvas id=cv width=600 height=170 style='width:100%;background:#222;border-radius:6px'></canvas>"
@@ -68,6 +69,8 @@ static const char PAGE[] =
   "function boot(d){var k=0,r=[];d.forEach(x=>{if(sus(x)){k++;r.push(k)}else r.push('')});return r}"
   "function trend(h){if(h.length<12)return 0;var n=h.length,a=0,b=0;for(var i=0;i<6;i++){a+=h[n-1-i];b+=h[n-7-i]}return (a-b)/6}"
   "function tick(){fetch('/s').then(r=>r.json()).then(j=>{"
+  "lk.textContent=j.ls<3000?'C5 link OK':'NO DATA from the C5. Check: C5 powered and blinking, wire C5 D6 -> shifter A2, shifter B2 -> R4 D0, grounds joined, C5 reflashed.';"
+  "lk.style.color=j.ls<3000?'#4c8':'#f66';"
   "var heard=j.l&&j.n&&j.age<3000,lost=j.l&&!heard;"
   "st.textContent=!j.l?'Not locked: scanning all channels':(lost?'Target not heard':'Tracking target');"
   "st.style.color=!j.l?'#fc4':(lost?'#f66':'#4c8');"
@@ -139,6 +142,7 @@ inline void signal(int now, int a, int c) {
 
 inline void stats(int total, int cams, int iot, int hidden) {
   stTotal = total; stCams = cams; stIot = iot; stHidden = hidden;
+  lastStats = millis();
 }
 
 inline void nearbyStart(int count) { nearN = constrain(count, 0, NEAR_MAX); }
@@ -211,8 +215,9 @@ inline void poll() {
   if (strstr(req, "GET /s") != nullptr) {
     uint32_t age = lastSignal ? millis() - lastSignal : 99999;
     emit(c, "%s", JSON_HEAD);
-    emit(c, "{\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,",
-         haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age);
+    emit(c, "{\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,\"ls\":%lu,",
+         haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age,
+         (unsigned long)(lastStats ? millis() - lastStats : 99999));
     emit(c, "\"s\":[%d,%d,%d,%d],\"h\":[", stTotal, stCams, stIot, stHidden);
     for (int i = 0; i < histN; i++) emit(c, "%s%d", i ? "," : "", (int)hist[i]);
     emit(c, "],\"d\":[");
