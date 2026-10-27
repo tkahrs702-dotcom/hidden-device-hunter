@@ -111,7 +111,6 @@ void setup() {
   Serial.begin(115200);
   Serial1.begin(115200);  // D0/D1 to the ESP32 sniffer through the level shifter
   Meter::begin();
-  Web::begin();  // phone readout: Wi-Fi "HDH-Finder", page at http://192.168.4.1
   if (!Beeper::begin()) Serial.println(F("WARNING: Modulino Buzzer not found. Check the Qwiic cable."));
   Serial.println(F("\n=== Hidden Device Hunter - Phase 2 display (Uno R4 WiFi) ==="));
   Serial.println(F("Waiting for the ESP32 sniffer..."));
@@ -119,6 +118,13 @@ void setup() {
 }
 
 void loop() {
+  // The phone page starts 4 s after power-up, from the loop task, so the chirp, the dot and the
+  // beeps never wait for the Wi-Fi module: if it is slow or stuck, only the page is affected.
+  static bool webStarted = false;
+  if (!webStarted && millis() > 4000) {
+    webStarted = true;
+    Web::begin();  // Wi-Fi "HDH-Finder", page at http://192.168.4.1
+  }
   Web::poll();
   static char buf[110];
   static uint8_t len = 0;
