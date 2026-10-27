@@ -23,3 +23,6 @@ to a redesign that makes it work out of the box. The message was cut off after "
 Replies of 2-3 plain lines, take Taelor's reports as true, never ask for serial-monitor output, one command at a time,
 no placeholders, design first and write it in the repo before building, no merging until Taelor says "merge".
 See `HANDOFF-ble-scan-and-mode-toggle.md` for the current technical state.
+
+## Update 2026-10-27 14:01
+The claude.ai artifact copy of the finder page loads and Demo works, but Connect fails (Bluetooth is blocked inside that kind of page). Not tried yet: the saved file opened from Downloads in Chrome. The R4 Wi-Fi page (http://192.168.4.1) is the only phone route confirmed to open so far.
