@@ -26,11 +26,13 @@ static volatile uint32_t onMs = 0;       // beep length
 static volatile uint32_t gen = 0;        // changes on every new setting
 static volatile bool muted = false;
 static volatile bool found = false;
-static const uint32_t FREQ_HZ = 4000;  // the Modulino's piezo is loudest at 4 kHz
+static volatile uint8_t volumeLevel = 3;  // 0 mute, 1 quiet, 2 medium, 3 loud
+// The Modulino has no volume setting; its piezo is loudest near 4 kHz, so lower levels use lower pitches.
+static uint32_t freqHz() { return volumeLevel >= 3 ? 4000 : (volumeLevel == 2 ? 2500 : 1500); }
 static TaskHandle_t beepTask = nullptr;
 static TaskHandle_t loopTask = nullptr;
 
-static void play(uint32_t ms) { if (found) buzzer.tone(FREQ_HZ, ms); }
+static void play(uint32_t ms) { if (found && volumeLevel) buzzer.tone(freqHz(), ms); }
 static void quiet() { if (found) buzzer.noTone(); }
 
 // Try to find the buzzer on Wire1. Only begin() and the beeper task touch Wire1.
@@ -92,6 +94,7 @@ inline void set(uint32_t intervalMs, uint32_t lengthMs) {
 
 inline void continuous() { set(1000, 1000); }
 inline void mute(bool m) { muted = m; }
+inline void volume(uint8_t level) { volumeLevel = level > 3 ? 3 : level; }
 
 // Runs loop() as a task and starts the scheduler. Never returns if it succeeds.
 inline void runLoopAsTask() {

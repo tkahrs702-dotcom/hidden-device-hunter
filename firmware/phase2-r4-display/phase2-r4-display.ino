@@ -86,6 +86,10 @@ void onLine(char *line) {
     int lit = (pct * 12 + 50) / 100;
     if (lit > peakBars) peakBars = lit;
     Meter::bars(lit, peakBars);
+  } else if (f[0][0] == 'V' && n >= 2) {
+    Beeper::volume(atoi(f[1]));
+  } else if (f[0][0] == 'M' && n >= 2) {
+    Web::mode(atoi(f[1]));
   } else if (f[0][0] == 'B' && n >= 2) {
     Web::nearbyStart(atoi(f[1]));
   } else if (f[0][0] == 'D' && n >= 6) {
@@ -111,15 +115,15 @@ void setup() {
   Serial.begin(115200);
   Serial1.begin(115200);  // D0/D1 to the ESP32 sniffer through the level shifter
   Meter::begin();
-  Web::begin();  // phone readout: Wi-Fi "HDH-Finder", page at http://192.168.4.1
   if (!Beeper::begin()) Serial.println(F("WARNING: Modulino Buzzer not found. Check the Qwiic cable."));
   Serial.println(F("\n=== Hidden Device Hunter - Phase 2 display (Uno R4 WiFi) ==="));
   Serial.println(F("Waiting for the ESP32 sniffer..."));
   Beeper::runLoopAsTask();  // loop() runs as a task from here on
 }
 
-void loop() {
-  Web::poll();
+// Reads whatever the sniffer has sent. Also called while the phone page is being sent, because
+// the Wi-Fi chip is slow and the R4's serial buffer would otherwise overflow and lose lines.
+void pumpSerial() {
   static char buf[110];
   static uint8_t len = 0;
   while (Serial1.available()) {
@@ -133,6 +137,19 @@ void loop() {
       buf[len++] = c;
     }
   }
+}
+
+void loop() {
+  // The phone page starts 4 s after power-up, from the loop task, so the chirp, the dot and the
+  // beeps never wait for the Wi-Fi module: if it is slow or stuck, only the page is affected.
+  static bool webStarted = false;
+  if (!webStarted && millis() > 4000) {
+    webStarted = true;
+    Web::setPump(pumpSerial);
+    Web::begin();  // Wi-Fi "HDH-Finder", page at http://192.168.4.1
+  }
+  pumpSerial();
+  Web::poll();
 
   uint32_t now = millis();
   static bool showingLost = false;

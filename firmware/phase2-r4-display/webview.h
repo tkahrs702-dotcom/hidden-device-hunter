@@ -32,8 +32,9 @@ static bool haveLock = false;
 static char mac[18] = "";
 static char maker[16] = "";
 static int raw = -100, avg = -100, ch = 0, peak = -100;
+static int modeNow = -1;  // 0 Wi-Fi, 1 Bluetooth, 2 both, as reported by the C5
 static int stTotal = 0, stCams = 0, stIot = 0, stHidden = 0;
-static uint32_t lastSignal = 0, lastPush = 0, lockedAt = 0;
+static uint32_t lastSignal = 0, lastPush = 0, lockedAt = 0, lastStats = 0;
 static int8_t hist[HIST];
 static int histN = 0;
 static Near nearList[NEAR_MAX];
@@ -42,7 +43,7 @@ static char out[512];  // JSON is built in pieces and written when this fills (t
 
 static const char PAGE[] =
   "<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'><title>Finder</title>"
-  "<style>body{font-family:sans-serif;background:#111;color:#eee;margin:12px}"
+  "<style>button{font-size:16px;padding:8px 12px;margin:2px}body{font-family:sans-serif;background:#111;color:#eee;margin:12px}"
   ".c{background:#1c1c1c;border-radius:10px;padding:12px;margin:10px 0}"
   ".big{font-size:64px;font-weight:bold;line-height:1}.m{color:#999;font-size:14px}"
   ".bar{background:#333;height:26px;border-radius:6px}.bar div{height:26px;border-radius:6px;transition:width .4s}"
@@ -50,6 +51,9 @@ static const char PAGE[] =
   ".r b{display:block;font-size:22px}table{width:100%;border-collapse:collapse;font-size:14px}"
   "td{padding:5px 3px;border-top:1px solid #333}.t{color:#4c8}.cam{color:#f66}.iot{color:#fc4}"
   "#rec{font-size:18px;border-left:4px solid #4c8}</style>"
+  "<div class=c id=lk style='font-weight:bold'>checking the C5 link...</div>"
+  "<div class=c><b>Scan for</b> <button id=m0 onclick=sm(0)>Wi-Fi</button> <button id=m1 onclick=sm(1)>Bluetooth</button> <button id=m2 onclick=sm(2)>Both</button>"
+  "<div class=m>Bluetooth devices show as BLE in the ch column.</div></div>"
   "<div class=c><div id=st>connecting...</div><div class=m id=tg></div></div>"
   "<div class=c><div class=big id=big>--</div><div class=m id=sub></div><br><div class=bar><div id=bar></div></div>"
   "<p id=pk></p><canvas id=cv width=600 height=170 style='width:100%;background:#222;border-radius:6px'></canvas>"
@@ -67,7 +71,11 @@ static const char PAGE[] =
   "function sus(x){return x[1]>0||x[4]=='hidden net'}"
   "function boot(d){var k=0,r=[];d.forEach(x=>{if(sus(x)){k++;r.push(k)}else r.push('')});return r}"
   "function trend(h){if(h.length<12)return 0;var n=h.length,a=0,b=0;for(var i=0;i<6;i++){a+=h[n-1-i];b+=h[n-7-i]}return (a-b)/6}"
+  "function sm(v){fetch('/m'+v)}"
   "function tick(){fetch('/s').then(r=>r.json()).then(j=>{"
+  "lk.textContent=j.ls<3000?'C5 link OK':'NO DATA from the C5. Check: C5 powered and blinking, wire C5 D6 -> shifter A2, shifter B2 -> R4 D0, grounds joined, C5 reflashed.';"
+  "lk.style.color=j.ls<3000?'#4c8':'#f66';"
+  "for(var q=0;q<3;q++){var b=document.getElementById('m'+q);b.style.background=j.mo==q?'#4c8':'';b.style.color=j.mo==q?'#000':''}"
   "var heard=j.l&&j.n&&j.age<3000,lost=j.l&&!heard;"
   "st.textContent=!j.l?'Not locked: scanning all channels':(lost?'Target not heard':'Tracking target');"
   "st.style.color=!j.l?'#fc4':(lost?'#f66':'#4c8');"
@@ -88,12 +96,12 @@ static const char PAGE[] =
   "rec.textContent=m;"
   "s0.textContent=j.s[0];s1.textContent=j.s[1];s2.textContent=j.s[2];s3.textContent=j.s[3];"
   "var t='<tr class=m><td>BOOT<td>MAC<td>maker<td>dBm<td>ch</tr>',bk=boot(j.d);"
-  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
+  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+x[2]+'<td>'+(x[3]||'BLE')+'</tr>'});"
   "tb.innerHTML=t;"
   "}).catch(e=>{st.textContent='no connection';st.style.color='#f66'})}"
   "function all(){if(!allbox.open)return;fetch('/d').then(r=>r.json()).then(j=>{alln.textContent='('+j.d.length+' heard in the last minute)';"
   "var t='<tr class=m><td>BOOT<td>MAC<td>maker<td>name<td>dBm<td>ch</tr>',bk=boot(j.d);"
-  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+(x[5]||'')+'<td>'+x[2]+'<td>'+x[3]+'</tr>'});"
+  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+(x[5]||'')+'<td>'+x[2]+'<td>'+(x[3]||'BLE')+'</tr>'});"
   "ta.innerHTML=t}).catch(e=>{})}"
   "setInterval(tick,500);tick();setInterval(all,2000);"
   "</script>";
@@ -137,8 +145,11 @@ inline void signal(int now, int a, int c) {
   }
 }
 
+inline void mode(int m) { modeNow = m; }
+
 inline void stats(int total, int cams, int iot, int hidden) {
   stTotal = total; stCams = cams; stIot = iot; stHidden = hidden;
+  lastStats = millis();
 }
 
 inline void nearbyStart(int count) { nearN = constrain(count, 0, NEAR_MAX); }
@@ -158,10 +169,14 @@ inline void nearby(int n, const char *m, int cat, int a, int c, const char *k, c
   if (n >= nearN) nearN = n + 1;
 }
 
+static void (*pump)() = nullptr;  // reads the sniffer link; called between slow Wi-Fi writes so no lines are lost
+inline void setPump(void (*f)()) { pump = f; }
+
 static void sendAll(WiFiClient &c, const char *p, size_t len) {
   while (len) {
-    size_t k = len > 512 ? 512 : len;
+    size_t k = len > 256 ? 256 : len;
     c.write((const uint8_t *)p, k);
+    if (pump) pump();
     p += k;
     len -= k;
   }
@@ -198,17 +213,25 @@ inline void poll() {
   uint8_t n = 0;
   uint32_t t0 = millis();
   while (c.connected() && millis() - t0 < 100) {  // first line only: "GET /s HTTP/1.1"
-    if (!c.available()) continue;
+    if (!c.available()) { if (pump) pump(); continue; }
     char b = c.read();
     if (b == '\n') break;
     if (n < sizeof(req) - 1) req[n++] = b;
   }
   outN = 0;
-  if (strstr(req, "GET /s") != nullptr) {
+  const char *mq = strstr(req, "GET /m");
+  if (mq != nullptr && mq[6] >= '0' && mq[6] <= '2') {  // mode buttons: pass M,<n> on to the C5
+    Serial1.print("M,");
+    Serial1.println(mq[6]);
+    emit(c, "%s", JSON_HEAD);
+    emit(c, "{}");
+    flushOut(c);
+  } else if (strstr(req, "GET /s") != nullptr) {
     uint32_t age = lastSignal ? millis() - lastSignal : 99999;
     emit(c, "%s", JSON_HEAD);
-    emit(c, "{\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,",
-         haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age);
+    emit(c, "{\"mo\":%d,\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,\"ls\":%lu,",
+         modeNow, haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age,
+         (unsigned long)(lastStats ? millis() - lastStats : 99999));
     emit(c, "\"s\":[%d,%d,%d,%d],\"h\":[", stTotal, stCams, stIot, stHidden);
     for (int i = 0; i < histN; i++) emit(c, "%s%d", i ? "," : "", (int)hist[i]);
     emit(c, "],\"d\":[");
