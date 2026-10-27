@@ -117,15 +117,9 @@ void setup() {
   Beeper::runLoopAsTask();  // loop() runs as a task from here on
 }
 
-void loop() {
-  // The phone page starts 4 s after power-up, from the loop task, so the chirp, the dot and the
-  // beeps never wait for the Wi-Fi module: if it is slow or stuck, only the page is affected.
-  static bool webStarted = false;
-  if (!webStarted && millis() > 4000) {
-    webStarted = true;
-    Web::begin();  // Wi-Fi "HDH-Finder", page at http://192.168.4.1
-  }
-  Web::poll();
+// Reads whatever the sniffer has sent. Also called while the phone page is being sent, because
+// the Wi-Fi chip is slow and the R4's serial buffer would otherwise overflow and lose lines.
+void pumpSerial() {
   static char buf[110];
   static uint8_t len = 0;
   while (Serial1.available()) {
@@ -139,6 +133,19 @@ void loop() {
       buf[len++] = c;
     }
   }
+}
+
+void loop() {
+  // The phone page starts 4 s after power-up, from the loop task, so the chirp, the dot and the
+  // beeps never wait for the Wi-Fi module: if it is slow or stuck, only the page is affected.
+  static bool webStarted = false;
+  if (!webStarted && millis() > 4000) {
+    webStarted = true;
+    Web::setPump(pumpSerial);
+    Web::begin();  // Wi-Fi "HDH-Finder", page at http://192.168.4.1
+  }
+  pumpSerial();
+  Web::poll();
 
   uint32_t now = millis();
   static bool showingLost = false;

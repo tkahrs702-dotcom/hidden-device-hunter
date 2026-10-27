@@ -271,7 +271,7 @@ static void unlock() {
   Serial.println("UNLOCKED. Scanning all channels.");
 }
 
-// Every 2 s, tell the R4 (and its phone page) every device heard lately, up to NEARBY_MAX:
+// Every 4 s, tell the R4 (and its phone page) every device heard lately, up to NEARBY_MAX:
 // camera makers first, then IoT chips, then the strongest. Does not touch the typed-number list.
 //   B,<count>                         starts a batch
 //   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>     ("-" when maker or name is empty)
@@ -562,7 +562,7 @@ void loop() {
     }
     Serial1.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
     static uint8_t nearbyTick = 0;
-    if ((nearbyTick++ & 1) == 0) sendNearby(now);
+    if ((nearbyTick++ & 3) == 0) sendNearby(now);  // every 4 s
     if (locked && !heardRecently)
       Serial.println(searching ? "TARGET not heard - searching all channels..." : "TARGET quiet - waiting on its channel...");
   }

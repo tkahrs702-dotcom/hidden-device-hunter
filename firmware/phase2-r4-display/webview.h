@@ -158,10 +158,14 @@ inline void nearby(int n, const char *m, int cat, int a, int c, const char *k, c
   if (n >= nearN) nearN = n + 1;
 }
 
+static void (*pump)() = nullptr;  // reads the sniffer link; called between slow Wi-Fi writes so no lines are lost
+inline void setPump(void (*f)()) { pump = f; }
+
 static void sendAll(WiFiClient &c, const char *p, size_t len) {
   while (len) {
-    size_t k = len > 512 ? 512 : len;
+    size_t k = len > 256 ? 256 : len;
     c.write((const uint8_t *)p, k);
+    if (pump) pump();
     p += k;
     len -= k;
   }
@@ -198,7 +202,7 @@ inline void poll() {
   uint8_t n = 0;
   uint32_t t0 = millis();
   while (c.connected() && millis() - t0 < 100) {  // first line only: "GET /s HTTP/1.1"
-    if (!c.available()) continue;
+    if (!c.available()) { if (pump) pump(); continue; }
     char b = c.read();
     if (b == '\n') break;
     if (n < sizeof(req) - 1) req[n++] = b;
