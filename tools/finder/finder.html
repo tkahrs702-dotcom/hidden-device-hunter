@@ -46,6 +46,8 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0}dt{colo
 <div class="c" id="rec">Connect to start.</div>
 
 <div class="c">
+  <b>Scan for</b>
+  <div class="row" id="mode"><button data-m="0">Wi-Fi</button><button data-m="1">Bluetooth</button><button data-m="2">Both</button></div>
   <b>Buzzer volume</b>
   <div class="row" id="vol"><button data-v="3">Loud</button><button data-v="2">Medium</button><button data-v="1">Quiet</button><button data-v="0">Mute</button></div>
 </div>
@@ -73,8 +75,9 @@ function pct(d){return Math.max(0,Math.min(100,(d+90)*100/60))}
 function col(p){return p>75?'var(--ok)':p>40?'var(--warn)':'var(--bad)'}
 function sus(d){return d.cat>0||(d.flags&4)>0}
 function kind(d){return d.cat==1?'camera maker':d.cat==2?'IoT chip':(d.flags&4)?'hidden network':''}
-function typ(d){return (d.flags&4)?'hidden network':(d.flags&1)?'access point':(d.flags&2)?'phone or gadget':'device'}
-function band(ch){return ch>14?'5 GHz':'2.4 GHz'}
+function typ(d){return (d.flags&16)?'Bluetooth LE device':(d.flags&4)?'hidden network':(d.flags&1)?'access point':(d.flags&2)?'phone or gadget':'device'}
+function band(ch){return ch==0?'Bluetooth':ch>14?'5 GHz':'2.4 GHz'}
+function chs(d){return d.ch?d.ch:(d.flags&16?'BLE':'')}
 
 function feed(text){
   S.buf+=text;
@@ -85,6 +88,7 @@ function line(l){
   var f=l.split(','),t=f[0];S.lastLine=Date.now();
   if(t=='L'){S.lock={mac:f[1],cat:+f[2],maker:f.slice(3).join(',')};S.peak=-100;S.hist=[];S.now=null;S.avg=null}
   else if(t=='U'){S.lock=null}
+  else if(t=='M'){[].forEach.call($('mode').children,function(b){b.className=b.getAttribute('data-m')==f[1]?'on':''})}
   else if(t=='T'){S.now=+f[1];S.avg=+f[2];S.ch=+f[3];S.lastT=Date.now();if(S.avg>S.peak)S.peak=S.avg}
   else if(t=='S'){S.stats=[+f[1],+f[2],+f[3],+f[4]]}
   else if(t=='B'){S.tmp=[];S.tmpN=+f[1];if(S.tmpN==0){S.devs=[];}}
@@ -133,7 +137,7 @@ function render(){
   $('count').textContent='('+list.length+' of '+S.devs.length+')';
   var t='<tr class="m"><td>MAC<td>maker / name<td>dBm<td>ch</tr>';
   list.forEach(function(x){
-    t+='<tr class="d'+(S.lock&&x.mac==S.lock.mac?' t':'')+'" data-mac="'+x.mac+'"><td>'+x.mac.slice(9)+'<td class="'+(x.cat==1?'cam':sus(x)?'iot':'')+'">'+(x.maker||(x.flags&4?'hidden net':''))+' '+(x.name&&x.name!='(hidden)'?x.name:'')+'<td>'+x.avg+'<td>'+x.ch+'</tr>'});
+    t+='<tr class="d'+(S.lock&&x.mac==S.lock.mac?' t':'')+'" data-mac="'+x.mac+'"><td>'+x.mac.slice(9)+'<td class="'+(x.cat==1?'cam':sus(x)?'iot':'')+'">'+(x.maker||(x.flags&4?'hidden net':''))+' '+(x.name&&x.name!='(hidden)'?x.name:'')+'<td>'+x.avg+'<td>'+chs(x)+'</tr>'});
   $('tb').innerHTML=t;
   // detail card
   var dv=S.devs.filter(function(x){return x.mac==S.sel})[0],dc=$('detail');
@@ -144,7 +148,7 @@ function render(){
       +'<dt>Type<dd>'+typ(dv)+((dv.flags&8)?' (random address)':'')
       +'<dt>Maker<dd>'+(dv.maker||'unknown')
       +'<dt>Network name<dd>'+(dv.name||'none')
-      +'<dt>Channel<dd>'+dv.ch+' ('+band(dv.ch)+')'
+      +'<dt>Channel<dd>'+(dv.ch?dv.ch+' ('+band(dv.ch)+')':'Bluetooth LE')
       +'<dt>Signal<dd>'+dv.avg+' dBm ('+Math.round(pct(dv.avg))+'%)'
       +'<dt>Packets heard<dd>'+dv.pkts
       +'<dt>Last heard<dd>'+ago+' s ago</dl>'
@@ -161,6 +165,7 @@ setInterval(render,500);
 
 $('tb').onclick=function(e){var tr=e.target.closest('tr.d');if(tr){S.sel=tr.getAttribute('data-mac');render();$('detail').scrollIntoView({behavior:'smooth',block:'nearest'})}};
 $('flt').onclick=function(e){var f=e.target.getAttribute('data-f');if(!f)return;S.filter=f;[].forEach.call($('flt').children,function(b){b.className=b.getAttribute('data-f')==f?'on':''});render()};
+$('mode').onclick=function(e){var v=e.target.getAttribute('data-m');if(v===null)return;send('M,'+v)};
 $('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)return;send('V,'+v);[].forEach.call($('vol').children,function(b){b.className=b.getAttribute('data-v')==v?'on':''})};
 $('unlock').onclick=function(){send('U')};
 

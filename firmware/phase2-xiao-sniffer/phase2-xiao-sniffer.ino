@@ -78,14 +78,16 @@ static const char *DEFAULT_LOCK = "10:5A:17:6C:02:4D";  // Taelor's Tuya device
 static const uint8_t DEFAULT_LOCK_VER = 1;
 // ---------------------------------------------
 
-enum Kind : uint8_t { K_OTHER = 0, K_BEACON = 1, K_PROBE_REQ = 2, K_PROBE_RESP = 3 };
-enum Flags : uint8_t { F_AP = 1, F_CLIENT = 2, F_HIDDEN = 4, F_RANDOM = 8 };
+enum Kind : uint8_t { K_OTHER = 0, K_BEACON = 1, K_PROBE_REQ = 2, K_PROBE_RESP = 3, K_BLE = 4 };
+enum Flags : uint8_t { F_AP = 1, F_CLIENT = 2, F_HIDDEN = 4, F_RANDOM = 8, F_BLE = 16 };
 
 struct Pkt {
   uint8_t mac[6];
   int8_t rssi;
   uint8_t ch;
   uint8_t kind;
+  uint16_t company;  // Bluetooth company code (0 = none)
+  uint8_t bleRandom; // Bluetooth address is a random one
   char ssid[33];
 };
 
@@ -100,6 +102,7 @@ struct Dev {
   uint8_t flags;
   uint8_t cat;    // 0 none, 1 CAM, 2 IOT
   uint8_t label;  // index into OUI_LABELS
+  uint16_t company;
   char ssid[33];
 };
 
@@ -233,6 +236,8 @@ static void sniff(void *buf, wifi_promiscuous_pkt_type_t type) {
   k.rssi = p->rx_ctrl.rssi;
   k.ch = p->rx_ctrl.channel;
   k.kind = K_OTHER;
+  k.company = 0;
+  k.bleRandom = 0;
   k.ssid[0] = 0;
   uint8_t ftype = (f[0] >> 2) & 0x3;
   uint8_t sub = (f[0] >> 4) & 0xF;
@@ -252,6 +257,72 @@ static void sniff(void *buf, wifi_promiscuous_pkt_type_t type) {
     }
   }
   xQueueSend(pktQueue, &k, 0);
+}
+
+// ---------- Bluetooth LE scan and mode ----------
+// Mode: 0 = Wi-Fi only, 1 = Bluetooth only, 2 = both. Receive-only in every mode (passive scan).
+static uint8_t mode = 2;
+static const char *MODE_NAMES[] = {"Wi-Fi", "Bluetooth", "Wi-Fi + Bluetooth"};
+
+static const char *bleCompany(uint16_t id) {
+  switch (id) {
+    case 0x004C: return "Apple";
+    case 0x0006: return "Microsoft";
+    case 0x0075: return "Samsung";
+    case 0x00E0: return "Google";
+    case 0x02E5: return "Espressif";
+    case 0x0059: return "Nordic";
+    case 0x0499: return "Ruuvi";
+    case 0x0157: return "Huami";
+    default: return nullptr;
+  }
+}
+
+class AdvCb : public BLEAdvertisedDeviceCallbacks {
+  void onResult(BLEAdvertisedDevice d) override {
+    Pkt k;
+    memset(&k, 0, sizeof(k));
+    String a = d.getAddress().toString();  // lower-case "aa:bb:..."
+    unsigned v[6];
+    if (sscanf(a.c_str(), "%x:%x:%x:%x:%x:%x", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]) != 6) return;
+    for (int i = 0; i < 6; i++) k.mac[i] = (uint8_t)v[i];
+    k.rssi = d.getRSSI();
+    k.kind = K_BLE;
+    k.bleRandom = d.getAddressType() != 0;  // 0 = public
+    String m = d.getManufacturerData();
+    if (m.length() >= 2) k.company = (uint8_t)m[0] | ((uint16_t)(uint8_t)m[1] << 8);
+    if (d.haveName()) {
+      String n = d.getName();
+      strncpy(k.ssid, n.c_str(), 32);
+    }
+    xQueueSend(pktQueue, &k, 0);
+  }
+};
+
+static bool bleScanOn = false;
+static void bleScanSet(bool on) {
+  if (on == bleScanOn) return;
+  bleScanOn = on;
+  BLEScan *scan = BLEDevice::getScan();
+  if (on) {
+    scan->setAdvertisedDeviceCallbacks(new AdvCb(), true);
+    scan->setActiveScan(false);  // passive: never transmits
+    scan->setInterval(100);
+    scan->setWindow(90);
+    scan->start(0, nullptr, false);
+  } else {
+    scan->stop();
+    scan->clearResults();
+  }
+}
+
+static void applyMode(uint8_t m) {
+  mode = m % 3;
+  esp_wifi_set_promiscuous(mode != 1);
+  bleScanSet(mode != 0);
+  prefs.putUChar("mode", mode);
+  Link.printf("M,%u\n", mode);
+  Serial.printf("MODE: %s\n", MODE_NAMES[mode]);
 }
 
 // ---------- helpers ----------
@@ -282,6 +353,11 @@ static void lookupVendor(const uint8_t *mac, uint8_t &cat, uint8_t &label) {
     if (OUI_TABLE[mid].oui < oui) lo = mid + 1;
     else hi = mid - 1;
   }
+}
+
+static void makerOf(const Dev &d, char *out, size_t n) {
+  const char *c = (!d.cat && d.company) ? bleCompany(d.company) : nullptr;
+  snprintf(out, n, "%s", d.cat ? OUI_LABELS[d.label] : (c ? c : ""));
 }
 
 static const char *catName(uint8_t c) { return c == 1 ? "CAM" : (c == 2 ? "IOT" : ""); }
@@ -414,7 +490,9 @@ static void sendNearby(uint32_t now) {
     char m[18];
     macStr(d.mac, m);
     char maker[24], name[21];
-    cleanText(d.cat ? OUI_LABELS[d.label] : "", maker, sizeof(maker));
+    char mk[24];
+    makerOf(d, mk, sizeof(mk));
+    cleanText(mk, maker, sizeof(maker));
     cleanText((d.flags & F_HIDDEN) ? "(hidden)" : d.ssid, name, sizeof(name));
     Link.printf("D,%d,%s,%u,%d,%u,%s,%s,%lu,%lu,%u\n", k, m, d.cat, (int)d.avg, d.ch, maker, name, (unsigned long)d.pkts,
                 (unsigned long)((now - d.lastSeen) / 1000), d.flags);
@@ -459,9 +537,10 @@ static void printList(bool suspectsOnly) {
     Dev &d = devs[lastList[k]];
     char m[18];
     macStr(d.mac, m);
-    const char *type = (d.flags & F_AP) ? "AP" : ((d.flags & F_CLIENT) ? "client" : "device");
+    const char *type = (d.flags & F_BLE) ? "BLE" : (d.flags & F_AP) ? "AP" : ((d.flags & F_CLIENT) ? "client" : "device");
     char maker[24] = "";
     if (d.cat) snprintf(maker, sizeof(maker), "%s %s", catName(d.cat), OUI_LABELS[d.label]);
+    else if (d.company && bleCompany(d.company)) snprintf(maker, sizeof(maker), "%s", bleCompany(d.company));
     else if (d.flags & F_RANDOM) snprintf(maker, sizeof(maker), "(random MAC)");
     char notes[48] = "";
     if (d.flags & F_HIDDEN) snprintf(notes, sizeof(notes), "HIDDEN network");
@@ -474,8 +553,8 @@ static void printList(bool suspectsOnly) {
 }
 
 static void printHelp() {
-  Serial.println("\nCommands: l = list all   c = suspects only   <number> = lock   m <MAC> = lock MAC   u = unlock   h = help");
-  Serial.println("BOOT button: short press = next suspect, hold 1 s = unlock");
+  Serial.println("\nCommands: l = list all   c = suspects only   <number> = lock   m <MAC> = lock MAC   u = unlock   b = switch Wi-Fi/Bluetooth/both   h = help");
+  Serial.println("BOOT button: short press = next suspect, hold 1-3 s = unlock, hold 3 s+ = switch Wi-Fi / Bluetooth / both");
 }
 
 static void handleUsb() {
@@ -496,6 +575,7 @@ static void handleUsb() {
     else if (c0 == 'l') printList(false);
     else if (c0 == 'c') printList(true);
     else if (c0 == 'u') unlock();
+    else if (c0 == 'b') applyMode(mode + 1);  // cycle Wi-Fi / Bluetooth / both
     else if (c0 == 'm') {
       uint8_t mac[6];
       if (parseMac(buf + 1 + strspn(buf + 1, " "), mac)) lockOn(mac);
@@ -519,6 +599,9 @@ static void handleBleCmd() {
   } else if (c0 == 'V') {
     int v = atoi(bleCmd + 1 + strspn(bleCmd + 1, ", "));
     if (v >= 0 && v <= 3) Serial1.printf("V,%d\n", v);  // the R4 sets the buzzer volume
+  } else if (c0 == 'M') {
+    int v = atoi(bleCmd + 1 + strspn(bleCmd + 1, ", "));
+    if (v >= 0 && v <= 2) applyMode(v);
   }
 }
 
@@ -530,11 +613,13 @@ static void handleButton() {
   bool down = digitalRead(BUTTON_PIN) == LOW;
   uint32_t now = millis();
   if (down && !wasDown) { downAt = now; longDone = false; }
-  if (down && !longDone && now - downAt > 1000) {
+  if (down && !longDone && now - downAt > 3000) {
     longDone = true;
-    unlock();
+    applyMode(mode + 1);
   }
-  if (!down && wasDown && !longDone && now - downAt > 30) {
+  if (!down && wasDown && !longDone && now - downAt > 1000) {
+    unlock();
+  } else if (!down && wasDown && !longDone && now - downAt > 30) {
     int n = buildList(true);
     if (n == 0) n = buildList(false);
     if (n > 0) {
@@ -594,6 +679,7 @@ void setup() {
 #endif
   Serial.printf("Maker list: %u entries. Receive-only: this board never transmits.\n", OUI_COUNT);
   bleBegin();
+  applyMode(prefs.getUChar("mode", 2));
   printHelp();
 
   uint8_t saved[6];
@@ -622,7 +708,15 @@ void loop() {
     Dev &d = devs[i];
     d.last = k.rssi;
     d.avg = (d.pkts == 0) ? k.rssi : (0.8f * d.avg + 0.2f * k.rssi);
-    d.ch = k.ch;
+    if (k.kind == K_BLE) {
+      d.flags |= F_BLE;
+      if (k.company) d.company = k.company;
+      if (k.ssid[0]) strncpy(d.ssid, k.ssid, 32);
+      if (!k.bleRandom) lookupVendor(k.mac, d.cat, d.label);
+      if (k.bleRandom) { d.flags |= F_RANDOM; d.cat = 0; d.label = 0; }  // random address: no maker from the OUI table
+    } else {
+      d.ch = k.ch;
+    }
     d.pkts++;
     d.lastSeen = now;
     if (k.kind == K_BEACON || k.kind == K_PROBE_RESP) {
@@ -663,7 +757,7 @@ void loop() {
   bool heardRecently = locked && quiet <= LOST_MS;
   bool searching = !locked || (quiet > LOST_MS && (!knownCh || quiet > RESWEEP_MS));
   if (searching) {
-    if (now - lastHop >= HOP_MS) {
+    if (mode != 1 && now - lastHop >= HOP_MS) {
       lastHop = now;
       hopNext();
     }
@@ -686,6 +780,11 @@ void loop() {
     Link.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
     static uint8_t nearbyTick = 0;
     if ((nearbyTick++ & 3) == 0) sendNearby(now);  // every 4 s
+    static uint32_t lastClear = 0;
+    if (bleScanOn && now - lastClear > 20000) {  // keep the scan's own result list from growing
+      lastClear = now;
+      BLEDevice::getScan()->clearResults();
+    }
     if (locked && !heardRecently)
       Serial.println(searching ? "TARGET not heard - searching all channels..." : "TARGET quiet - waiting on its channel...");
   }
@@ -695,6 +794,7 @@ void loop() {
     bleHello = false;
     if (locked) sendLock();
     else Link.print("U\n");
+    Link.printf("M,%u\n", mode);
     sendNearby(now);
   }
   if (bleCmdReady) {
