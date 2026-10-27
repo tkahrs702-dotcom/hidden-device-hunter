@@ -26,3 +26,6 @@ See `HANDOFF-ble-scan-and-mode-toggle.md` for the current technical state.
 
 ## Update 2026-10-27 14:01
 The claude.ai artifact copy of the finder page loads and Demo works, but Connect fails (Bluetooth is blocked inside that kind of page). Not tried yet: the saved file opened from Downloads in Chrome. The R4 Wi-Fi page (http://192.168.4.1) is the only phone route confirmed to open so far.
+
+## Update 2026-10-27 14:20
+The Scan for buttons (Wi-Fi / Bluetooth / Both) are now also on the R4 Wi-Fi page. The R4 sends `M,<n>` to the C5 over the D1 wire (R4 TX to C5 RX), so that direction of the link must be wired. Bluetooth devices appear in the page lists with "BLE" in the ch column.

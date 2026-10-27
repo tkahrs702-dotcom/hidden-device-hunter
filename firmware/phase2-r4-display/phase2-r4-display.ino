@@ -88,6 +88,8 @@ void onLine(char *line) {
     Meter::bars(lit, peakBars);
   } else if (f[0][0] == 'V' && n >= 2) {
     Beeper::volume(atoi(f[1]));
+  } else if (f[0][0] == 'M' && n >= 2) {
+    Web::mode(atoi(f[1]));
   } else if (f[0][0] == 'B' && n >= 2) {
     Web::nearbyStart(atoi(f[1]));
   } else if (f[0][0] == 'D' && n >= 6) {

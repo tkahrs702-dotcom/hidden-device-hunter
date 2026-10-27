@@ -605,6 +605,22 @@ static void handleBleCmd() {
   }
 }
 
+// Commands from the R4 (its Wi-Fi page buttons): M,<0|1|2> sets the scan mode.
+static void handleLinkCmd() {
+  static char buf[16];
+  static uint8_t len = 0;
+  while (Serial1.available()) {
+    char ch = Serial1.read();
+    if (ch != '\n' && ch != '\r') {
+      if (len < sizeof(buf) - 1) buf[len++] = ch;
+      continue;
+    }
+    buf[len] = 0;
+    len = 0;
+    if (buf[0] == 'M' && buf[1] == ',' && buf[2] >= '0' && buf[2] <= '2') applyMode(buf[2] - '0');
+  }
+}
+
 // BOOT button: short press = next suspect, hold = unlock
 static void handleButton() {
   static bool wasDown = false;
@@ -779,7 +795,10 @@ void loop() {
     }
     Link.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
     static uint8_t nearbyTick = 0;
-    if ((nearbyTick++ & 3) == 0) sendNearby(now);  // every 4 s
+    if ((nearbyTick++ & 3) == 0) {  // every 4 s
+      Link.printf("M,%u\n", mode);
+      sendNearby(now);
+    }
     static uint32_t lastClear = 0;
     if (bleScanOn && now - lastClear > 20000) {  // keep the scan's own result list from growing
       lastClear = now;
@@ -802,6 +821,7 @@ void loop() {
     bleCmdReady = false;
   }
   handleUsb();
+  handleLinkCmd();
   handleButton();
   updateLed(now, locked, heardRecently);
   delay(2);
