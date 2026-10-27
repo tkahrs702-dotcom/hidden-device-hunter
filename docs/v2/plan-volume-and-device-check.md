@@ -37,3 +37,7 @@ Recommendation: B (or C). It removes the weakest parts (R4 Wi-Fi, return wire) a
 
 ## Decision and build status (2026-10-27)
 Taelor chose the C5 Bluetooth dashboard (Android). Built: BLE service on the C5 (Nordic UART style UUIDs, device name HDH-Finder), commands K/U/V, 40-device list with detail fields, buzzer volume levels on the R4, and `tools/finder/finder.html`. The return wire is not needed. Open: the page must be opened in a secure context (Web Bluetooth needs https or a local file); try the file from the phone's Downloads in Chrome first, host it on a private https page only if that fails.
+
+## Bluetooth device finding (asked 2026-10-27) - not built yet
+Today the C5 only listens for Wi-Fi. Bluetooth on the C5 is used for the phone link, not for finding devices. The same radio can also scan for Bluetooth LE advertisers (trackers, cameras, beacons, smart gadgets) while it serves the phone.
+Plan: after the phone link works on hardware, add a BLE scan to the C5 that adds each advertiser to the same device list (type "Bluetooth", with name, maker from the Bluetooth company code, RSSI and packet count). Tracking uses the same lock-by-address flow; the RSSI feeds the same bars, beeps and graph. Limits: many phones and trackers use rotating random addresses, so only fixed-address devices can be tracked for long; Wi-Fi sniffing, BLE scanning and the phone link share one 2.4 GHz radio, so the Wi-Fi sweep and scan will each be slower. Needs a hardware check before it is relied on.
