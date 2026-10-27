@@ -86,6 +86,8 @@ void onLine(char *line) {
     int lit = (pct * 12 + 50) / 100;
     if (lit > peakBars) peakBars = lit;
     Meter::bars(lit, peakBars);
+  } else if (f[0][0] == 'V' && n >= 2) {
+    Beeper::volume(atoi(f[1]));
   } else if (f[0][0] == 'B' && n >= 2) {
     Web::nearbyStart(atoi(f[1]));
   } else if (f[0][0] == 'D' && n >= 6) {

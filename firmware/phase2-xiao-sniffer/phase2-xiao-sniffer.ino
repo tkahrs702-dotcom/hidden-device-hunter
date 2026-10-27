@@ -34,6 +34,12 @@
 #include <Preferences.h>
 #include "esp_wifi.h"
 #include "oui_table.h"
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#ifdef CONFIG_BLUEDROID_ENABLED
+#include <BLE2902.h>
+#endif
 
 // ---------- settings you can change ----------
 // US channels. On a dual-band chip (ESP32-C5) the 5 GHz ones are added. 52-144 are DFS
@@ -117,6 +123,102 @@ static uint8_t currentCh = 1;
 static int lastList[64];
 static int lastListCount = 0;
 static int cycleCursor = -1;
+
+// ---------- phone link over Bluetooth LE (Nordic UART style) ----------
+// Everything sent to the R4 is also streamed to a connected phone as text lines; the phone sends
+// back lines: K,<MAC> track a device   U unlock   V,<0-3> buzzer volume (forwarded to the R4).
+// Lines are queued in a ring and sent 20 bytes at a time so they fit any Bluetooth packet size.
+static const char *BLE_SERVICE = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
+static const char *BLE_TX = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";  // C5 -> phone (notify)
+static const char *BLE_RX = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // phone -> C5 (write)
+static BLECharacteristic *bleTx = nullptr;
+static volatile bool bleConnected = false;
+static volatile bool bleHello = false;     // a phone just connected: resend the lock state
+static char bleRing[4096];
+static uint16_t bleHead = 0, bleTail = 0;  // loop task only
+static char bleCmd[48];
+static volatile bool bleCmdReady = false;
+
+static void bleEnqueue(const uint8_t *b, size_t n) {
+  if (!bleConnected) return;
+  for (size_t i = 0; i < n; i++) {
+    uint16_t next = (bleHead + 1) % sizeof(bleRing);
+    if (next == bleTail) bleTail = (bleTail + 1) % sizeof(bleRing);  // full: drop the oldest byte
+    bleRing[bleHead] = (char)b[i];
+    bleHead = next;
+  }
+}
+
+class LinkOut : public Print {
+ public:
+  bool toSerial = true;
+  size_t write(uint8_t c) override { return write(&c, 1); }
+  size_t write(const uint8_t *b, size_t n) override {
+    if (toSerial) Serial1.write(b, n);
+    bleEnqueue(b, n);
+    return n;
+  }
+};
+static LinkOut Link;  // use instead of Serial1 for anything the phone should also see
+
+static void bleDrain(uint32_t now) {
+  static uint32_t lastChunk = 0;
+  if (!bleConnected || bleHead == bleTail || now - lastChunk < 10) return;
+  lastChunk = now;
+  uint8_t chunk[20];
+  size_t n = 0;
+  while (n < sizeof(chunk) && bleTail != bleHead) {
+    chunk[n++] = (uint8_t)bleRing[bleTail];
+    bleTail = (bleTail + 1) % sizeof(bleRing);
+  }
+  bleTx->setValue(chunk, n);
+  bleTx->notify();
+}
+
+class BleServerCb : public BLEServerCallbacks {
+  void onConnect(BLEServer *) override { bleConnected = true; bleHello = true; }
+  void onDisconnect(BLEServer *) override {
+    bleConnected = false;
+    BLEDevice::startAdvertising();  // allow the phone to come back
+  }
+};
+
+class BleRxCb : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *c) override {
+    auto v = c->getValue();
+    static uint8_t len = 0;
+    for (size_t i = 0; i < v.length(); i++) {
+      char ch = v[i];
+      if (ch == '\n' || ch == '\r') {
+        if (len && !bleCmdReady) {
+          bleCmd[len] = 0;
+          bleCmdReady = true;
+        }
+        len = 0;
+      } else if (len < sizeof(bleCmd) - 1 && !bleCmdReady) {
+        bleCmd[len++] = ch;
+      }
+    }
+  }
+};
+
+static void bleBegin() {
+  BLEDevice::init("HDH-Finder");
+  BLEServer *srv = BLEDevice::createServer();
+  srv->setCallbacks(new BleServerCb());
+  BLEService *svc = srv->createService(BLE_SERVICE);
+  bleTx = svc->createCharacteristic(BLE_TX, BLECharacteristic::PROPERTY_NOTIFY);
+#ifdef CONFIG_BLUEDROID_ENABLED
+  bleTx->addDescriptor(new BLE2902());
+#endif
+  BLECharacteristic *rx = svc->createCharacteristic(BLE_RX, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
+  rx->setCallbacks(new BleRxCb());
+  svc->start();
+  BLEAdvertising *adv = BLEDevice::getAdvertising();
+  adv->addServiceUUID(BLE_SERVICE);
+  adv->setScanResponse(true);
+  BLEDevice::startAdvertising();
+}
 
 // ---------- radio callback (runs in the Wi-Fi task: keep it short) ----------
 static void sniff(void *buf, wifi_promiscuous_pkt_type_t type) {
@@ -245,7 +347,7 @@ static void sendLock() {
   uint8_t cat = 0, label = 0;
   if (i >= 0) { cat = devs[i].cat; label = devs[i].label; }
   else lookupVendor(lockMac, cat, label);
-  Serial1.printf("L,%s,%u,%s\n", mac, cat, cat ? OUI_LABELS[label] : "");
+  Link.printf("L,%s,%u,%s\n", mac, cat, cat ? OUI_LABELS[label] : "");
 }
 
 static void lockOn(const uint8_t *mac) {
@@ -270,15 +372,16 @@ static void unlock() {
   locked = false;
   lockIdx = -1;
   prefs.remove("lock");
-  Serial1.print("U\n");
+  Link.print("U\n");
   Serial.println("UNLOCKED. Scanning all channels.");
 }
 
 // Every 4 s, tell the R4 (and its phone page) every device heard lately, up to NEARBY_MAX:
 // camera makers first, then IoT chips, then the strongest. Does not touch the typed-number list.
+// Sent to the phone only (not the R4's serial line).
 //   B,<count>                         starts a batch
-//   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>     ("-" when maker or name is empty)
-static const int NEARBY_MAX = 60;
+//   D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>,<packets>,<seconds since heard>,<flags>   ("-" when empty)
+static const int NEARBY_MAX = 40;
 static void cleanText(const char *src, char *dst, size_t n) {  // one comma-free printable-ASCII word
   size_t i = 0;
   for (; src[i] && i < n - 1; i++) dst[i] = (src[i] < 32 || src[i] > 126 || src[i] == ',') ? '?' : src[i];
@@ -304,7 +407,8 @@ static void sendNearby(uint32_t now) {
     if (best < 0) break;
     picked[n] = best;
   }
-  Serial1.printf("B,%d\n", n);
+  Link.toSerial = false;
+  Link.printf("B,%d\n", n);
   for (int k = 0; k < n; k++) {
     Dev &d = devs[picked[k]];
     char m[18];
@@ -312,8 +416,10 @@ static void sendNearby(uint32_t now) {
     char maker[24], name[21];
     cleanText(d.cat ? OUI_LABELS[d.label] : "", maker, sizeof(maker));
     cleanText((d.flags & F_HIDDEN) ? "(hidden)" : d.ssid, name, sizeof(name));
-    Serial1.printf("D,%d,%s,%u,%d,%u,%s,%s\n", k, m, d.cat, (int)d.avg, d.ch, maker, name);
+    Link.printf("D,%d,%s,%u,%d,%u,%s,%s,%lu,%lu,%u\n", k, m, d.cat, (int)d.avg, d.ch, maker, name, (unsigned long)d.pkts,
+                (unsigned long)((now - d.lastSeen) / 1000), d.flags);
   }
+  Link.toSerial = true;
 }
 
 // ---------- lists ----------
@@ -402,6 +508,20 @@ static void handleUsb() {
   }
 }
 
+// Commands from the phone (see the Bluetooth section above). Runs in the loop task.
+static void handleBleCmd() {
+  char c0 = bleCmd[0];
+  if (c0 == 'K') {
+    uint8_t mac[6];
+    if (parseMac(bleCmd + 1 + strspn(bleCmd + 1, ", "), mac)) lockOn(mac);
+  } else if (c0 == 'U') {
+    unlock();
+  } else if (c0 == 'V') {
+    int v = atoi(bleCmd + 1 + strspn(bleCmd + 1, ", "));
+    if (v >= 0 && v <= 3) Serial1.printf("V,%d\n", v);  // the R4 sets the buzzer volume
+  }
+}
+
 // BOOT button: short press = next suspect, hold = unlock
 static void handleButton() {
   static bool wasDown = false;
@@ -444,7 +564,6 @@ void setup() {
 #if ARDUINO_USB_CDC_ON_BOOT
   Serial.setTxTimeoutMs(0);  // no computer reading the USB port: drop text instead of stalling the loop
 #endif
-  Serial1.setTxBufferSize(6144);  // the 60-device list goes out in one burst; don't stall the loop
   Serial1.begin(LINK_BAUD, SERIAL_8N1, LINK_RX, LINK_TX);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 #ifdef LED_BUILTIN
@@ -474,6 +593,7 @@ void setup() {
                 (unsigned long)((NUM_CH * HOP_MS + 500) / 1000));
 #endif
   Serial.printf("Maker list: %u entries. Receive-only: this board never transmits.\n", OUI_COUNT);
+  bleBegin();
   printHelp();
 
   uint8_t saved[6];
@@ -485,7 +605,7 @@ void setup() {
     Serial.print("Saved lock found. ");
     lockOn(saved);
   } else {
-    Serial1.print("U\n");
+    Link.print("U\n");
   }
 }
 
@@ -527,7 +647,7 @@ void loop() {
   // Send the target's signal to the R4 up to 10 times a second.
   if (locked && targetHeard && now - lastT >= 100) {
     lastT = now;
-    Serial1.printf("T,%d,%d,%u\n", targetRssi, (int)lockAvg, currentCh);
+    Link.printf("T,%d,%d,%u\n", targetRssi, (int)lockAvg, currentCh);
     static uint32_t lastUsb = 0;
     if (now - lastUsb >= 500) {
       lastUsb = now;
@@ -563,13 +683,24 @@ void loop() {
       if (devs[i].cat == 2) iot++;
       if (devs[i].flags & F_HIDDEN) hidden++;
     }
-    Serial1.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
+    Link.printf("S,%d,%d,%d,%d,%d\n", total, cams, iot, hidden, locked ? 1 : 0);
     static uint8_t nearbyTick = 0;
     if ((nearbyTick++ & 3) == 0) sendNearby(now);  // every 4 s
     if (locked && !heardRecently)
       Serial.println(searching ? "TARGET not heard - searching all channels..." : "TARGET quiet - waiting on its channel...");
   }
 
+  bleDrain(now);
+  if (bleHello) {
+    bleHello = false;
+    if (locked) sendLock();
+    else Link.print("U\n");
+    sendNearby(now);
+  }
+  if (bleCmdReady) {
+    handleBleCmd();
+    bleCmdReady = false;
+  }
   handleUsb();
   handleButton();
   updateLed(now, locked, heardRecently);
