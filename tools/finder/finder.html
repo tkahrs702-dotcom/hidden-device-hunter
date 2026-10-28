@@ -106,7 +106,7 @@ function send(s){
   if(demoTimer){demoCmd(s);return}
   if(!S.rx)return;
   var enc=new TextEncoder().encode(s+'\n'),p=Promise.resolve();
-  for(var o=0;o<enc.length;o+=20){(function(ch){p=p.then(function(){return S.rx.writeValueWithoutResponse(ch)})})(enc.slice(o,o+20))}
+  for(var o=0;o<enc.length;o+=20){(function(ch){p=p.then(function(){return S.rx.writeValueWithoutResponse(ch)}).catch(function(){})})(enc.slice(o,o+20))}
   return p;
 }
 
@@ -174,7 +174,7 @@ $('unlock').onclick=function(){send('U')};
 var DEV=null,retry=null;
 function linkMsg(t,bad){$('link').textContent=t;$('link').style.color=bad?'var(--bad)':''}
 async function attach(dev){
-  DEV=dev;
+  DEV=dev;S.buf='';
   var srv=await dev.gatt.connect(),svc=await srv.getPrimaryService(SERVICE);
   var tx=await svc.getCharacteristic(TXC);S.rx=await svc.getCharacteristic(RXC);
   tx.addEventListener('characteristicvaluechanged',function(e){feed(new TextDecoder().decode(e.target.value))});
