@@ -1,4 +1,4 @@
-# Phase 3 plan: painless phone access (2026-10-28)
+# Phase 2 plan: painless phone access (2026-10-28)
 
 Goal (Taelor): the phone shows the finder without a slow R4 Wi-Fi server, a file hunt, or browser blocking.
 Gemini's summary agrees with what we found: `tools/finder/finder.html` already streams the same lines
