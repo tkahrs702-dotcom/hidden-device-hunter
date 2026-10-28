@@ -55,7 +55,9 @@ void onLine(char *line) {
   for (char *tok = strtok(line, ","); tok && n < 8; tok = strtok(nullptr, ",")) f[n++] = tok;
   if (n == 0) return;
 
-  if (f[0][0] == 'L' && n >= 3) {
+  if (f[0][0] == 'L' && n >= 3 && locked && strcmp(f[1], lockMac) == 0) {
+    lastT = millis();  // the sniffer repeats L every 4 s: same target, nothing to redo
+  } else if (f[0][0] == 'L' && n >= 3) {
     locked = true;
     lastT = millis();
     peakBars = 0;
@@ -106,6 +108,7 @@ void onLine(char *line) {
       Meter::bars(0);
     } else if (!snifferLocked && locked) {
       locked = false;
+      Web::unlocked();
       Beeper::set(0, 0);
     }
   }
