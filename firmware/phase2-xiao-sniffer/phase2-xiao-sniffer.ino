@@ -483,7 +483,7 @@ static void sendNearby(uint32_t now) {
     if (best < 0) break;
     picked[n] = best;
   }
-  Link.toSerial = false;
+  Link.toSerial = true;  // the R4 page needs the list too
   Link.printf("B,%d\n", n);
   for (int k = 0; k < n; k++) {
     Dev &d = devs[picked[k]];
