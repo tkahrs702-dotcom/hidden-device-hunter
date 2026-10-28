@@ -68,7 +68,7 @@ static const char *BOARD_NAME = "XIAO ESP32-S3";
 #endif
 // Taelor's wires to the level shifter are crossed (TX on D7, RX on D6), so the pins are swapped here
 // instead of rewiring. Set LINK_CROSSED to false if the wires are put back as D6 = TX, D7 = RX.
-static const bool LINK_CROSSED = true;
+static const bool LINK_CROSSED = false;
 static const int LINK_RX = LINK_CROSSED ? D6 : D7;
 static const int LINK_TX = LINK_CROSSED ? D7 : D6;
 static const uint32_t LINK_BAUD = 115200;
