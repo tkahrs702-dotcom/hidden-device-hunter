@@ -811,6 +811,7 @@ void loop() {
   bleDrain(now);
   if (bleHello) {
     bleHello = false;
+    bleHead = bleTail = 0;  // a new phone should not get lines queued for the last one
     if (locked) sendLock();
     else Link.print("U\n");
     Link.printf("M,%u\n", mode);
