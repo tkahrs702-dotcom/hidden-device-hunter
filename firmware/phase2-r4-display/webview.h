@@ -3,7 +3,7 @@
 // Join the Wi-Fi "HDH-Finder" (password in WEB_PASS below), then open http://192.168.4.1
 // The page shows what is being monitored (target MAC, maker, channel), the signal in dBm with
 // a bar, the closest approach, a graph of the last minute, a warmer/colder hint, a plain
-// recommendation, the sniffer's counts and the nearby suspects. It reads /s twice a second.
+// recommendation, the sniffer's counts and the nearby suspects. It reads /s about once a second, one request at a time.
 //
 // Usage:  Web::begin();                       // in setup()
 //         Web::poll();                        // in loop(): answers phone requests
@@ -69,10 +69,13 @@ static const char PAGE[] =
   "function pct(d){return Math.max(0,Math.min(100,(d+90)*100/60))}"
   "function col(p){return p>75?'#4c8':p>40?'#fc4':'#f66'}"
   "function sus(x){return x[1]>0||x[4]=='hidden net'}"
+  "function esc(v){return String(v).replace(/[&<>\"]/g,c=>'&#'+c.charCodeAt(0)+';')}"
   "function boot(d){var k=0,r=[];d.forEach(x=>{if(sus(x)){k++;r.push(k)}else r.push('')});return r}"
   "function trend(h){if(h.length<12)return 0;var n=h.length,a=0,b=0;for(var i=0;i<6;i++){a+=h[n-1-i];b+=h[n-7-i]}return (a-b)/6}"
+  "var done={};try{done=JSON.parse(localStorage.hdh||'{}')}catch(_){}"
+  "document.onchange=e=>{var m=e.target.dataset&&e.target.dataset.m;if(m){done[m]=e.target.checked?1:0;try{localStorage.hdh=JSON.stringify(done)}catch(_){}}};"
   "function sm(v){fetch('/m'+v)}"
-  "function tick(){fetch('/s').then(r=>r.json()).then(j=>{"
+  "function tick(){return fetch('/s').then(r=>r.json()).then(j=>{"
   "lk.textContent=j.ls<3000?'C5 link OK':'NO DATA from the C5. Check: C5 powered and blinking, wire C5 D6 -> shifter A2, shifter B2 -> R4 D0, grounds joined, C5 reflashed.';"
   "lk.style.color=j.ls<3000?'#4c8':'#f66';"
   "for(var q=0;q<3;q++){var b=document.getElementById('m'+q);b.style.background=j.mo==q?'#4c8':'';b.style.color=j.mo==q?'#000':''}"
@@ -95,15 +98,15 @@ static const char PAGE[] =
   "else m='Signal steady. Sweep the antenna slowly left and right and walk toward the strongest side.';"
   "rec.textContent=m;"
   "s0.textContent=j.s[0];s1.textContent=j.s[1];s2.textContent=j.s[2];s3.textContent=j.s[3];"
-  "var t='<tr class=m><td>BOOT<td>MAC<td>maker<td>dBm<td>ch</tr>',bk=boot(j.d);"
-  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+x[2]+'<td>'+(x[3]||'BLE')+'</tr>'});"
-  "tb.innerHTML=t;"
+  "var t='<tr class=m><td>ok<td>BOOT<td>MAC<td>maker<td>dBm<td>ch</tr>',bk=boot(j.d);"
+  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+(done[x[0]]?' style=opacity:.4':'')+'><td><input type=checkbox data-m='+x[0]+(done[x[0]]?' checked':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+esc(x[4]||'-')+'<td>'+x[2]+'<td>'+(x[3]||'BLE')+'</tr>'});"
+  "if(tb.dataset.h!=t){tb.dataset.h=t;tb.innerHTML=t}"
   "}).catch(e=>{st.textContent='no connection';st.style.color='#f66'})}"
-  "function all(){if(!allbox.open)return;fetch('/d').then(r=>r.json()).then(j=>{alln.textContent='('+j.d.length+' heard in the last minute)';"
-  "var t='<tr class=m><td>BOOT<td>MAC<td>maker<td>name<td>dBm<td>ch</tr>',bk=boot(j.d);"
-  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+(x[4]||'-')+'<td>'+(x[5]||'')+'<td>'+x[2]+'<td>'+(x[3]||'BLE')+'</tr>'});"
-  "ta.innerHTML=t}).catch(e=>{})}"
-  "setInterval(tick,500);tick();setInterval(all,2000);"
+  "function all(){if(!allbox.open)return 0;return fetch('/d').then(r=>r.json()).then(j=>{alln.textContent='('+j.d.length+' heard in the last minute)';"
+  "var t='<tr class=m><td>ok<td>BOOT<td>MAC<td>maker<td>name<td>dBm<td>ch</tr>',bk=boot(j.d);"
+  "j.d.forEach((x,i)=>{t+='<tr'+(x[0]==j.m?' class=t':'')+(done[x[0]]?' style=opacity:.4':'')+'><td><input type=checkbox data-m='+x[0]+(done[x[0]]?' checked':'')+'><td>'+bk[i]+'<td>'+x[0]+'<td class='+(x[1]==1?'cam':x[1]==2?'iot':sus(x)?'iot':'')+'>'+esc(x[4]||'-')+'<td>'+esc(x[5]||'')+'<td>'+x[2]+'<td>'+(x[3]||'BLE')+'</tr>'});"
+  "if(ta.dataset.h!=t){ta.dataset.h=t;ta.innerHTML=t}}).catch(e=>{})}"
+  "var n=0;function run(){var p=tick();if(++n%4==0)p=p.then(()=>all());p.finally(()=>setTimeout(run,600))}run();"
   "</script>";
 
 static void copyClean(char *dst, const char *src, size_t n) {  // keeps JSON valid
@@ -248,6 +251,9 @@ inline void poll() {
            (int)nearList[i].avg, nearList[i].ch, nearList[i].maker, nearList[i].name);
     emit(c, "]}");
     flushOut(c);
+  } else if (strstr(req, "GET / ") == nullptr) {  // favicon and other stray requests: answer fast, not with the whole page
+    const char *nf = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+    sendAll(c, nf, strlen(nf));
   } else {
     const char *head = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n";
     sendAll(c, head, strlen(head));

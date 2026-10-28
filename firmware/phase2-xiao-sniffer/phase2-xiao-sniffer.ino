@@ -68,7 +68,7 @@ static const char *BOARD_NAME = "XIAO ESP32-S3";
 #endif
 // Taelor's wires to the level shifter are crossed (TX on D7, RX on D6), so the pins are swapped here
 // instead of rewiring. Set LINK_CROSSED to false if the wires are put back as D6 = TX, D7 = RX.
-static const bool LINK_CROSSED = true;
+static const bool LINK_CROSSED = false;
 static const int LINK_RX = LINK_CROSSED ? D6 : D7;
 static const int LINK_TX = LINK_CROSSED ? D7 : D6;
 static const uint32_t LINK_BAUD = 115200;
@@ -465,7 +465,7 @@ static void cleanText(const char *src, char *dst, size_t n) {  // one comma-free
   if (!dst[0]) strcpy(dst, "-");
 }
 
-static void sendNearby(uint32_t now) {
+static void sendNearby(uint32_t now, bool toR4) {
   int picked[NEARBY_MAX];
   int n = 0;
   for (; n < NEARBY_MAX; n++) {
@@ -483,7 +483,7 @@ static void sendNearby(uint32_t now) {
     if (best < 0) break;
     picked[n] = best;
   }
-  Link.toSerial = false;
+  Link.toSerial = toR4;  // the 4 s batch goes to the R4 page too; a new phone's hello is BLE only
   Link.printf("B,%d\n", n);
   for (int k = 0; k < n; k++) {
     Dev &d = devs[picked[k]];
@@ -617,7 +617,7 @@ static void handleLinkCmd() {
     }
     buf[len] = 0;
     len = 0;
-    if (buf[0] == 'M' && buf[1] == ',' && buf[2] >= '0' && buf[2] <= '2') applyMode(buf[2] - '0');
+    if (len >= 3 && buf[0] == 'M' && buf[1] == ',' && buf[2] >= '0' && buf[2] <= '2') applyMode(buf[2] - '0');
   }
 }
 
@@ -797,7 +797,8 @@ void loop() {
     static uint8_t nearbyTick = 0;
     if ((nearbyTick++ & 3) == 0) {  // every 4 s
       Link.printf("M,%u\n", mode);
-      sendNearby(now);
+      sendNearby(now, true);
+      if (locked) sendLock();  // the R4 keeps its lock even if an earlier L line was lost
     }
     static uint32_t lastClear = 0;
     if (bleScanOn && now - lastClear > 20000) {  // keep the scan's own result list from growing
@@ -811,10 +812,13 @@ void loop() {
   bleDrain(now);
   if (bleHello) {
     bleHello = false;
+    bleHead = bleTail = 0;  // a new phone should not get lines queued for the last one
+    Link.toSerial = false;  // the R4 already knows; do not make it redo its lock sequence
     if (locked) sendLock();
     else Link.print("U\n");
     Link.printf("M,%u\n", mode);
-    sendNearby(now);
+    sendNearby(now, false);
+    Link.toSerial = true;
   }
   if (bleCmdReady) {
     handleBleCmd();
