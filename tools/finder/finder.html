@@ -137,9 +137,9 @@ function render(){
   // device table
   var list=S.devs.filter(function(x){return S.filter=='all'||(S.filter=='sus'&&sus(x))||(S.filter=='hid'&&(x.flags&4))});
   $('count').textContent='('+list.length+' of '+S.devs.length+')';
-  var t='<tr class="m"><td>MAC<td>maker / name<td>dBm<td>ch</tr>';
+  var t='<tr class="m"><td>ok<td>MAC<td>maker / name<td>dBm<td>ch</tr>';
   list.forEach(function(x){
-    t+='<tr class="d'+(S.lock&&x.mac==S.lock.mac?' t':'')+'" data-mac="'+x.mac+'"><td>'+x.mac.slice(9)+'<td class="'+(x.cat==1?'cam':sus(x)?'iot':'')+'">'+(x.maker||(x.flags&4?'hidden net':''))+' '+(x.name&&x.name!='(hidden)'?x.name:'')+'<td>'+x.avg+'<td>'+chs(x)+'</tr>'});
+    t+='<tr class="d'+(S.lock&&x.mac==S.lock.mac?' t':'')+'" data-mac="'+x.mac+'"'+(DONE[x.mac]?' style="opacity:.4"':'')+'><td><input type=checkbox data-ck="'+x.mac+'"'+(DONE[x.mac]?' checked':'')+'><td>'+x.mac.slice(9)+'<td class="'+(x.cat==1?'cam':sus(x)?'iot':'')+'">'+(x.maker||(x.flags&4?'hidden net':''))+' '+(x.name&&x.name!='(hidden)'?x.name:'')+'<td>'+x.avg+'<td>'+chs(x)+'</tr>'});
   $('tb').innerHTML=t;
   // detail card
   var dv=S.devs.filter(function(x){return x.mac==S.sel})[0],dc=$('detail');
@@ -165,12 +165,14 @@ function render(){
 }
 setInterval(render,500);
 
-$('tb').onclick=function(e){var tr=e.target.closest('tr.d');if(tr){S.sel=tr.getAttribute('data-mac');render();$('detail').scrollIntoView({behavior:'smooth',block:'nearest'})}};
+$('tb').onclick=function(e){if(e.target.tagName=='INPUT')return;var tr=e.target.closest('tr.d');if(tr){S.sel=tr.getAttribute('data-mac');render();$('detail').scrollIntoView({behavior:'smooth',block:'nearest'})}};
 $('flt').onclick=function(e){var f=e.target.getAttribute('data-f');if(!f)return;S.filter=f;[].forEach.call($('flt').children,function(b){b.className=b.getAttribute('data-f')==f?'on':''});render()};
 $('mode').onclick=function(e){var v=e.target.getAttribute('data-m');if(v===null)return;send('M,'+v)};
 $('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)return;send('V,'+v);[].forEach.call($('vol').children,function(b){b.className=b.getAttribute('data-v')==v?'on':''})};
 $('unlock').onclick=function(){send('U')};
 
+var DONE={};try{DONE=JSON.parse(localStorage.hdhDone||'{}')}catch(e){}
+document.addEventListener('change',function(e){var m=e.target.getAttribute&&e.target.getAttribute('data-ck');if(m){DONE[m]=e.target.checked?1:0;try{localStorage.hdhDone=JSON.stringify(DONE)}catch(x){}render()}});
 var DEV=null,retry=null;
 function linkMsg(t,bad){$('link').textContent=t;$('link').style.color=bad?'var(--bad)':''}
 async function attach(dev){
