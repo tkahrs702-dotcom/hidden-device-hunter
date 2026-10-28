@@ -16,6 +16,9 @@ default, inside the claude.ai artifact frame, or from a raw GitHub link (the rep
 
 Recommended: option 1, with option 3 as the fallback that always works.
 
+## Done so far
+- Page reconnects by itself (retry every 2 s, and Chrome can offer back the paired finder), keeps the screen on, works in Demo with the mode switch. Tested in headless Chrome demo mode only.
+
 ## Rewrite and review steps once delivery is chosen
 - Page: one file, offline-capable (manifest + service-worker-free "add to home screen" is enough), reconnect automatically,
   big targets, a Wi-Fi / Bluetooth / Both switch, tap a device to track, volume.

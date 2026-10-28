@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Hidden Device Hunter</title>
 <style>
 :root{--bg:#111;--card:#1c1c1c;--card2:#262626;--tx:#eee;--mut:#999;--ok:#4c8;--warn:#fc4;--bad:#f66;--line:#333}
@@ -169,21 +171,46 @@ $('mode').onclick=function(e){var v=e.target.getAttribute('data-m');if(v===null)
 $('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)return;send('V,'+v);[].forEach.call($('vol').children,function(b){b.className=b.getAttribute('data-v')==v?'on':''})};
 $('unlock').onclick=function(){send('U')};
 
+var DEV=null,retry=null;
+function linkMsg(t,bad){$('link').textContent=t;$('link').style.color=bad?'var(--bad)':''}
+async function attach(dev){
+  DEV=dev;
+  var srv=await dev.gatt.connect(),svc=await srv.getPrimaryService(SERVICE);
+  var tx=await svc.getCharacteristic(TXC);S.rx=await svc.getCharacteristic(RXC);
+  tx.addEventListener('characteristicvaluechanged',function(e){feed(new TextDecoder().decode(e.target.value))});
+  await tx.startNotifications();
+  S.lastLine=Date.now();linkMsg('Connected.');render();
+  try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(function(){})}catch(e){}
+}
+function reconnect(){
+  if(retry||!DEV)return;
+  retry=setTimeout(async function(){
+    retry=null;
+    try{linkMsg('Reconnecting...',true);await attach(DEV)}catch(e){reconnect()}
+  },2000);
+}
 $('conn').onclick=async function(){
   if(demoTimer){clearInterval(demoTimer);demoTimer=null}
-  if(!navigator.bluetooth){$('link').textContent='This browser has no Web Bluetooth. Use Chrome on Android.';$('link').style.color='var(--bad)';return}
+  if(!navigator.bluetooth){linkMsg('This browser has no Web Bluetooth. Use Chrome on Android.',true);return}
   try{
-    $('link').textContent='Choose HDH-Finder in the list...';
+    linkMsg('Choose HDH-Finder in the list...');
     var dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'HDH'}],optionalServices:[SERVICE]});
-    dev.addEventListener('gattserverdisconnected',function(){S.rx=null;$('link').textContent='Disconnected. Press Connect again.';$('link').style.color='var(--bad)'});
-    $('link').textContent='Connecting...';
-    var srv=await dev.gatt.connect(),svc=await srv.getPrimaryService(SERVICE);
-    var tx=await svc.getCharacteristic(TXC);S.rx=await svc.getCharacteristic(RXC);
-    tx.addEventListener('characteristicvaluechanged',function(e){feed(new TextDecoder().decode(e.target.value))});
-    await tx.startNotifications();
-    S.lastLine=Date.now();render();
-  }catch(err){$('link').textContent='Could not connect: '+err.message;$('link').style.color='var(--bad)'}
+    dev.addEventListener('gattserverdisconnected',function(){S.rx=null;reconnect()});
+    linkMsg('Connecting...');
+    await attach(dev);
+  }catch(err){linkMsg('Could not connect: '+err.message,true)}
 };
+// Chrome can hand back a finder it was already allowed to use: reconnect with no pairing list.
+(async function(){
+  try{
+    if(!navigator.bluetooth||!navigator.bluetooth.getDevices)return;
+    var list=await navigator.bluetooth.getDevices();
+    var dev=list.filter(function(d){return d.name&&d.name.indexOf('HDH')==0})[0];
+    if(!dev)return;
+    dev.addEventListener('gattserverdisconnected',function(){S.rx=null;reconnect()});
+    if(dev.watchAdvertisements){dev.addEventListener('advertisementreceived',function(){if(!S.rx&&!retry){try{attach(dev).catch(function(){})}catch(e){}}});dev.watchAdvertisements().catch(function(){})}
+  }catch(e){}
+})();
 
 // Demo mode: fake data so the page can be tried without the finder.
 function demoCmd(s){if(s.charAt(0)=='K'){feed('L,'+s.slice(2)+',1,Hikvision\n')}else if(s=='U'){feed('U\n')}else if(s.charAt(0)=='M'){feed(s+'\n')}}
