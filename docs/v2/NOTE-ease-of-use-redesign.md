@@ -29,3 +29,6 @@ The claude.ai artifact copy of the finder page loads and Demo works, but Connect
 
 ## Update 2026-10-27 14:20
 The Scan for buttons (Wi-Fi / Bluetooth / Both) are now also on the R4 Wi-Fi page. The R4 sends `M,<n>` to the C5 over the D1 wire (R4 TX to C5 RX), so that direction of the link must be wired. Bluetooth devices appear in the page lists with "BLE" in the ch column.
+
+## Update 2026-10-28
+R4 page connection fixes: the page now asks for the next reading only after the previous answer arrives (before, requests piled up on the slow R4 Wi-Fi chip), polls about once a second, and the R4 answers favicon and other stray requests with a quick 404 instead of resending the whole page.
