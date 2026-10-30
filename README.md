@@ -8,9 +8,9 @@ Phase 3 (P4 camera) and Phase 4 (optional add-ons) are parked for later research
 
 ## Where we left off
 
-Updated 2026-10-26. V2 (Phase 1 + Phase 2) is built and bench-tested; Phases 3 and 4 are parked. Session note: [`docs/sessions/2026-10-26-01YKZUS1.md`](docs/sessions/2026-10-26-01YKZUS1.md).
+Updated 2026-10-30. V2 (Phase 1 + Phase 2) is built; Phases 3 and 4 are parked. Session notes: [`docs/sessions/2026-10-28-01YKZUS1.md`](docs/sessions/2026-10-28-01YKZUS1.md), [`docs/sessions/2026-10-26-01YKZUS1.md`](docs/sessions/2026-10-26-01YKZUS1.md).
 - State: the XIAO ESP32-C5 sniffer locks the default Tuya plug on boot and the UNO R4 WiFi shows bars, a peak dot (closest approach) and beeps. The R4 also serves a phone page (Wi-Fi `HDH-Finder`, `http://192.168.4.1`) with live dBm, a graph, a recommendation and up to 60 devices; hidden networks rank with the suspects and the page shows the BOOT presses that lock each. PRs #9 to #14 are merged and CI compiles every sketch. The phone page has not run on hardware yet. Details: [`docs/worklog/2026-10-26-c5-firmware-review.md`](docs/worklog/2026-10-26-c5-firmware-review.md).
-- READ FIRST (2026-10-27): Taelor says the current setup is too fiddly to work with; rethink for ease of use before adding features, see [`docs/v2/NOTE-ease-of-use-redesign.md`](docs/v2/NOTE-ease-of-use-redesign.md). Bluetooth scan and Wi-Fi/Bluetooth switch are on PR #16 (green, untested on hardware, default Wi-Fi only).
+- READ FIRST (2026-10-30): PR #17 is merged: Bluetooth scan, Wi-Fi/Bluetooth/Both switch, tick boxes, Bluetooth phone page (`tools/finder/finder.html`). Open: the page has no public address yet (GitHub Pages off), so Taelor still cannot open it painlessly; finish that before new features. Ease of use comes first, see [`docs/v2/NOTE-ease-of-use-redesign.md`](docs/v2/NOTE-ease-of-use-redesign.md). Parked: C5 Wi-Fi flashing, telemetry (Phase 2.A), Pico 4 screen.
 - Planned: volume control and per-device check, see [`docs/v2/plan-volume-and-device-check.md`](docs/v2/plan-volume-and-device-check.md).
 - Planned: find devices that attack your home devices, see [`docs/v2/plan-attack-tracking.md`](docs/v2/plan-attack-tracking.md).
 - Flash and test steps, all in one page: [`docs/FLASH-AND-TEST.md`](docs/FLASH-AND-TEST.md).
