@@ -50,7 +50,7 @@ add(f'<line x1="790" y1="104" x2="820" y2="104" stroke="{GRN}" stroke-width="5"/
 add(f'<line x1="822" y1="104" x2="852" y2="104" stroke="{PUR}" stroke-width="5"/>')
 text(860, 109, "3.3 V data signals", 14, "#333", "bold")
 
-# ---- Merlin header (pair 1 = the 5V end, at the top) ----
+# ---- Merlin header (J3 on Waveshare's schematic: odd pins on the left, even on the right, pin 1 = the 5V end at the top) ----
 Y0, P = 330, 34
 AX, BX = 640, 850            # A = 5V row of the silkscreen, B = 3V3 row
 A = ["5V", "5V", "GND", "37", "38", "5", "GND", "21", "22", "GND",
@@ -64,9 +64,9 @@ y = lambda i: Y0 + i * P
 add(f'<rect x="{AX-25}" y="{Y0-58}" width="{BX-AX+50}" height="{20*P+76}" rx="12" fill="#eef3fb" stroke="#2456a4" stroke-width="3"/>')
 text((AX + BX) / 2, Y0 - 98, "MERLIN", 24, "#2456a4", "bold", "middle")
 text((AX + BX) / 2, Y0 - 76, "Waveshare ESP32-P4-WIFI6-Touch-LCD-4.3, 40-pin header", 13, "#555", anchor="middle")
-text(AX + 10, Y0 - 32, "left row", 12, "#2456a4", "bold")
-text(BX - 10, Y0 - 32, "right row", 12, "#2456a4", "bold", "end")
-text((AX + BX) / 2, Y0 - 32, "pair", 11, GRY, anchor="middle")
+text(AX + 10, Y0 - 32, "odd pins", 12, "#2456a4", "bold")
+text(BX - 10, Y0 - 32, "even pins", 12, "#2456a4", "bold", "end")
+text((AX + BX) / 2, Y0 - 32, "pin nos.", 11, GRY, anchor="middle")
 for i in range(20):
     ca, cb = used_a.get(i), used_b.get(i)
     la = ("GPIO" + A[i]) if A[i].isdigit() else A[i]
@@ -75,12 +75,12 @@ for i in range(20):
     fb = ORG if B[i] == "3V3" else ("#111" if cb else GRY)
     text(AX + 16, y(i) + 5, la, 14, fa, "bold" if ca or A[i] == "5V" else "normal")
     text(BX - 16, y(i) + 5, lb, 14, fb, "bold" if cb or B[i] == "3V3" else "normal", "end")
-    text((AX + BX) / 2, y(i) + 4, str(i + 1), 11, "#b8b8b8", anchor="middle")
+    text((AX + BX) / 2, y(i) + 4, f"{2*i+1} | {2*i+2}", 11, "#8a8a8a", anchor="middle")
     dot(AX, y(i), ca or "#c4c4c4", 7 if ca else 5)
     dot(BX, y(i), cb or "#c4c4c4", 7 if cb else 5)
 text((AX + BX) / 2, y(19) + 40, "other end of the header", 12, GRY, anchor="middle")
 
-# Photo strip, aligned pair-for-pair with the drawing
+# Photo strip, aligned row-for-row with the drawing
 PX = 985
 add(f'<image x="{PX}" y="{Y0-P/2}" width="78.5" height="{20*P}" xlink:href="data:image/jpeg;base64,{b64(strip_jpg)}"/>')
 add(f'<rect x="{PX}" y="{Y0-P/2}" width="78.5" height="{20*P}" fill="none" stroke="#2456a4" stroke-width="2"/>')
@@ -144,16 +144,15 @@ text(RX0 + 16, 349, "No wires to Merlin.", 13, RED, "bold")
 text(RX0 + 16, 375, "((•)) sends alerts to Iolaus by LoRa", 13, "#b5651d", "bold")
 
 add(f'<rect x="{RX0}" y="425" width="{RX1-RX0}" height="300" rx="12" fill="#f6f6f6" stroke="#666" stroke-width="2"/>')
-text(RX0 + 16, 453, "SOUND: Merlin's onboard speaker", 15, "#111", "bold")
-add(f'<image x="{RX0+16}" y="468" width="120" height="120" xlink:href="data:image/jpeg;base64,{b64(spk_jpg)}"/>')
-add(f'<rect x="{RX0+16}" y="468" width="120" height="120" fill="none" stroke="#666"/>')
-for k, t in enumerate(["Your photo: the red/black", "speaker wire in the 2-pin", "socket by MIC1 (top", "right, near the USB-C", "ports). Leave it plugged in."]):
-    text(RX0 + 148, 486 + k * 19, t, 12, "#333")
-for k, t in enumerate(["No header wires and no external piezo.",
-                       "Driven by the onboard ES8311 codec",
-                       "and NS4150B amp, set up in firmware.",
-                       "Better close-up photo coming from Taelor."]):
-    text(RX0 + 16, 616 + k * 22, t, 13, "#333" if k < 3 else "#b5651d", "bold" if k == 3 else "normal")
+text(RX0 + 16, 453, "SOUND: Merlin's own speaker", 15, "#111", "bold")
+add(f'<image x="{RX0+16}" y="466" width="130" height="190" xlink:href="data:image/jpeg;base64,{b64(spk_jpg)}"/>')
+add(f'<rect x="{RX0+16}" y="466" width="130" height="190" fill="none" stroke="#666"/>')
+for k, t in enumerate(["Your photo: the speaker", "(white plate) hangs on a", "red/black wire. The wire", "plugs into the white 2-pin", "socket above USB TO UART,", "by MIC1. Leave it plugged", "in."]):
+    text(RX0 + 158, 484 + k * 19, t, 12, "#333")
+for k, t in enumerate(["No header wires, no external piezo.",
+                       "Driven by the onboard codec and amp,",
+                       "set up in the Merlin firmware."]):
+    text(RX0 + 16, 680 + k * 16, t, 12, "#333")
 
 add(f'<rect x="{RX0}" y="745" width="{RX1-RX0}" height="92" rx="12" fill="#f6f6f6" stroke="#666" stroke-width="2"/>')
 text(RX0 + 16, 772, "C6-UART pins (TX RX IO9 GND)", 15, "#111", "bold")
@@ -163,16 +162,16 @@ text(RX0 + 16, 818, "Not used. Leave them empty.", 13, "#333")
 # ---- Wire list ----
 LY = 1075
 add(f'<rect x="60" y="{LY}" width="1380" height="168" rx="12" fill="#fafafa" stroke="#ccc" stroke-width="2"/>')
-text(80, LY + 28, "Wire list (find each Merlin pin by its printed label, counting pairs from the 5V end)", 16, "#111", "bold")
+text(80, LY + 28, "Wire list (Merlin pin numbers are J3 from Waveshare's schematic; pin 1 is the 5V end; the board prints GPIO numbers, not pin numbers)", 16, "#111", "bold")
 rows = [
-    ("W1", RED, "Nimue 5V → Merlin 5V (pair 1), the only 5 V wire"),
-    ("W2", BLK, "Nimue GND → Merlin GND (pair 3)"),
-    ("W3", GRN, "Nimue D7 (TX) → Merlin GPIO5 (pair 6), Merlin listens"),
-    ("W4", PUR, "Merlin GPIO4 (pair 7) → Nimue D6 (RX), optional, dashed"),
-    ("W5", BLK, "Iolaus GND → Merlin GND (pair 7)"),
-    ("W6", GRN, "Iolaus GPIO13 (TX) → Merlin GPIO21 (pair 8), Merlin listens"),
-    ("W7", PUR, "Merlin GPIO22 (pair 9) → Iolaus GPIO34 (RX)"),
-    ("W8", ORG, "Iolaus 3V3 → Merlin 3V3 (pair 9), 3.3 V power"),
+    ("W1", RED, "Nimue 5V → Merlin 5V (pin 1), the only 5 V wire"),
+    ("W2", BLK, "Nimue GND → Merlin GND (pin 5)"),
+    ("W3", GRN, "Nimue D7 (TX) → Merlin GPIO5 (pin 11), Merlin listens"),
+    ("W4", PUR, "Merlin GPIO4 (pin 14) → Nimue D6 (RX), optional, dashed"),
+    ("W5", BLK, "Iolaus GND → Merlin GND (pin 13)"),
+    ("W6", GRN, "Iolaus GPIO13 (TX) → Merlin GPIO21 (pin 15), Merlin listens"),
+    ("W7", PUR, "Merlin GPIO22 (pin 17) → Iolaus GPIO34 (RX)"),
+    ("W8", ORG, "Iolaus 3V3 → Merlin 3V3 (pin 18), 3.3 V power"),
 ]
 for k, (tag, col, t) in enumerate(rows):
     cx, cy = (80 if k < 4 else 760), LY + 58 + (k % 4) * 27
@@ -182,7 +181,7 @@ for k, (tag, col, t) in enumerate(rows):
 
 text(60, LY + 196, "⚠ 3.3 V on every signal pin. Never put Merlin's 5V on any GPIO of Nimue, Iolaus or Merlin.", 13, RED, "bold")
 text(60, LY + 218, "Feed Nimue from Merlin 5V only with Nimue's USB unplugged. Feed Iolaus from Merlin 3V3 only with its USB and battery unplugged.", 13, RED, "bold")
-text(60, LY + 242, "METER CHECK 1 (Merlin on USB, nothing else wired, black probe on GND): both 5V sockets read 5.0 V; both 3V3 sockets read 3.3 V. That tells you which row is which.", 13, "#111", "bold")
+text(60, LY + 242, "METER CHECK 1 (Merlin on USB, nothing else wired, black probe on GND): pins 1 and 3 read 5.0 V; pins 2 and 18 read 3.3 V; GPIO5, 21 and 22 read 0 V. If not, stop.", 13, "#111", "bold")
 text(60, LY + 264, "METER CHECK 2 (everything unplugged, meter on beep): each wire beeps end-to-end. Merlin 5V to GPIO5, GPIO21, GPIO22 and 3V3 must NOT beep.", 13, "#111", "bold")
 text(60, LY + 286, "Camera (OV5647, Phase 3) uses Merlin's CAMERA ribbon socket, not header wires.", 13, "#333")
 add("</svg>")

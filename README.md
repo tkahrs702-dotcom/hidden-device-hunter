@@ -8,7 +8,7 @@ Phase 3 (P4 camera) and Phase 4 (optional add-ons) are parked for later research
 
 ## Where we left off
 
-Updated 10-30-2026. Merlin (P4 screen), Iolaus and Argus firmware plus Nimue's rewiring are written but not yet run on hardware. Start with [`docs/merlin-build-guide.md`](docs/merlin-build-guide.md) (flash and wire all four boards, with meter checks) and the diagram [`docs/manual/diagrams/merlin-four-board-wiring.svg`](docs/manual/diagrams/merlin-four-board-wiring.svg). Session note: [`docs/sessions/10-30-2026-merlin-firmware.md`](docs/sessions/10-30-2026-merlin-firmware.md). Waiting on: Taelor's speaker photo, first hardware test.
+Updated 10-30-2026. Merlin (P4 screen), Iolaus and Argus firmware plus Nimue's rewiring are written but not yet run on hardware. Start with [`docs/merlin-build-guide.md`](docs/merlin-build-guide.md) (flash and wire all four boards, with meter checks) and the diagram [`docs/manual/diagrams/merlin-four-board-wiring.svg`](docs/manual/diagrams/merlin-four-board-wiring.svg). Verified header pinout and used-pin map: [`docs/v2/merlin-p4-hardware-notes.md`](docs/v2/merlin-p4-hardware-notes.md). Session note: [`docs/sessions/10-30-2026-merlin-firmware.md`](docs/sessions/10-30-2026-merlin-firmware.md). Waiting on: first hardware test.
 
 Earlier state (10-26-2026):
 Updated 2026-10-26. V2 (Phase 1 + Phase 2) is built and bench-tested; Phases 3 and 4 are parked. Session note: [`docs/sessions/2026-10-26-01YKZUS1.md`](docs/sessions/2026-10-26-01YKZUS1.md).

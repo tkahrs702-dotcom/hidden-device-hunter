@@ -77,11 +77,12 @@ idf.py build flash monitor
 
 ## 5. Meter check 1 (Merlin alone, on USB)
 
-Meter on DC volts, black probe on a Merlin GND socket.
-- Both 5V sockets (pair 1 and 2) read about 5.0 V.
-- Both 3V3 sockets (pair 1 and pair 9, other row) read about 3.3 V.
+Meter on DC volts, black probe on a Merlin GND pin (5, 13 or 19). Pin 1 is the end of the header marked 5V on the board; odd pins are the row with the 5V labels (the lower row in your photo).
+- Pins 1 and 3 read about 5.0 V.
+- Pins 2 and 18 read about 3.3 V.
+- Pins 11, 14, 15 and 17 (GPIO5, 4, 21, 22) read about 0 V.
 
-This tells you which socket row is which. Now unplug Merlin's USB.
+Pin numbers come from Waveshare's schematic (connector J3), see `docs/v2/merlin-p4-hardware-notes.md`. If any reading is off, stop and tell Claude. Now unplug Merlin's USB.
 
 ## 6. Wire it (everything unplugged)
 
@@ -89,14 +90,14 @@ Follow the diagram, W1 to W8, one wire at a time:
 
 | Wire | From | To |
 |---|---|---|
-| W1 | Nimue 5V | Merlin 5V (pair 1) |
-| W2 | Nimue GND | Merlin GND (pair 3) |
-| W3 | Nimue D7 (TX) | Merlin GPIO5 (pair 6) |
-| W4 (optional) | Merlin GPIO4 (pair 7) | Nimue D6 (RX): lets the screen's mode buttons work |
-| W5 | Iolaus GND | Merlin GND (pair 7) |
-| W6 | Iolaus GPIO13 (TX) | Merlin GPIO21 (pair 8) |
-| W7 | Merlin GPIO22 (pair 9) | Iolaus GPIO34 (RX) |
-| W8 | Iolaus 3V3 | Merlin 3V3 (pair 9) |
+| W1 | Nimue 5V | Merlin 5V (pin 1) |
+| W2 | Nimue GND | Merlin GND (pin 5) |
+| W3 | Nimue D7 (TX) | Merlin GPIO5 (pin 11) |
+| W4 (optional) | Merlin GPIO4 (pin 14) | Nimue D6 (RX): lets the screen's mode buttons work |
+| W5 | Iolaus GND | Merlin GND (pin 13) |
+| W6 | Iolaus GPIO13 (TX) | Merlin GPIO21 (pin 15) |
+| W7 | Merlin GPIO22 (pin 17) | Iolaus GPIO34 (RX) |
+| W8 | Iolaus 3V3 | Merlin 3V3 (pin 18) |
 
 ## 7. Meter check 2 (still unplugged, meter on beep)
 
