@@ -208,15 +208,15 @@ function reconnect(){
   if(retry||!DEV)return;
   retry=setTimeout(async function(){
     retry=null;
-    try{linkMsg('Reconnecting...',true);await attach(DEV)}catch(e){reconnect()}
+    try{linkMsg('Reconnecting... If this lasts, press BOOT on the finder once.',true);await attach(DEV)}catch(e){reconnect()}
   },2000);
 }
 $('conn').onclick=async function(){
   if(demoTimer){clearInterval(demoTimer);demoTimer=null}
   if(!navigator.bluetooth){linkMsg('This browser has no Web Bluetooth. Use Chrome on Android.',true);return}
   try{
-    linkMsg('Choose HDH-Finder in the list...');
-    var dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'HDH'}],optionalServices:[SERVICE]});
+    linkMsg('Choose Mini Speaker (or HDH-Finder on older firmware) in the list...');
+    var dev=await navigator.bluetooth.requestDevice({filters:[{services:[SERVICE]},{namePrefix:'HDH'}],optionalServices:[SERVICE]});
     dev.addEventListener('gattserverdisconnected',function(){S.rx=null;reconnect()});
     linkMsg('Connecting...');
     await attach(dev);
@@ -227,7 +227,7 @@ $('conn').onclick=async function(){
   try{
     if(!navigator.bluetooth||!navigator.bluetooth.getDevices)return;
     var list=await navigator.bluetooth.getDevices();
-    var dev=list.filter(function(d){return d.name&&d.name.indexOf('HDH')==0})[0];
+    var dev=list[0];
     if(!dev)return;
     dev.addEventListener('gattserverdisconnected',function(){S.rx=null;reconnect()});
     if(dev.watchAdvertisements){dev.addEventListener('advertisementreceived',function(){if(!S.rx&&!retry){try{attach(dev).catch(function(){})}catch(e){}}});dev.watchAdvertisements().catch(function(){})}
