@@ -73,7 +73,7 @@ ls /dev/ttyACM*
 ```
 The chip is known to be revision **v1.3** (Taelor, 10-30-2026: this is the same physical board that ran the earlier working firmware, which now needs updating), and the firmware is set up for that, so the revision check is skipped (Taelor, 10-30-2026). Optional: `python -m esptool -p /dev/ttyACM0 chip_id` shows the revision; if it ever says v3.x, stop and tell Claude, because `sdkconfig.defaults` would have to change.
 
-**Back up the board's factory software before the first flash** (about 2 minutes, keep the file):
+**Backup (optional):** Taelor says the board's earlier firmware is already backed up (10-30-2026), so this step can be skipped. If you want a fresh copy anyway (about 2 minutes, keep the file):
 ```
 mkdir -p ~/backups/merlin
 python -m esptool -p /dev/ttyACM0 -b 921600 read_flash 0 0x2000000 ~/backups/merlin/merlin-original.bin
