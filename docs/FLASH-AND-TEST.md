@@ -10,10 +10,7 @@ cd ~/Projects/hidden-device-hunter && git checkout main && git pull && bash tool
 ```
    (`... flash.sh c5` or `... flash.sh r4` does just one board.)
 2. Power both boards from the 2-port power bank.
-3. Phone: Bluetooth and Location on. Scan the printed QR code (to print it, open
-   `~/Projects/hidden-device-hunter/docs/qr/print-me.html` in a browser on the computer and press Print),
-   open the link in Chrome, tap **Connect to the finder**, pick **HDH-Finder**.
-   Limits: Chrome on Android only (not Brave, not iPhone); the phone needs internet (mobile data is fine) each time it opens the page.
+3. The C5 locks the Tuya plug, and the R4 shows bars and beeps.
 
 The sections below are the same steps by hand, for when something goes wrong.
 

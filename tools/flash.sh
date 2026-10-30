@@ -93,5 +93,5 @@ case "$WHICH" in
   *) echo "Use: flash.sh, flash.sh c5 or flash.sh r4"; exit 1 ;;
 esac
 echo
-if [ $ok -eq 0 ]; then echo "All done. Power both boards from the power bank, then scan the QR code with your phone."; else echo "Something failed; see the message above."; fi
+if [ $ok -eq 0 ]; then echo "All done. Power both boards from the power bank, and the R4 bars and beeps start."; else echo "Something failed; see the message above."; fi
 exit $ok
