@@ -70,9 +70,8 @@ Plug a USB-C cable into the port marked **USB TO UART**, nothing else connected.
 ```
 . ~/esp/esp-idf-v5.5.5/export.sh
 ls /dev/ttyACM*
-python -m esptool -p /dev/ttyACM0 chip_id
 ```
-**Check 1:** the output says "ESP32-P4" and a chip revision. The firmware is set up for revision **v1.3**. If it says v3.x, stop and tell Claude: the settings in `sdkconfig.defaults` must change first.
+The chip is known to be revision **v1.3** (measured on another board of the same model), and the firmware is set up for that, so the revision check is skipped (Taelor, 10-30-2026). Optional: `python -m esptool -p /dev/ttyACM0 chip_id` shows the revision; if it ever says v3.x, stop and tell Claude, because `sdkconfig.defaults` would have to change.
 
 **Back up the board's factory software before the first flash** (about 2 minutes, keep the file):
 ```
