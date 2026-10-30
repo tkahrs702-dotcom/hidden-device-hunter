@@ -41,7 +41,7 @@ Pins 1 and 3 are the board's 5V rail (with a protection diode); pins 2 and 18 ar
 | Display | backlight 26, reset 27 (the MIPI-DSI data lanes have their own dedicated pins) |
 | microSD | 39 to 44 (D0 to D3 = 39 to 42, CLK 43, CMD 44) |
 | Camera | MIPI-CSI ribbon socket, no GPIOs |
-| ESP32-C6 (Wi-Fi/Bluetooth) | SDIO to the C6, not on the header |
+| ESP32-C6 (Wi-Fi/Bluetooth) | SDIO: 14 (C6 IO20, D0), 15 (IO21, D1), 16 (IO22, D2), 17 (IO23, D3), 18 (IO19, CLK), 19 (IO18, CMD); 6 (C6 IO2); 54 (C6 enable/reset). None of these are on the header. Read from the schematic's ESP32-C6 block 10-30-2026 (the CLK/CMD/data roles follow the C6's fixed SDIO pins). |
 
 ## Choices made for the project, and why
 - **GPIO5 (pin 11) RX and GPIO4 (pin 14) TX** for Nimue; **GPIO21 (pin 15) RX and GPIO22 (pin 17) TX** for Iolaus. None of these appear in the BSP's used-pin list or in the schematic's other blocks; GPIO4/5/21/22 are ordinary GPIOs. The ESP32-P4 can route any UART to any free GPIO.
@@ -52,7 +52,6 @@ Pins 1 and 3 are the board's 5V rail (with a protection diode); pins 2 and 18 ar
 ## Not confirmed
 - Nothing has been run on the physical board.
 - The 5V and 3V3 rows are confirmed from the schematic; meter check 1 in `docs/merlin-build-guide.md` still verifies them on the real board.
-- The ESP-Hosted SDIO pins to the C6 (believed to be GPIO14 to 19 plus a reset line, as on Espressif's P4 boards) were not read from the schematic.
 
 ## Notes for future work (not researched yet)
 - **Camera (arrives Saturday, OV5647):** MIPI-CSI 15-pin 2-lane socket; Waveshare's example `09_video_lcd_display` shows a camera preview on this screen. Phase 3.
