@@ -208,7 +208,7 @@ function reconnect(){
   if(retry||!DEV)return;
   retry=setTimeout(async function(){
     retry=null;
-    try{linkMsg('Reconnecting...',true);await attach(DEV)}catch(e){reconnect()}
+    try{linkMsg('Reconnecting... If this lasts, press BOOT on the finder once.',true);await attach(DEV)}catch(e){reconnect()}
   },2000);
 }
 $('conn').onclick=async function(){

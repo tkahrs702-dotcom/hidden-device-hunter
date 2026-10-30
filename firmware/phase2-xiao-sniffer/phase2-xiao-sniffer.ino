@@ -173,11 +173,16 @@ static int cycleCursor = -1;
 static const char *BLE_SERVICE = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
 static const char *BLE_TX = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";  // C5 -> phone (notify)
 static const char *BLE_RX = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // phone -> C5 (write)
+static BLECharacteristic *bleTx = nullptr;
+static volatile bool bleConnected = false;
+static volatile bool bleHello = false;     // a phone just connected: resend the lock state
+
 // Low profile: a plain name (the phone page finds the C5 by its service, not its name), and it only
-// advertises for ADVERT_MS after power-on, after the phone disconnects, or after any BOOT press.
+// advertises for ADVERT_MS after power-on or any BOOT press, and REJOIN_MS after the phone disconnects.
 // While a phone is connected it does not advertise at all.
 static const char *BLE_NAME = "Mini Speaker";
 static const uint32_t ADVERT_MS = 120000;
+static const uint32_t REJOIN_MS = 600000;  // after a dropped link: 10 min for the phone to come back in range
 static uint32_t advUntil = 0;
 static bool advOn = false;
 static volatile bool bleReAdvertise = false;  // set by the disconnect callback, handled in loop()
@@ -194,16 +199,13 @@ static void bleAdvertiseCheck(uint32_t now) {
   if (bleReAdvertise) {
     bleReAdvertise = false;
     advOn = false;  // the stack stopped advertising when the phone connected
-    bleAdvertiseFor(ADVERT_MS);
+    bleAdvertiseFor(REJOIN_MS);
   }
   if (advOn && !bleConnected && (int32_t)(now - advUntil) > 0) {
     BLEDevice::stopAdvertising();
     advOn = false;
   }
 }
-static BLECharacteristic *bleTx = nullptr;
-static volatile bool bleConnected = false;
-static volatile bool bleHello = false;     // a phone just connected: resend the lock state
 static char bleRing[4096];
 static uint16_t bleHead = 0, bleTail = 0;  // loop task only
 static char bleCmd[48];
