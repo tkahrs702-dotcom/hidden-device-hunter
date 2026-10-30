@@ -516,17 +516,11 @@ void app_main(void) {
   linkBegin(&nimue, NIMUE_RX_PIN, NIMUE_TX_PIN, "nimue");
   linkBegin(&iolaus, IOLAUS_RX_PIN, IOLAUS_TX_PIN, "iolaus");
 
-  bsp_display_cfg_t cfg = {
-      .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
-      .buffer_size = BSP_LCD_DRAW_BUFF_SIZE,
-      .double_buffer = BSP_LCD_DRAW_BUFF_DOUBLE,
-      .flags = {.buff_dma = true, .buff_spiram = true, .sw_rotate = PORTRAIT},
-  };
-  lv_display_t *disp = bsp_display_start_with_config(&cfg);
+  lv_display_t *disp = bsp_display_start();  // this BSP sets up LVGL through esp_lvgl_adapter
   bsp_display_backlight_on();
   bsp_display_lock(0);
 #if PORTRAIT
-  bsp_display_rotate(disp, LV_DISPLAY_ROTATION_90);
+  lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
 #endif
   buildScreen();
   lv_timer_create(refresh, 100, NULL);
