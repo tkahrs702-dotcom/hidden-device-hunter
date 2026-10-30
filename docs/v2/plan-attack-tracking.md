@@ -27,8 +27,9 @@ frames come from: the strength they arrive at, and that it differs from the real
 2. Learn a quiet baseline for each count over the first minutes (same idea as the hand-wave baseline).
 3. Raise an alert only when a count stays well above baseline for a few seconds (one stray deauth is normal
    when a device leaves). Record type, channel, the targeted MAC and the signal strength.
-4. Watch-list: Taelor's own devices (cameras, Tuya plug, router) saved by MAC, so an attack aimed at them is
-   flagged first. Router beacons give the "real" strength to compare a spoofed router against.
+4. Watch-list, learned automatically (Taelor, 2026-10-30: no list to type): the C5 finds Taelor's router by its
+   network name, then every device it hears exchanging data with that router is watched. An attack aimed at any
+   of them is flagged first. Router beacons give the "real" strength to compare a spoofed router against.
 5. Send `A,<type>,<channel>,<target MAC>,<dBm>,<count>` lines to the R4 and the phone.
 
 ### B. Point at the attacker
@@ -52,5 +53,6 @@ frames come from: the strength they arrive at, and that it differs from the real
 - Second listening point (the Phase 2.A telemetry idea) to tell which room the attacker is in.
 
 ## Open questions for Taelor
-- Which home devices go on the watch-list (MACs)?
+- Second listening point: the TTGO LoRa32 boards would work (2.4 GHz only), but they belong to SENTINEL;
+  use one only if Taelor gives it to this project for good.
 - Alert style: special beep pattern on the R4, phone pop-up, or both?
