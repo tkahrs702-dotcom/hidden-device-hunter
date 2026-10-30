@@ -15,7 +15,8 @@
 // Messages from the ESP32 sniffer (one per line):
 //   L,<MAC>,<cat>,<maker>   locked (cat 0 = unknown, 1 = camera maker, 2 = IoT chip)
 //   U                       unlocked
-//   T,<now>,<avg>,<ch>      target signal in dBm, about 10 per second
+//   T,<now>,<avg>,<ch>,<pps>,<idle pps>,<wobble dB>,<wave 0/1>
+//                           target signal in dBm, about 10 per second, plus telemetry for the phone page
 //   S,<total>,<cams>,<iot>,<hidden>,<locked>   once a second
 
 #include "beeper.h"
@@ -55,7 +56,9 @@ void onLine(char *line) {
   for (char *tok = strtok(line, ","); tok && n < 8; tok = strtok(nullptr, ",")) f[n++] = tok;
   if (n == 0) return;
 
-  if (f[0][0] == 'L' && n >= 3) {
+  if (f[0][0] == 'L' && n >= 3 && locked && strcmp(f[1], lockMac) == 0) {
+    lastT = millis();  // the sniffer repeats L every 4 s: same target, nothing to redo
+  } else if (f[0][0] == 'L' && n >= 3) {
     locked = true;
     lastT = millis();
     peakBars = 0;
@@ -80,6 +83,7 @@ void onLine(char *line) {
     if (millis() < camUntil) return;  // let the camera picture show first
     int avg = atoi(f[2]);
     Web::signal(atoi(f[1]), avg, n >= 4 ? atoi(f[3]) : 0);
+    if (n >= 8) Web::telemetry(atoi(f[4]), atoi(f[5]), atoi(f[6]), atoi(f[7]));
     int pct = strengthPct(avg);
     if (pct >= 97) Beeper::continuous();
     else Beeper::set(1200 - (uint32_t)pct * 11, 40);
@@ -106,6 +110,7 @@ void onLine(char *line) {
       Meter::bars(0);
     } else if (!snifferLocked && locked) {
       locked = false;
+      Web::unlocked();
       Beeper::set(0, 0);
     }
   }

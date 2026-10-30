@@ -68,7 +68,7 @@ static const char *BOARD_NAME = "XIAO ESP32-S3";
 #endif
 // Taelor's wires to the level shifter are crossed (TX on D7, RX on D6), so the pins are swapped here
 // instead of rewiring. Set LINK_CROSSED to false if the wires are put back as D6 = TX, D7 = RX.
-static const bool LINK_CROSSED = true;
+static const bool LINK_CROSSED = false;
 static const int LINK_RX = LINK_CROSSED ? D6 : D7;
 static const int LINK_TX = LINK_CROSSED ? D7 : D6;
 static const uint32_t LINK_BAUD = 115200;
@@ -118,6 +118,45 @@ static uint32_t lockLastHeard = 0;
 static float lockAvg = 0;
 static bool lockAvgValid = false;
 
+// Telemetry on the locked target (sent on each T line):
+//   packets per second, its slow baseline, a "wave" spike flag and how much the signal wobbles.
+// Hand-wave test: a camera idles at a few packets/s and jumps when its picture changes, so waving
+// a hand in front of a suspect makes it spike. Spike = pps > max(WAVE_MIN_PPS, WAVE_FACTOR x baseline).
+static const float WAVE_FACTOR = 2.4f;
+static const uint16_t WAVE_MIN_PPS = 8;
+static const uint32_t WAVE_HOLD_MS = 2000;   // keep the flag up long enough to see it
+static uint16_t lockPktsThisSec = 0;
+static int lockPps = -1;
+static float lockBase = 0;
+static uint8_t lockBaseSecs = 0;             // seconds of baseline so far; no spike call until 3
+static uint8_t spikeSecs = 0;                // spike seconds in a row; a long "spike" is the new normal
+static bool wasParked = false;
+static uint32_t waveUntil = 0;
+static int8_t jitBuf[16];                    // last raw readings of the target, for the wobble
+static uint8_t jitN = 0, jitPos = 0;
+
+static void resetTelemetry() {
+  lockPktsThisSec = 0;
+  lockPps = -1;
+  lockBase = 0;
+  lockBaseSecs = 0;
+  waveUntil = 0;
+  spikeSecs = 0;
+  wasParked = false;
+  jitN = 0;
+  jitPos = 0;
+}
+
+// Spread (standard deviation, dB) of the last readings: 0-2 steady, 3-6 wobbly, over 6 = reflections.
+static int jitter() {
+  if (jitN < 4) return 0;
+  float m = 0, v = 0;
+  for (int i = 0; i < jitN; i++) m += jitBuf[i];
+  m /= jitN;
+  for (int i = 0; i < jitN; i++) v += (jitBuf[i] - m) * (jitBuf[i] - m);
+  return (int)(sqrtf(v / jitN) + 0.5f);
+}
+
 static uint8_t chIndex = 0;
 static bool chBad[NUM_CH];                   // channels the radio refused (skipped while hopping)
 static uint32_t lastHop = 0;
@@ -137,6 +176,36 @@ static const char *BLE_RX = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // phone ->
 static BLECharacteristic *bleTx = nullptr;
 static volatile bool bleConnected = false;
 static volatile bool bleHello = false;     // a phone just connected: resend the lock state
+
+// Low profile: a plain name (the phone page finds the C5 by its service, not its name), and it only
+// advertises for ADVERT_MS after power-on or any BOOT press, and REJOIN_MS after the phone disconnects.
+// While a phone is connected it does not advertise at all.
+static const char *BLE_NAME = "Mini Speaker";
+static const uint32_t ADVERT_MS = 120000;
+static const uint32_t REJOIN_MS = 600000;  // after a dropped link: 10 min for the phone to come back in range
+static uint32_t advUntil = 0;
+static bool advOn = false;
+static volatile bool bleReAdvertise = false;  // set by the disconnect callback, handled in loop()
+
+static void bleAdvertiseFor(uint32_t ms) {
+  advUntil = millis() + ms;
+  if (!advOn) {
+    BLEDevice::startAdvertising();
+    advOn = true;
+  }
+}
+
+static void bleAdvertiseCheck(uint32_t now) {
+  if (bleReAdvertise) {
+    bleReAdvertise = false;
+    advOn = false;  // the stack stopped advertising when the phone connected
+    bleAdvertiseFor(REJOIN_MS);
+  }
+  if (advOn && !bleConnected && (int32_t)(now - advUntil) > 0) {
+    BLEDevice::stopAdvertising();
+    advOn = false;
+  }
+}
 static char bleRing[4096];
 static uint16_t bleHead = 0, bleTail = 0;  // loop task only
 static char bleCmd[48];
@@ -182,7 +251,7 @@ class BleServerCb : public BLEServerCallbacks {
   void onConnect(BLEServer *) override { bleConnected = true; bleHello = true; }
   void onDisconnect(BLEServer *) override {
     bleConnected = false;
-    BLEDevice::startAdvertising();  // allow the phone to come back
+    bleReAdvertise = true;  // let the phone come back for ADVERT_MS
   }
 };
 
@@ -206,7 +275,7 @@ class BleRxCb : public BLECharacteristicCallbacks {
 };
 
 static void bleBegin() {
-  BLEDevice::init("HDH-Finder");
+  BLEDevice::init(BLE_NAME);
   BLEServer *srv = BLEDevice::createServer();
   srv->setCallbacks(new BleServerCb());
   BLEService *svc = srv->createService(BLE_SERVICE);
@@ -220,7 +289,7 @@ static void bleBegin() {
   BLEAdvertising *adv = BLEDevice::getAdvertising();
   adv->addServiceUUID(BLE_SERVICE);
   adv->setScanResponse(true);
-  BLEDevice::startAdvertising();
+  bleAdvertiseFor(ADVERT_MS);
 }
 
 // ---------- radio callback (runs in the Wi-Fi task: keep it short) ----------
@@ -432,6 +501,7 @@ static void lockOn(const uint8_t *mac) {
   lockIdx = findDev(mac);
   lockLastHeard = millis();
   lockAvgValid = false;
+  resetTelemetry();
   prefs.putBytes("lock", lockMac, 6);
   if (lockIdx >= 0 && devs[lockIdx].ch) setChannel(devs[lockIdx].ch);
   char m[18];
@@ -465,7 +535,7 @@ static void cleanText(const char *src, char *dst, size_t n) {  // one comma-free
   if (!dst[0]) strcpy(dst, "-");
 }
 
-static void sendNearby(uint32_t now) {
+static void sendNearby(uint32_t now, bool toR4) {
   int picked[NEARBY_MAX];
   int n = 0;
   for (; n < NEARBY_MAX; n++) {
@@ -483,7 +553,7 @@ static void sendNearby(uint32_t now) {
     if (best < 0) break;
     picked[n] = best;
   }
-  Link.toSerial = false;
+  Link.toSerial = toR4;  // the 4 s batch goes to the R4 page too; a new phone's hello is BLE only
   Link.printf("B,%d\n", n);
   for (int k = 0; k < n; k++) {
     Dev &d = devs[picked[k]];
@@ -617,7 +687,7 @@ static void handleLinkCmd() {
     }
     buf[len] = 0;
     len = 0;
-    if (buf[0] == 'M' && buf[1] == ',' && buf[2] >= '0' && buf[2] <= '2') applyMode(buf[2] - '0');
+    if (len >= 3 && buf[0] == 'M' && buf[1] == ',' && buf[2] >= '0' && buf[2] <= '2') applyMode(buf[2] - '0');
   }
 }
 
@@ -628,7 +698,11 @@ static void handleButton() {
   static bool longDone = false;
   bool down = digitalRead(BUTTON_PIN) == LOW;
   uint32_t now = millis();
-  if (down && !wasDown) { downAt = now; longDone = false; }
+  if (down && !wasDown) {
+    downAt = now;
+    longDone = false;
+    if (!bleConnected) { advOn = false; bleAdvertiseFor(ADVERT_MS); }  // any press: phone can connect again
+  }
   if (down && !longDone && now - downAt > 3000) {
     longDone = true;
     applyMode(mode + 1);
@@ -751,17 +825,50 @@ void loop() {
       lockLastHeard = now;
       lockAvg = lockAvgValid ? (0.7f * lockAvg + 0.3f * k.rssi) : k.rssi;
       lockAvgValid = true;
+      lockPktsThisSec++;
+      jitBuf[jitPos] = k.rssi;
+      jitPos = (jitPos + 1) % 16;
+      if (jitN < 16) jitN++;
     }
+  }
+
+  // Once a second: the target's packet rate, its baseline and the wave spike.
+  // Only counted while parked on the target's channel with Wi-Fi capture on and the target heard;
+  // hopping, Bluetooth-only mode or a quiet target would drag the baseline toward 0.
+  static uint32_t lastPps = 0;
+  if (now - lastPps >= 1000) {
+    lastPps = now;
+    bool parked = locked && mode != 1 && lockIdx >= 0 && devs[lockIdx].ch && devs[lockIdx].ch == currentCh &&
+                  !(devs[lockIdx].flags & F_BLE) && now - lockLastHeard <= LOST_MS;
+    if (parked && wasParked && lockPktsThisSec > 0) {  // skip the first, partial second after (re)parking
+      lockPps = lockPktsThisSec;
+      float limit = max((float)WAVE_MIN_PPS, WAVE_FACTOR * lockBase);
+      bool spike = lockBaseSecs >= 3 && lockPps > limit && spikeSecs < 10;
+      if (spike) {
+        spikeSecs++;
+        waveUntil = now + WAVE_HOLD_MS;  // leave the baseline alone so it stays the idle rate
+      } else {
+        spikeSecs = 0;  // after 10 s of "spike" the baseline catches up instead of latching
+        lockBase = lockBaseSecs ? 0.75f * lockBase + 0.25f * lockPps : lockPps;
+        if (lockBaseSecs < 255) lockBaseSecs++;
+      }
+    } else if (!parked) {
+      lockPps = -1;  // not measurable now; the pages hide the readout
+    }
+    wasParked = parked;
+    lockPktsThisSec = 0;
   }
 
   // Send the target's signal to the R4 up to 10 times a second.
   if (locked && targetHeard && now - lastT >= 100) {
     lastT = now;
-    Link.printf("T,%d,%d,%u\n", targetRssi, (int)lockAvg, currentCh);
+    Link.printf("T,%d,%d,%u,%d,%d,%d,%d\n", targetRssi, (int)lockAvg, currentCh, lockPps, (int)(lockBase + 0.5f), jitter(),
+                (int)(now < waveUntil));
     static uint32_t lastUsb = 0;
     if (now - lastUsb >= 500) {
       lastUsb = now;
-      Serial.printf("TARGET now %4d dBm  avg %4d dBm  ch %u\n", targetRssi, (int)lockAvg, currentCh);
+      Serial.printf("TARGET now %4d dBm  avg %4d dBm  ch %u  %d pkt/s (idle %d)  wobble %d dB%s\n", targetRssi, (int)lockAvg,
+                    currentCh, lockPps, (int)(lockBase + 0.5f), jitter(), now < waveUntil ? "  WAVE SPIKE" : "");
     }
   }
 
@@ -797,7 +904,8 @@ void loop() {
     static uint8_t nearbyTick = 0;
     if ((nearbyTick++ & 3) == 0) {  // every 4 s
       Link.printf("M,%u\n", mode);
-      sendNearby(now);
+      sendNearby(now, true);
+      if (locked) sendLock();  // the R4 keeps its lock even if an earlier L line was lost
     }
     static uint32_t lastClear = 0;
     if (bleScanOn && now - lastClear > 20000) {  // keep the scan's own result list from growing
@@ -809,12 +917,16 @@ void loop() {
   }
 
   bleDrain(now);
+  bleAdvertiseCheck(now);
   if (bleHello) {
     bleHello = false;
+    bleHead = bleTail = 0;  // a new phone should not get lines queued for the last one
+    Link.toSerial = false;  // the R4 already knows; do not make it redo its lock sequence
     if (locked) sendLock();
     else Link.print("U\n");
     Link.printf("M,%u\n", mode);
-    sendNearby(now);
+    sendNearby(now, false);
+    Link.toSerial = true;
   }
   if (bleCmdReady) {
     handleBleCmd();
