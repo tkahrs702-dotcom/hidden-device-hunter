@@ -36,9 +36,9 @@ static const int ATTACK_FRAMES = 8;        // more than this many in one window 
 static const uint32_t HEARTBEAT_MS = 30000;
 static const uint32_t RECHECK_MS = 600000; // look for the router's channel again every 10 min
 static const uint32_t QUIET_MS = 20000;    // no beacon from the router this long -> look again now
-// TTGO T3 V1.6.1 pins
-static const int LORA_SCK = 5, LORA_MISO = 19, LORA_MOSI = 27, LORA_SS = 18, LORA_RST = 23, LORA_DIO0 = 26;
-static const int OLED_SDA = 21, OLED_SCL = 22, BUTTON = 0;
+// TTGO T3 V1.6.1 pins (PIN_ prefix: the board package already defines LORA_SCK etc. as macros)
+static const int PIN_LORA_SCK = 5, PIN_LORA_MISO = 19, PIN_LORA_MOSI = 27, PIN_LORA_SS = 18, PIN_LORA_RST = 23, PIN_LORA_DIO0 = 26;
+static const int PIN_OLED_SDA = 21, PIN_OLED_SCL = 22, BUTTON = 0;
 // ---------------------------------------------
 
 Adafruit_SSD1306 oled(128, 64, &Wire, -1);
@@ -139,11 +139,11 @@ static void sendLora(const char *msg) {
 void setup() {
   Serial.begin(115200);
   pinMode(BUTTON, INPUT_PULLUP);
-  Wire.begin(OLED_SDA, OLED_SCL);
+  Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL);
   haveOled = oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
-  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_SS);
-  LoRa.setPins(LORA_SS, LORA_RST, LORA_DIO0);
+  SPI.begin(PIN_LORA_SCK, PIN_LORA_MISO, PIN_LORA_MOSI, PIN_LORA_SS);
+  LoRa.setPins(PIN_LORA_SS, PIN_LORA_RST, PIN_LORA_DIO0);
   if (!LoRa.begin(LORA_FREQ)) {
     show("LoRa radio not found!", "Check the board type.");
     while (true) delay(1000);

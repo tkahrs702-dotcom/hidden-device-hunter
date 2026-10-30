@@ -22,9 +22,9 @@ static const long LORA_FREQ = 915E6;
 static const int LORA_SF = 9;
 static const long LORA_BW = 125E3;
 static const int LORA_SYNC = 0x5A;
-// TTGO T3 V1.6.1 pins
-static const int LORA_SCK = 5, LORA_MISO = 19, LORA_MOSI = 27, LORA_SS = 18, LORA_RST = 23, LORA_DIO0 = 26;
-static const int OLED_SDA = 21, OLED_SCL = 22;
+// TTGO T3 V1.6.1 pins (PIN_ prefix: the board package already defines LORA_SCK etc. as macros)
+static const int PIN_LORA_SCK = 5, PIN_LORA_MISO = 19, PIN_LORA_MOSI = 27, PIN_LORA_SS = 18, PIN_LORA_RST = 23, PIN_LORA_DIO0 = 26;
+static const int PIN_OLED_SDA = 21, PIN_OLED_SCL = 22;
 static const int MERLIN_TX = 13, MERLIN_RX = 34;  // 34 is input-only, fine for receiving
 // ---------------------------------------------
 
@@ -49,11 +49,11 @@ static void show() {
 void setup() {
   Serial.begin(115200);  // USB, for checking on a computer
   Serial1.begin(115200, SERIAL_8N1, MERLIN_RX, MERLIN_TX);
-  Wire.begin(OLED_SDA, OLED_SCL);
+  Wire.begin(PIN_OLED_SDA, PIN_OLED_SCL);
   haveOled = oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
-  SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_SS);
-  LoRa.setPins(LORA_SS, LORA_RST, LORA_DIO0);
+  SPI.begin(PIN_LORA_SCK, PIN_LORA_MISO, PIN_LORA_MOSI, PIN_LORA_SS);
+  LoRa.setPins(PIN_LORA_SS, PIN_LORA_RST, PIN_LORA_DIO0);
   if (!LoRa.begin(LORA_FREQ)) {
     lastLine = "LoRa radio not found!";
     Serial.println(lastLine);
