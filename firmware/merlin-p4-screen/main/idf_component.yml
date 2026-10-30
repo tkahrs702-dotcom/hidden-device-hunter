@@ -1,0 +1,5 @@
+dependencies:
+  idf: ">=5.5"
+  # Waveshare's board support package for the ESP32-P4-WIFI6-Touch-LCD-4.3: screen, touch, backlight,
+  # speaker codec and LVGL. Pinned so a new release cannot change the build under us.
+  waveshare/esp32_p4_wifi6_touch_lcd_4_3: "==1.0.1"
