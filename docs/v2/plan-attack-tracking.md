@@ -50,9 +50,10 @@ frames come from: the strength they arrive at, and that it differs from the real
 
 ### D. Later (Phase 3/4)
 - P4 screen: attack log and a direction view.
-- Second listening point (the Phase 2.A telemetry idea) to tell which room the attacker is in.
+- Second listening point (the Phase 2.A telemetry idea) to tell which room the attacker is in: one of Taelor's
+  TTGO LoRa32 boards (Taelor, 2026-10-30: they own them, OK to plan with). Its ESP32 hears 2.4 GHz Wi-Fi and
+  Bluetooth (not 5 GHz); it sits still in one room and sends its attack counts and strengths to the handheld over
+  LoRa, so it needs no Wi-Fi and works away from home Wi-Fi. This project's own firmware only, nothing from SENTINEL.
 
 ## Open questions for Taelor
-- Second listening point: the TTGO LoRa32 boards would work (2.4 GHz only), but they belong to SENTINEL;
-  use one only if Taelor gives it to this project for good.
 - Alert style: special beep pattern on the R4, phone pop-up, or both?
