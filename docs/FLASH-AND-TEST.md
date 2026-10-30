@@ -6,13 +6,14 @@ Copy each command whole; nothing in them needs editing.
 ## Quick way (normally all you need)
 1. Flash both boards with one command, and follow its prompts:
 ```
-bash ~/Projects/hidden-device-hunter/tools/flash.sh
+cd ~/Projects/hidden-device-hunter && git checkout main && git pull && bash tools/flash.sh
 ```
    (`... flash.sh c5` or `... flash.sh r4` does just one board.)
 2. Power both boards from the 2-port power bank.
-3. Phone: Bluetooth and Location on. Scan the printed QR code ([`docs/qr/print-me.html`](qr/print-me.html)),
+3. Phone: Bluetooth and Location on. Scan the printed QR code (to print it, open
+   `~/Projects/hidden-device-hunter/docs/qr/print-me.html` in a browser on the computer and press Print),
    open the link in Chrome, tap **Connect to the finder**, pick **HDH-Finder**.
-   Limits: Chrome on Android only (not Brave, not iPhone); the page needs the internet once to load.
+   Limits: Chrome on Android only (not Brave, not iPhone); the phone needs internet (mobile data is fine) each time it opens the page.
 
 The sections below are the same steps by hand, for when something goes wrong.
 

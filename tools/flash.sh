@@ -7,12 +7,14 @@
 # Plug in only one board at a time. The computer must be on home Wi-Fi (not HDH-Finder).
 set -u
 REPO=~/Projects/hidden-device-hunter
-WHICH=${1:-both}
+WHICH=$(echo "${1:-both}" | tr "[:upper:]" "[:lower:]")
 cd "$REPO" || { echo "No folder $REPO"; exit 1; }
 
 echo "== Getting the latest code (main) =="
-git checkout -q main 2>/dev/null || { git stash -q && git checkout -q main; } || { echo "Could not switch to main."; exit 1; }
-git pull -q || echo "(git pull failed: not on home Wi-Fi? Flashing the code already on this computer.)"
+if ! git checkout -q main 2>/dev/null; then
+  git stash -q && echo "Your local changes were saved with git stash." && git checkout -q main || { echo "Could not switch to main."; exit 1; }
+fi
+git pull -q || { echo "git pull failed (see the message above). Fix that first, or the boards get old code."; exit 1; }
 
 wait_for() {  # wait_for <command that prints a port> <seconds>; prints the port
   local i
@@ -46,6 +48,7 @@ flash_c5() {
   port=$(wait_for "ls /dev/serial/by-id/*Espressif* 2>/dev/null | head -1" 15) || { echo "C5 not found."; return 1; }
   local esptool
   esptool=$(ls ~/.arduino15/packages/esp32/tools/esptool_py/*/esptool 2>/dev/null | tail -1)
+  [ -n "$esptool" ] || { echo "esptool not found in ~/.arduino15; cannot use the slow method."; return 1; }
   arduino-cli compile --output-dir /tmp/c5 --fqbn esp32:esp32:XIAO_ESP32C5:CDCOnBoot=cdc firmware/phase2-xiao-sniffer &&
     "$esptool" --chip esp32c5 -p "$port" --no-stub write-flash 0x0 /tmp/c5/phase2-xiao-sniffer.ino.merged.bin &&
     { echo "C5 done. Unplug it and plug it back in to start the new code."; return 0; }
@@ -86,7 +89,8 @@ ok=0
 case "$WHICH" in
   c5) flash_c5 || ok=1 ;;
   r4) flash_r4 || ok=1 ;;
-  *) flash_c5 || ok=1; flash_r4 || ok=1 ;;
+  both) flash_c5 || ok=1; flash_r4 || ok=1 ;;
+  *) echo "Use: flash.sh, flash.sh c5 or flash.sh r4"; exit 1 ;;
 esac
 echo
 if [ $ok -eq 0 ]; then echo "All done. Power both boards from the power bank, then scan the QR code with your phone."; else echo "Something failed; see the message above."; fi
