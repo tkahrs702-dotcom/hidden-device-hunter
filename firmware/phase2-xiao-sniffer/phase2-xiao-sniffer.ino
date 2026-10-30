@@ -118,6 +118,45 @@ static uint32_t lockLastHeard = 0;
 static float lockAvg = 0;
 static bool lockAvgValid = false;
 
+// Telemetry on the locked target (sent on each T line):
+//   packets per second, its slow baseline, a "wave" spike flag and how much the signal wobbles.
+// Hand-wave test: a camera idles at a few packets/s and jumps when its picture changes, so waving
+// a hand in front of a suspect makes it spike. Spike = pps > max(WAVE_MIN_PPS, WAVE_FACTOR x baseline).
+static const float WAVE_FACTOR = 2.4f;
+static const uint16_t WAVE_MIN_PPS = 8;
+static const uint32_t WAVE_HOLD_MS = 2000;   // keep the flag up long enough to see it
+static uint16_t lockPktsThisSec = 0;
+static int lockPps = -1;
+static float lockBase = 0;
+static uint8_t lockBaseSecs = 0;             // seconds of baseline so far; no spike call until 3
+static uint8_t spikeSecs = 0;                // spike seconds in a row; a long "spike" is the new normal
+static bool wasParked = false;
+static uint32_t waveUntil = 0;
+static int8_t jitBuf[16];                    // last raw readings of the target, for the wobble
+static uint8_t jitN = 0, jitPos = 0;
+
+static void resetTelemetry() {
+  lockPktsThisSec = 0;
+  lockPps = -1;
+  lockBase = 0;
+  lockBaseSecs = 0;
+  waveUntil = 0;
+  spikeSecs = 0;
+  wasParked = false;
+  jitN = 0;
+  jitPos = 0;
+}
+
+// Spread (standard deviation, dB) of the last readings: 0-2 steady, 3-6 wobbly, over 6 = reflections.
+static int jitter() {
+  if (jitN < 4) return 0;
+  float m = 0, v = 0;
+  for (int i = 0; i < jitN; i++) m += jitBuf[i];
+  m /= jitN;
+  for (int i = 0; i < jitN; i++) v += (jitBuf[i] - m) * (jitBuf[i] - m);
+  return (int)(sqrtf(v / jitN) + 0.5f);
+}
+
 static uint8_t chIndex = 0;
 static bool chBad[NUM_CH];                   // channels the radio refused (skipped while hopping)
 static uint32_t lastHop = 0;
@@ -432,6 +471,7 @@ static void lockOn(const uint8_t *mac) {
   lockIdx = findDev(mac);
   lockLastHeard = millis();
   lockAvgValid = false;
+  resetTelemetry();
   prefs.putBytes("lock", lockMac, 6);
   if (lockIdx >= 0 && devs[lockIdx].ch) setChannel(devs[lockIdx].ch);
   char m[18];
@@ -751,17 +791,50 @@ void loop() {
       lockLastHeard = now;
       lockAvg = lockAvgValid ? (0.7f * lockAvg + 0.3f * k.rssi) : k.rssi;
       lockAvgValid = true;
+      lockPktsThisSec++;
+      jitBuf[jitPos] = k.rssi;
+      jitPos = (jitPos + 1) % 16;
+      if (jitN < 16) jitN++;
     }
+  }
+
+  // Once a second: the target's packet rate, its baseline and the wave spike.
+  // Only counted while parked on the target's channel with Wi-Fi capture on and the target heard;
+  // hopping, Bluetooth-only mode or a quiet target would drag the baseline toward 0.
+  static uint32_t lastPps = 0;
+  if (now - lastPps >= 1000) {
+    lastPps = now;
+    bool parked = locked && mode != 1 && lockIdx >= 0 && devs[lockIdx].ch && devs[lockIdx].ch == currentCh &&
+                  !(devs[lockIdx].flags & F_BLE) && now - lockLastHeard <= LOST_MS;
+    if (parked && wasParked && lockPktsThisSec > 0) {  // skip the first, partial second after (re)parking
+      lockPps = lockPktsThisSec;
+      float limit = max((float)WAVE_MIN_PPS, WAVE_FACTOR * lockBase);
+      bool spike = lockBaseSecs >= 3 && lockPps > limit && spikeSecs < 10;
+      if (spike) {
+        spikeSecs++;
+        waveUntil = now + WAVE_HOLD_MS;  // leave the baseline alone so it stays the idle rate
+      } else {
+        spikeSecs = 0;  // after 10 s of "spike" the baseline catches up instead of latching
+        lockBase = lockBaseSecs ? 0.75f * lockBase + 0.25f * lockPps : lockPps;
+        if (lockBaseSecs < 255) lockBaseSecs++;
+      }
+    } else if (!parked) {
+      lockPps = -1;  // not measurable now; the pages hide the readout
+    }
+    wasParked = parked;
+    lockPktsThisSec = 0;
   }
 
   // Send the target's signal to the R4 up to 10 times a second.
   if (locked && targetHeard && now - lastT >= 100) {
     lastT = now;
-    Link.printf("T,%d,%d,%u\n", targetRssi, (int)lockAvg, currentCh);
+    Link.printf("T,%d,%d,%u,%d,%d,%d,%d\n", targetRssi, (int)lockAvg, currentCh, lockPps, (int)(lockBase + 0.5f), jitter(),
+                (int)(now < waveUntil));
     static uint32_t lastUsb = 0;
     if (now - lastUsb >= 500) {
       lastUsb = now;
-      Serial.printf("TARGET now %4d dBm  avg %4d dBm  ch %u\n", targetRssi, (int)lockAvg, currentCh);
+      Serial.printf("TARGET now %4d dBm  avg %4d dBm  ch %u  %d pkt/s (idle %d)  wobble %d dB%s\n", targetRssi, (int)lockAvg,
+                    currentCh, lockPps, (int)(lockBase + 0.5f), jitter(), now < waveUntil ? "  WAVE SPIKE" : "");
     }
   }
 

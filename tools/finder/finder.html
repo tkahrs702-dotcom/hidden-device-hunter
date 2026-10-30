@@ -40,9 +40,11 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0}dt{colo
   <div class="m" id="sub"></div><br>
   <div class="bar"><div id="bar"></div></div>
   <p id="pk"></p>
+  <p id="tm"></p>
   <canvas id="cv" width="600" height="150"></canvas>
   <div class="m">Last minute. -30 dBm is touching it, -90 is far.</div>
-  <div class="row" style="margin-top:8px"><button id="unlock">Unlock</button></div>
+  <div class="row" style="margin-top:8px"><button id="unlock">Unlock</button><button id="savelog">Save log</button></div>
+  <div class="m" id="logn"></div>
 </div>
 
 <div class="c" id="rec">Connect to start.</div>
@@ -87,12 +89,15 @@ function feed(text){
   while((i=S.buf.indexOf('\n'))>=0){var l=S.buf.slice(0,i).replace('\r','');S.buf=S.buf.slice(i+1);if(l)line(l)}
 }
 function esc(v){return String(v).replace(/[&<>"]/g,function(c){return '&#'+c.charCodeAt(0)+';'})}
+// Session log: every line from the finder with the phone's clock time, saved as a CSV file
+var LOG=[];
 function line(l){
   var f=l.split(','),t=f[0];S.lastLine=Date.now();
+  LOG.push(new Date().toISOString()+','+l.replace(/"/g,"'"));if(LOG.length>50000)LOG.shift();  // keeps the newest hour or so
   if(t=='L'){S.lock={mac:f[1],cat:+f[2],maker:f.slice(3).join(',')};S.peak=-100;S.hist=[];S.now=null;S.avg=null}
   else if(t=='U'){S.lock=null}
   else if(t=='M'){[].forEach.call($('mode').children,function(b){b.className=b.getAttribute('data-m')==f[1]?'on':''})}
-  else if(t=='T'){S.now=+f[1];S.avg=+f[2];S.ch=+f[3];S.lastT=Date.now();if(S.avg>S.peak)S.peak=S.avg}
+  else if(t=='T'){S.now=+f[1];S.avg=+f[2];S.ch=+f[3];S.lastT=Date.now();if(S.avg>S.peak)S.peak=S.avg;S.q=f.length>=8?[+f[4],+f[5],+f[6],+f[7]]:null}
   else if(t=='S'){S.stats=[+f[1],+f[2],+f[3],+f[4]]}
   else if(t=='B'){S.tmp=[];S.tmpN=+f[1];if(S.tmpN==0){S.devs=[];}}
   else if(t=='D'&&f.length>=11&&S.tmp){
@@ -120,6 +125,8 @@ function render(){
   $('sub').textContent=heard?'now '+S.now+' dBm   '+Math.round(pct(S.avg))+'% strength':'';
   $('bar').style.width=(heard?pct(S.avg):0)+'%';$('bar').style.background=col(pct(S.avg||-100));
   $('pk').textContent=(S.lock&&S.peak>-100)?'Closest so far: '+S.peak+' dBm ('+Math.round(pct(S.peak))+'%)':'';
+  var q=heard&&S.q;  // telemetry from a newer C5: packets/s, idle packets/s, wobble dB, wave spike
+  $('tm').innerHTML=q&&q[0]>=0?(q[3]?'<b style="color:var(--bad)">WAVE SPIKE: traffic jumped. Could be a camera seeing your hand.</b><br>':'')+q[0]+' packets/s (idle '+q[1]+')   wobble '+q[2]+' dB: '+(q[2]<=2?'steady':q[2]<=6?'wobbly':'bouncing (reflections)'):'';
   var g=$('cv').getContext('2d');g.clearRect(0,0,600,150);g.strokeStyle='#333';
   for(var y=0;y<=150;y+=30){g.beginPath();g.moveTo(0,y);g.lineTo(600,y);g.stroke()}
   g.strokeStyle='#4c8';g.lineWidth=2;g.beginPath();
@@ -171,6 +178,13 @@ $('flt').onclick=function(e){var f=e.target.getAttribute('data-f');if(!f)return;
 $('mode').onclick=function(e){var v=e.target.getAttribute('data-m');if(v===null)return;send('M,'+v)};
 $('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)return;send('V,'+v);[].forEach.call($('vol').children,function(b){b.className=b.getAttribute('data-v')==v?'on':''})};
 $('unlock').onclick=function(){send('U')};
+$('savelog').onclick=function(){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['time,type,fields...\n'+LOG.join('\n')+'\n'],{type:'text/csv'}));
+  a.download='hdh-log-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},5000);
+};
+setInterval(function(){$('logn').textContent=LOG.length?LOG.length+' readings logged this session.':''},2000);
 
 var DONE={};try{DONE=JSON.parse(localStorage.hdhDone||'{}')}catch(e){}
 document.addEventListener('change',function(e){var m=e.target.getAttribute&&e.target.getAttribute('data-ck');if(m){DONE[m]=e.target.checked?1:0;try{localStorage.hdhDone=JSON.stringify(DONE)}catch(x){}render()}});
@@ -228,7 +242,7 @@ $('demo').onclick=function(){
   demoTimer=setInterval(function(){
     n++;
     if(n%8==1){feed('S,18,2,3,1,'+(S.lock?1:0)+'\nB,4\nD,0,24:0A:C4:12:34:56,1,-52,6,Hikvision,Cam-01,120,1,1\nD,1,10:5A:17:6C:02:4D,2,-61,11,Tuya,SmartPlug,80,2,1\nD,2,AA:BB:CC:00:11:22,0,-70,36,-,-,40,0,4\nD,3,00:11:22:33:44:55,0,-66,1,-,HomeNet,300,0,1\n')}
-    if(S.lock){var v=Math.round(-70+30*Math.abs(Math.sin(n/40)));feed('T,'+v+','+v+',6\n')}
+    if(S.lock){var v=Math.round(-70+30*Math.abs(Math.sin(n/40)));var w=n%300>200;feed('T,'+v+','+v+',6,'+(w?45:4)+',4,'+(n%50<25?1:4)+','+(w?1:0)+'\n')}
   },100);
   feed('B,0\n');
 };

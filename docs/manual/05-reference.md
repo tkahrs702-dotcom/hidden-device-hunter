@@ -61,7 +61,7 @@ XIAO -> R4 line protocol (`phase2-xiao-sniffer` -> `phase2-r4-display`), one ASC
 |---|---|---|
 | `L,<MAC>,<cat>,<maker>` | locked onto MAC; cat 0 unknown, 1 camera maker, 2 IoT chip | on lock |
 | `U` | unlocked | on unlock and at boot without a saved lock |
-| `T,<now>,<avg>,<ch>` | target RSSI now and averaged (dBm), channel | up to 10 per second while heard |
+| `T,<now>,<avg>,<ch>,<pps>,<idle pps>,<wobble dB>,<wave 0/1>` | target RSSI now and averaged (dBm), channel, packets/s, idle packets/s, wobble (dB spread), hand-wave spike flag | up to 10 per second while heard |
 | `S,<total>,<cams>,<iot>,<hidden>,<locked>` | devices heard in the last 60 s | once a second |
 
 ## Power
