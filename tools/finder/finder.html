@@ -42,7 +42,8 @@ dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0}dt{colo
   <p id="pk"></p>
   <canvas id="cv" width="600" height="150"></canvas>
   <div class="m">Last minute. -30 dBm is touching it, -90 is far.</div>
-  <div class="row" style="margin-top:8px"><button id="unlock">Unlock</button></div>
+  <div class="row" style="margin-top:8px"><button id="unlock">Unlock</button><button id="savelog">Save log</button></div>
+  <div class="m" id="logn"></div>
 </div>
 
 <div class="c" id="rec">Connect to start.</div>
@@ -87,8 +88,11 @@ function feed(text){
   while((i=S.buf.indexOf('\n'))>=0){var l=S.buf.slice(0,i).replace('\r','');S.buf=S.buf.slice(i+1);if(l)line(l)}
 }
 function esc(v){return String(v).replace(/[&<>"]/g,function(c){return '&#'+c.charCodeAt(0)+';'})}
+// Session log: every line from the finder with the phone's clock time, saved as a CSV file
+var LOG=[];
 function line(l){
   var f=l.split(','),t=f[0];S.lastLine=Date.now();
+  if(LOG.length<50000)LOG.push(new Date().toISOString()+','+l);
   if(t=='L'){S.lock={mac:f[1],cat:+f[2],maker:f.slice(3).join(',')};S.peak=-100;S.hist=[];S.now=null;S.avg=null}
   else if(t=='U'){S.lock=null}
   else if(t=='M'){[].forEach.call($('mode').children,function(b){b.className=b.getAttribute('data-m')==f[1]?'on':''})}
@@ -171,6 +175,13 @@ $('flt').onclick=function(e){var f=e.target.getAttribute('data-f');if(!f)return;
 $('mode').onclick=function(e){var v=e.target.getAttribute('data-m');if(v===null)return;send('M,'+v)};
 $('vol').onclick=function(e){var v=e.target.getAttribute('data-v');if(v===null)return;send('V,'+v);[].forEach.call($('vol').children,function(b){b.className=b.getAttribute('data-v')==v?'on':''})};
 $('unlock').onclick=function(){send('U')};
+$('savelog').onclick=function(){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['time,type,fields...\n'+LOG.join('\n')+'\n'],{type:'text/csv'}));
+  a.download='hdh-log-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
+  document.body.appendChild(a);a.click();a.remove();
+};
+setInterval(function(){$('logn').textContent=LOG.length?LOG.length+' readings logged this session.':''},2000);
 
 var DONE={};try{DONE=JSON.parse(localStorage.hdhDone||'{}')}catch(e){}
 document.addEventListener('change',function(e){var m=e.target.getAttribute&&e.target.getAttribute('data-ck');if(m){DONE[m]=e.target.checked?1:0;try{localStorage.hdhDone=JSON.stringify(DONE)}catch(x){}render()}});
