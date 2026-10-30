@@ -42,7 +42,6 @@
 #endif
 
 // ---------- settings you can change ----------
-#define PORTRAIT 1  // 1 = 480 x 800 upright; 0 = the panel's own 800 x 480 sideways
 #define NIMUE_UART UART_NUM_1
 #define NIMUE_RX_PIN 5
 #define NIMUE_TX_PIN 4
@@ -516,12 +515,15 @@ void app_main(void) {
   linkBegin(&nimue, NIMUE_RX_PIN, NIMUE_TX_PIN, "nimue");
   linkBegin(&iolaus, IOLAUS_RX_PIN, IOLAUS_TX_PIN, "iolaus");
 
-  lv_display_t *disp = bsp_display_start();  // this BSP sets up LVGL through esp_lvgl_adapter
+  // Same start-up as the board's verified firmware: the panel is natively 480 x 800 portrait, so no rotation.
+  bsp_display_cfg_t cfg = {
+      .lv_adapter_cfg = ESP_LV_ADAPTER_DEFAULT_CONFIG(),
+      .rotation = (esp_lv_adapter_rotation_t)0,
+      .tear_avoid_mode = ESP_LV_ADAPTER_TEAR_AVOID_MODE_TRIPLE_PARTIAL,
+  };
+  bsp_display_start_with_config(&cfg);
   bsp_display_backlight_on();
-  bsp_display_lock(0);
-#if PORTRAIT
-  lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
-#endif
+  bsp_display_lock(-1);  // -1 = wait for the LVGL lock; every LVGL call outside an LVGL timer needs it
   buildScreen();
   lv_timer_create(refresh, 100, NULL);
   bsp_display_unlock();

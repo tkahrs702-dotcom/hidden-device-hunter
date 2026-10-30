@@ -47,7 +47,16 @@ Pins 1 and 3 are the board's 5V rail (with a protection diode); pins 2 and 18 ar
 - **GPIO5 (pin 11) RX and GPIO4 (pin 14) TX** for Nimue; **GPIO21 (pin 15) RX and GPIO22 (pin 17) TX** for Iolaus. None of these appear in the BSP's used-pin list or in the schematic's other blocks; GPIO4/5/21/22 are ordinary GPIOs. The ESP32-P4 can route any UART to any free GPIO.
 - **Avoid** GPIO7/8 (shared I2C), GPIO37/38 (very likely the USB-to-UART port's UART0, plus strapping), GPIO34 to 38 (strapping pins on the P4, from the chip datasheet, not re-checked here), and GPIO24/25 (USB).
 - **Sound:** speaker through the ES8311 codec and NS4150B amplifier, confirmed in the schematic notes (`docs/HARDWARE.md`) and BSP (`bsp_audio_codec_speaker_init`, amp enable GPIO53). The speaker is the white plate on a red/black wire, plugged into the 2-pin socket above USB TO UART, by MIC1.
-- **Silicon:** Waveshare's default profile is chip revision 3.x (`CONFIG_ESP32P4_REV_MIN_300`, 250 MHz PSRAM); a Rev1.3 compatibility profile exists. Merlin's `sdkconfig.defaults` uses the Rev1.3 profile because the 10-28 draft noted the board is v1.3. If Merlin boot-loops or reports a chip revision error, try the Rev3.x profile (see `docs/HARDWARE.md` in the product repo for the exact settings).
+- **Silicon:** a working firmware on another board of this model (verified on hardware 09-27/28-2026) needs chip revision **v1.3**: `CONFIG_ESP32P4_REV_MIN_100=y` and `CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y`; Waveshare's own examples default to REV_MIN_300, which does not boot there. Merlin's `sdkconfig.defaults` uses the v1.3 settings. **The revision of Merlin itself has not been read**, since chip revisions can differ between boards of one model: step 4 of the build guide reads it with `esptool chip_id` before anything is flashed.
+
+## Verified on hardware elsewhere (from Taelor's working firmware, 09-27/28-2026; board of the same model)
+Taelor pasted these facts on 10-30-2026 from a working ESP-IDF program, so they are measured, not just read from documents:
+- ESP-IDF 5.5.5; BSP `waveshare/esp32_p4_wifi6_touch_lcd_4_3 ==1.0.1`; LVGL 9.5.0 through `espressif/esp_lvgl_adapter`.
+- Display start-up that works: `bsp_display_start_with_config()` with `ESP_LV_ADAPTER_DEFAULT_CONFIG()`, tear-avoid mode `TRIPLE_PARTIAL`, rotation 0 (the panel is natively 480 x 800 portrait). Every LVGL call outside an LVGL timer must be between `bsp_display_lock(-1)` and `bsp_display_unlock()`.
+- Memory: 32 MB flash in QIO mode, PSRAM at 200 MHz with malloc from PSRAM, L2 cache 256 KB with 128-byte lines, FreeRTOS 1000 Hz, main task stack 10 KB, optimisation for speed.
+- The USB serial chip is a CH343, so the port shows up as `/dev/ttyACM*` and its number changes; identify the board with `esptool chip_id`.
+- Fonts enabled there: Montserrat 14, 16, 20, 28. Merlin enables 14, 18, 20 and 48 for its own layout.
+- An earlier review of that firmware found no clash with GPIO4/5 or UART1; its console is UART0 on GPIO37/38, consistent with this note.
 
 ## Not confirmed
 - Nothing has been run on the physical board.

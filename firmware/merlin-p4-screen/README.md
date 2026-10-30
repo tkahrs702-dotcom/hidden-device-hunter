@@ -6,4 +6,4 @@ Status: written 10-30-2026, not yet run on the hardware. CI compiles it on every
 
 Wiring, flashing and checks: [`docs/merlin-build-guide.md`](../../docs/merlin-build-guide.md). Diagram: [`docs/manual/diagrams/merlin-four-board-wiring.svg`](../../docs/manual/diagrams/merlin-four-board-wiring.svg).
 
-Settings at the top of `main/main.c`: `PORTRAIT` (set to 0 if the picture comes out sideways), the link pins, and the signal scale.
+Settings at the top of `main/main.c`: the link pins and the signal scale. The panel is natively portrait (480 x 800), so nothing is rotated.

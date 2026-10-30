@@ -58,22 +58,38 @@ bash tools/flash.sh c5
 
 ## 4. Merlin (ESP32-P4 screen)
 
-One-time setup of ESP-IDF on HaLjr (about 20 minutes, skip if `~/esp/esp-idf` already exists):
+HaLjr already has ESP-IDF 5.5.5 at `~/esp/esp-idf-v5.5.5` (`. ~/esp/esp-idf-v5.5.5/export.sh`). If it is missing, install it first:
 ```
 mkdir -p ~/esp && cd ~/esp
-git clone -b release/v5.5 --recursive https://github.com/espressif/esp-idf.git
-cd esp-idf && ./install.sh esp32p4
+git clone -b v5.5.5 --recursive https://github.com/espressif/esp-idf.git esp-idf-v5.5.5
+cd esp-idf-v5.5.5 && ./install.sh esp32p4
 ```
-Build and flash. Plug a USB-C cable into the port marked **USB TO UART**, nothing else connected:
+**Use this project's own P4, not the SENTINEL one.** Flashing replaces everything on the board.
+
+Plug a USB-C cable into the port marked **USB TO UART**, nothing else connected. Its name changes (`/dev/ttyACM0`, `/dev/ttyACM1`, ...), so find it each time:
 ```
-. ~/esp/esp-idf/export.sh
+. ~/esp/esp-idf-v5.5.5/export.sh
+ls /dev/ttyACM*
+python -m esptool -p /dev/ttyACM0 chip_id
+```
+**Check 1:** the output says "ESP32-P4" and a chip revision. The firmware is set up for revision **v1.3**. If it says v3.x, stop and tell Claude: the settings in `sdkconfig.defaults` must change first.
+
+**Back up the board's factory software before the first flash** (about 2 minutes, keep the file):
+```
+mkdir -p ~/backups/merlin
+python -m esptool -p /dev/ttyACM0 -b 921600 read_flash 0 0x2000000 ~/backups/merlin/merlin-original.bin
+```
+To restore it later: `python -m esptool -p /dev/ttyACM0 -b 921600 write_flash 0 ~/backups/merlin/merlin-original.bin` (esptool 4 spells it `read_flash`/`write_flash`, with underscores).
+
+Build and flash:
+```
 cd ~/Projects/hidden-device-hunter/firmware/merlin-p4-screen
 idf.py set-target esp32p4
-idf.py build flash monitor
+idf.py -p /dev/ttyACM0 build flash monitor
 ```
 (Leave the monitor with Ctrl+].)
 
-**Check:** the screen lights up upright (tall, not sideways) with dark green-black panels: "Nimue sniffer: NOT HEARD", "Iolaus LoRa: NOT HEARD", "Router guard: Argus not heard yet". If the picture is sideways or garbled, set `#define PORTRAIT 0` at the top of `main/main.c` and flash again. If the monitor says "running silent", the speaker is not set up: tell Claude.
+**Check 2:** the screen lights up upright (tall, not sideways) with dark green-black panels: "Nimue sniffer: NOT HEARD", "Iolaus LoRa: NOT HEARD", "Router guard: Argus not heard yet". If the screen stays black or the board restarts over and over, stop and tell Claude with what the monitor prints. If the monitor says "running silent", the speaker is not set up: tell Claude.
 
 ## 5. Meter check 1 (Merlin alone, on USB)
 
