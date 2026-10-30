@@ -53,7 +53,7 @@ uint32_t seq;
 
 // Counters written by the Wi-Fi callback (another task), read and reset by loop().
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
-volatile int deauthCount, disassocCount, lastRssi;
+int deauthCount, disassocCount, lastRssi;  // only touched under mux
 volatile uint32_t lastBeaconMs;
 uint8_t lastFrom[6], lastTo[6];
 
