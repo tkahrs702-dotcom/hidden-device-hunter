@@ -3,6 +3,19 @@
 Everything needed to put the latest code on both boards and test it, on HaLjr (Linux).
 Copy each command whole; nothing in them needs editing.
 
+## Quick way (normally all you need)
+1. Flash both boards with one command, and follow its prompts:
+```
+bash ~/Projects/hidden-device-hunter/tools/flash.sh
+```
+   (`... flash.sh c5` or `... flash.sh r4` does just one board.)
+2. Power both boards from the 2-port power bank.
+3. Phone: Bluetooth and Location on. Scan the printed QR code ([`docs/qr/print-me.html`](qr/print-me.html)),
+   open the link in Chrome, tap **Connect to the finder**, pick **HDH-Finder**.
+   Limits: Chrome on Android only (not Brave, not iPhone); the page needs the internet once to load.
+
+The sections below are the same steps by hand, for when something goes wrong.
+
 ## 0. Before you start
 - Computer on your home Wi-Fi (not `HDH-Finder`), so `git pull` works.
 - Only one board plugged into the computer at a time.
@@ -62,9 +75,9 @@ sudo ~/.arduino15/packages/arduino/hardware/renesas_uno/*/post_install.sh
 ## 5. Open the phone page (pick one)
 - R4 Wi-Fi page (works with any phone browser): join Wi-Fi `HDH-Finder`, password `hunter2026`,
   open `http://192.168.4.1`.
-- Bluetooth page (Chrome on Android, not Brave): open
-  `https://raw.githubusercontent.com/tkahrs702-dotcom/hidden-device-hunter/main/tools/finder/finder.html`,
-  download it, open the downloaded file in Chrome, tap Connect to the finder and pick `HDH...`.
+- Bluetooth page (Chrome on Android, not Brave): scan the QR code on [`docs/qr/print-me.html`](qr/print-me.html)
+  or open `https://raw.githack.com/tkahrs702-dotcom/hidden-device-hunter/main/tools/finder/finder.html`,
+  tap Connect to the finder and pick `HDH-Finder`. (Android's Bluetooth settings never list it; that is normal.)
   Tap Demo first if you want to see it work without the boards.
 
 ## 6. Telemetry tests
