@@ -173,6 +173,34 @@ static int cycleCursor = -1;
 static const char *BLE_SERVICE = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
 static const char *BLE_TX = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";  // C5 -> phone (notify)
 static const char *BLE_RX = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // phone -> C5 (write)
+// Low profile: a plain name (the phone page finds the C5 by its service, not its name), and it only
+// advertises for ADVERT_MS after power-on, after the phone disconnects, or after any BOOT press.
+// While a phone is connected it does not advertise at all.
+static const char *BLE_NAME = "Mini Speaker";
+static const uint32_t ADVERT_MS = 120000;
+static uint32_t advUntil = 0;
+static bool advOn = false;
+static volatile bool bleReAdvertise = false;  // set by the disconnect callback, handled in loop()
+
+static void bleAdvertiseFor(uint32_t ms) {
+  advUntil = millis() + ms;
+  if (!advOn) {
+    BLEDevice::startAdvertising();
+    advOn = true;
+  }
+}
+
+static void bleAdvertiseCheck(uint32_t now) {
+  if (bleReAdvertise) {
+    bleReAdvertise = false;
+    advOn = false;  // the stack stopped advertising when the phone connected
+    bleAdvertiseFor(ADVERT_MS);
+  }
+  if (advOn && !bleConnected && (int32_t)(now - advUntil) > 0) {
+    BLEDevice::stopAdvertising();
+    advOn = false;
+  }
+}
 static BLECharacteristic *bleTx = nullptr;
 static volatile bool bleConnected = false;
 static volatile bool bleHello = false;     // a phone just connected: resend the lock state
@@ -221,7 +249,7 @@ class BleServerCb : public BLEServerCallbacks {
   void onConnect(BLEServer *) override { bleConnected = true; bleHello = true; }
   void onDisconnect(BLEServer *) override {
     bleConnected = false;
-    BLEDevice::startAdvertising();  // allow the phone to come back
+    bleReAdvertise = true;  // let the phone come back for ADVERT_MS
   }
 };
 
@@ -245,7 +273,7 @@ class BleRxCb : public BLECharacteristicCallbacks {
 };
 
 static void bleBegin() {
-  BLEDevice::init("HDH-Finder");
+  BLEDevice::init(BLE_NAME);
   BLEServer *srv = BLEDevice::createServer();
   srv->setCallbacks(new BleServerCb());
   BLEService *svc = srv->createService(BLE_SERVICE);
@@ -259,7 +287,7 @@ static void bleBegin() {
   BLEAdvertising *adv = BLEDevice::getAdvertising();
   adv->addServiceUUID(BLE_SERVICE);
   adv->setScanResponse(true);
-  BLEDevice::startAdvertising();
+  bleAdvertiseFor(ADVERT_MS);
 }
 
 // ---------- radio callback (runs in the Wi-Fi task: keep it short) ----------
@@ -668,7 +696,11 @@ static void handleButton() {
   static bool longDone = false;
   bool down = digitalRead(BUTTON_PIN) == LOW;
   uint32_t now = millis();
-  if (down && !wasDown) { downAt = now; longDone = false; }
+  if (down && !wasDown) {
+    downAt = now;
+    longDone = false;
+    if (!bleConnected) { advOn = false; bleAdvertiseFor(ADVERT_MS); }  // any press: phone can connect again
+  }
   if (down && !longDone && now - downAt > 3000) {
     longDone = true;
     applyMode(mode + 1);
@@ -883,6 +915,7 @@ void loop() {
   }
 
   bleDrain(now);
+  bleAdvertiseCheck(now);
   if (bleHello) {
     bleHello = false;
     bleHead = bleTail = 0;  // a new phone should not get lines queued for the last one

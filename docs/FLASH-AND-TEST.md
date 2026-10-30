@@ -75,7 +75,7 @@ sudo ~/.arduino15/packages/arduino/hardware/renesas_uno/*/post_install.sh
   open `http://192.168.4.1`.
 - Bluetooth page (Chrome on Android, not Brave): scan the QR code on [`docs/qr/print-me.html`](qr/print-me.html)
   or open `https://raw.githack.com/tkahrs702-dotcom/hidden-device-hunter/main/tools/finder/finder.html`,
-  tap Connect to the finder and pick `HDH-Finder`. (Android's Bluetooth settings never list it; that is normal.)
+  tap Connect to the finder and pick `Mini Speaker` (the C5's plain Bluetooth name). It is only visible for 2 minutes after power-on, after the phone disconnects, or after any BOOT press. (Android's Bluetooth settings never list it; that is normal.)
   Tap Demo first if you want to see it work without the boards.
 
 ## 6. Telemetry tests
