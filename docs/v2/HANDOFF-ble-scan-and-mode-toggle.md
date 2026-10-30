@@ -9,7 +9,7 @@ Written 2026-10-27 so any engineer or AI assistant (Taelor plans to use Gemini) 
 - Phone link (new, on branch `claude/project-thread-j89159`, PR #16): the C5 is a Bluetooth LE peripheral named `HDH-Finder` (Nordic UART UUIDs `6E400001-B5A3-F393-E0A9-E50E24DCCA9E`; notify `...0003...` C5 to phone; write `...0002...` phone to C5). Everything sent to the R4 is also streamed to the phone as text lines, in 20-byte chunks. The phone page is `tools/finder/finder.html` (Web Bluetooth, Chrome on Android; works in a "Demo" mode with fake data).
 
 ## Line protocol (C5 to R4 and phone)
-`L,<MAC>,<cat>,<maker>` locked | `U` unlocked | `T,<now>,<avg>,<ch>` target signal, ~10/s | `S,<total>,<cams>,<iot>,<hidden>,<locked>` once a second | phone only: `B,<count>` then `D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>,<packets>,<seconds since heard>,<flags>` every 4 s (flags: 1 AP, 2 client, 4 hidden, 8 random MAC; "-" means empty).
+`L,<MAC>,<cat>,<maker>` locked | `U` unlocked | `T,<now>,<avg>,<ch>,<pps>,<idle pps>,<wobble dB>,<wave 0/1>` target signal and telemetry, ~10/s | `S,<total>,<cams>,<iot>,<hidden>,<locked>` once a second | phone only: `B,<count>` then `D,<n>,<MAC>,<cat>,<avg>,<ch>,<maker>,<name>,<packets>,<seconds since heard>,<flags>` every 4 s (flags: 1 AP, 2 client, 4 hidden, 8 random MAC; "-" means empty).
 Phone to C5 (lines): `K,<MAC>` track | `U` unlock | `V,<0-3>` buzzer volume (C5 forwards `V,n` to the R4).
 `cat`: 0 none, 1 camera maker, 2 IoT chip.
 

@@ -9,6 +9,7 @@
 //         Web::poll();                        // in loop(): answers phone requests
 //         Web::locked(mac, maker);  Web::unlocked();
 //         Web::signal(now, avg, channel);     // each T line
+//         Web::telemetry(pps, idle, wobble, wave);       // extra T fields from a newer C5
 //         Web::stats(total, cams, iot, hidden);          // each S line
 //         Web::nearbyStart(count);  Web::nearby(n, mac, cat, avg, ch, maker, name);   // B and D lines
 #pragma once
@@ -32,6 +33,7 @@ static bool haveLock = false;
 static char mac[18] = "";
 static char maker[16] = "";
 static int raw = -100, avg = -100, ch = 0, peak = -100;
+static int pps = -1, ppsIdle = 0, wobble = 0, wave = 0;  // -1 = the C5 does not send telemetry
 static int modeNow = -1;  // 0 Wi-Fi, 1 Bluetooth, 2 both, as reported by the C5
 static int stTotal = 0, stCams = 0, stIot = 0, stHidden = 0;
 static uint32_t lastSignal = 0, lastPush = 0, lockedAt = 0, lastStats = 0;
@@ -56,7 +58,7 @@ static const char PAGE[] =
   "<div class=m>Bluetooth devices show as BLE in the ch column.</div></div>"
   "<div class=c><div id=st>connecting...</div><div class=m id=tg></div></div>"
   "<div class=c><div class=big id=big>--</div><div class=m id=sub></div><br><div class=bar><div id=bar></div></div>"
-  "<p id=pk></p><canvas id=cv width=600 height=170 style='width:100%;background:#222;border-radius:6px'></canvas>"
+  "<p id=pk></p><p id=tm></p><canvas id=cv width=600 height=170 style='width:100%;background:#222;border-radius:6px'></canvas>"
   "<div class=m>Graph: last minute. -30 dBm is touching it, -90 is far.</div></div>"
   "<div class=c id=rec>...</div>"
   "<div class='c r'><div><b id=s0>-</b>devices</div><div><b id=s1>-</b>camera makers</div>"
@@ -86,6 +88,7 @@ static const char PAGE[] =
   "big.textContent=heard?j.a+' dBm':'--';"
   "sub.textContent=heard?'now '+j.r+' dBm   '+Math.round(pct(j.a))+'% strength':'';"
   "bar.style.width=(heard?pct(j.a):0)+'%';bar.style.background=col(pct(j.a));"
+  "tm.innerHTML=heard&&j.q[0]>=0?(j.q[3]?'<b style=color:#f66>WAVE SPIKE: traffic jumped. Could be a camera seeing your hand.</b><br>':'')+j.q[0]+' packets/s (idle '+j.q[1]+')   wobble '+j.q[2]+' dB: '+(j.q[2]<=2?'steady':j.q[2]<=6?'wobbly':'bouncing (reflections)'):'';"
   "pk.textContent=(j.l&&j.n)?'Closest so far: '+j.p+' dBm ('+Math.round(pct(j.p))+'%)':'';"
   "g.clearRect(0,0,600,170);g.strokeStyle='#333';for(var y=0;y<=170;y+=34){g.beginPath();g.moveTo(0,y);g.lineTo(600,y);g.stroke()}"
   "g.strokeStyle='#4c8';g.lineWidth=2;g.beginPath();j.h.forEach((v,i)=>{var x=i*600/119,y=170-pct(v)*1.7;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();"
@@ -129,6 +132,7 @@ inline void locked(const char *m, const char *k) {
   peak = -100;
   histN = 0;
   lastSignal = 0;
+  pps = -1;
   lockedAt = millis();
 }
 
@@ -147,6 +151,8 @@ inline void signal(int now, int a, int c) {
     else { memmove(hist, hist + 1, HIST - 1); hist[HIST - 1] = (int8_t)a; }
   }
 }
+
+inline void telemetry(int p, int idle, int wob, int w) { pps = p; ppsIdle = idle; wobble = wob; wave = w; }
 
 inline void mode(int m) { modeNow = m; }
 
@@ -232,9 +238,9 @@ inline void poll() {
   } else if (strstr(req, "GET /s") != nullptr) {
     uint32_t age = lastSignal ? millis() - lastSignal : 99999;
     emit(c, "%s", JSON_HEAD);
-    emit(c, "{\"mo\":%d,\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,\"ls\":%lu,",
+    emit(c, "{\"mo\":%d,\"l\":%d,\"n\":%d,\"m\":\"%s\",\"k\":\"%s\",\"a\":%d,\"r\":%d,\"p\":%d,\"c\":%d,\"age\":%lu,\"ls\":%lu,\"q\":[%d,%d,%d,%d],",
          modeNow, haveLock ? 1 : 0, lastSignal ? 1 : 0, mac, maker, avg, raw, peak, ch, (unsigned long)age,
-         (unsigned long)(lastStats ? millis() - lastStats : 99999));
+         (unsigned long)(lastStats ? millis() - lastStats : 99999), pps, ppsIdle, wobble, wave);
     emit(c, "\"s\":[%d,%d,%d,%d],\"h\":[", stTotal, stCams, stIot, stHidden);
     for (int i = 0; i < histN; i++) emit(c, "%s%d", i ? "," : "", (int)hist[i]);
     emit(c, "],\"d\":[");
