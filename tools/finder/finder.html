@@ -93,7 +93,7 @@ function esc(v){return String(v).replace(/[&<>"]/g,function(c){return '&#'+c.cha
 var LOG=[];
 function line(l){
   var f=l.split(','),t=f[0];S.lastLine=Date.now();
-  if(LOG.length<50000)LOG.push(new Date().toISOString()+','+l);
+  LOG.push(new Date().toISOString()+','+l.replace(/"/g,"'"));if(LOG.length>50000)LOG.shift();  // keeps the newest hour or so
   if(t=='L'){S.lock={mac:f[1],cat:+f[2],maker:f.slice(3).join(',')};S.peak=-100;S.hist=[];S.now=null;S.avg=null}
   else if(t=='U'){S.lock=null}
   else if(t=='M'){[].forEach.call($('mode').children,function(b){b.className=b.getAttribute('data-m')==f[1]?'on':''})}
@@ -182,7 +182,7 @@ $('savelog').onclick=function(){
   var a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['time,type,fields...\n'+LOG.join('\n')+'\n'],{type:'text/csv'}));
   a.download='hdh-log-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.csv';
-  document.body.appendChild(a);a.click();a.remove();
+  document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},5000);
 };
 setInterval(function(){$('logn').textContent=LOG.length?LOG.length+' readings logged this session.':''},2000);
 
