@@ -66,9 +66,9 @@ static const char *BOARD_NAME = "XIAO ESP32-C3";
 static const int BUTTON_PIN = 0;
 static const char *BOARD_NAME = "XIAO ESP32-S3";
 #endif
-// Taelor's wires to the level shifter are crossed (TX on D7, RX on D6), so the pins are swapped here
-// instead of rewiring. Set LINK_CROSSED to false if the wires are put back as D6 = TX, D7 = RX.
-static const bool LINK_CROSSED = false;
+// Merlin wiring (docs/merlin-build-guide.md): Nimue TX on D7 -> Merlin GPIO5, Merlin GPIO4 -> Nimue RX on D6.
+// Set LINK_CROSSED to false only for the old R4 wiring (D6 = TX, D7 = RX).
+static const bool LINK_CROSSED = true;
 static const int LINK_RX = LINK_CROSSED ? D6 : D7;
 static const int LINK_TX = LINK_CROSSED ? D7 : D6;
 static const uint32_t LINK_BAUD = 115200;
@@ -180,7 +180,7 @@ static volatile bool bleHello = false;     // a phone just connected: resend the
 // Low profile: a plain name (the phone page finds the C5 by its service, not its name), and it only
 // advertises for ADVERT_MS after power-on or any BOOT press, and REJOIN_MS after the phone disconnects.
 // While a phone is connected it does not advertise at all.
-static const char *BLE_NAME = "Mini Speaker";
+static const char *BLE_NAME = "Ananizapta";
 static const uint32_t ADVERT_MS = 120000;
 static const uint32_t REJOIN_MS = 600000;  // after a dropped link: 10 min for the phone to come back in range
 static uint32_t advUntil = 0;

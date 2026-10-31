@@ -1,0 +1,69 @@
+# Merlin (Waveshare ESP32-P4-WIFI6-Touch-LCD-4.3): verified hardware facts
+
+Written 10-30-2026. Sources are Waveshare's own repositories on GitHub (Apache-2.0), read on 10-30-2026:
+- Product repo: `waveshareteam/ESP32-P4-WIFI6-Touch-LCD-4.3` (README, `docs/HARDWARE.md`, `schematic/ESP32-P4-WIFI6-Touch-LCD-4.3-schematic.pdf`, PCB label Rev1.2).
+- BSP: `waveshareteam/Waveshare-ESP32-components`, `bsp/esp32_p4_wifi6_touch_lcd_4_3` (the registry package `waveshare/esp32_p4_wifi6_touch_lcd_4_3` 1.0.1 that Merlin builds against).
+- Taelor's own board photos (10-30-2026): the silkscreen labels along the header, the speaker socket, the C6-UART pins.
+
+## 40-pin header (connector J3 on the schematic)
+Pin 1 is the 5V end. Odd pins are the row with the 5V labels (the lower row in the 10-30 photo, left column in the diagram). The schematic and the silkscreen photo agree on every pin. The board prints GPIO numbers only, not pin numbers.
+
+| Pin | Signal | Pin | Signal |
+|---|---|---|---|
+| 1 | 5V | 2 | 3V3 |
+| 3 | 5V | 4 | GPIO7 (I2C SDA, shared with touch and audio codec) |
+| 5 | GND | 6 | GPIO8 (I2C SCL, shared) |
+| 7 | GPIO37 | 8 | GPIO2 |
+| 9 | GPIO38 | 10 | GND |
+| 11 | GPIO5 | 12 | GPIO3 |
+| 13 | GND | 14 | GPIO4 |
+| 15 | GPIO21 | 16 | GPIO28 |
+| 17 | GPIO22 | 18 | 3V3 |
+| 19 | GND | 20 | GPIO29 |
+| 21 | GPIO24 (USB1 D-) | 22 | GPIO30 |
+| 23 | GPIO25 (USB1 D+) | 24 | GPIO31 |
+| 25 | USB D- | 26 | GND |
+| 27 | USB D+ | 28 | GPIO34 |
+| 29 | GND | 30 | GPIO35 |
+| 31 | GPIO32 | 32 | GPIO49 |
+| 33 | GND | 34 | GPIO50 |
+| 35 | GPIO46 | 36 | GPIO51 |
+| 37 | GPIO47 | 38 | GPIO52 |
+| 39 | GPIO48 | 40 | GND |
+
+Pins 1 and 3 are the board's 5V rail (with a protection diode); pins 2 and 18 are 3V3. GPIO24/25 share the USB1 data lines.
+
+## Pins Merlin uses for itself (do not use on the header)
+| Function | GPIOs |
+|---|---|
+| I2C (touch GT911, audio codec) | 7 (SDA), 8 (SCL), also on header pins 4 and 6 |
+| Audio I2S (ES8311) | 9 DOUT, 10 LRCK, 11 DIN, 12 SCLK, 13 MCLK; power-amp enable 53 |
+| Display | backlight 26, reset 27 (the MIPI-DSI data lanes have their own dedicated pins) |
+| microSD | 39 to 44 (D0 to D3 = 39 to 42, CLK 43, CMD 44) |
+| Camera | MIPI-CSI ribbon socket, no GPIOs |
+| ESP32-C6 (Wi-Fi/Bluetooth) | SDIO: 14 (C6 IO20, D0), 15 (IO21, D1), 16 (IO22, D2), 17 (IO23, D3), 18 (IO19, CLK), 19 (IO18, CMD); 6 (C6 IO2); 54 (C6 enable/reset). None of these are on the header. Read from the schematic's ESP32-C6 block 10-30-2026 (the CLK/CMD/data roles follow the C6's fixed SDIO pins). |
+
+## Choices made for the project, and why
+- **GPIO5 (pin 11) RX and GPIO4 (pin 14) TX** for Nimue; **GPIO21 (pin 15) RX and GPIO22 (pin 17) TX** for Iolaus. None of these appear in the BSP's used-pin list or in the schematic's other blocks; GPIO4/5/21/22 are ordinary GPIOs. The ESP32-P4 can route any UART to any free GPIO.
+- **Avoid** GPIO7/8 (shared I2C), GPIO37/38 (very likely the USB-to-UART port's UART0, plus strapping), GPIO34 to 38 (strapping pins on the P4, from the chip datasheet, not re-checked here), and GPIO24/25 (USB).
+- **Sound:** speaker through the ES8311 codec and NS4150B amplifier, confirmed in the schematic notes (`docs/HARDWARE.md`) and BSP (`bsp_audio_codec_speaker_init`, amp enable GPIO53). The speaker is the white plate on a red/black wire, plugged into the 2-pin socket above USB TO UART, by MIC1.
+- **Silicon:** a working firmware on this board (verified on hardware 09-27/28-2026) needs chip revision **v1.3**: `CONFIG_ESP32P4_REV_MIN_100=y` and `CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y`; Waveshare's own examples default to REV_MIN_300, which does not boot there. Merlin's `sdkconfig.defaults` uses the v1.3 settings. Taelor confirmed on 10-30-2026 that Merlin is the same physical board as the working firmware's, so v1.3 is Merlin's own revision (not read by this project; `esptool chip_id` stays optional). `esptool chip_id` in step 4 of the build guide is optional.
+
+## Verified on hardware elsewhere (from Taelor's working firmware, 09-27/28-2026; board of the same model)
+Taelor pasted these facts on 10-30-2026 from a working ESP-IDF program, so they are measured, not just read from documents:
+- ESP-IDF 5.5.5; BSP `waveshare/esp32_p4_wifi6_touch_lcd_4_3 ==1.0.1`; LVGL 9.5.0 through `espressif/esp_lvgl_adapter`.
+- Display start-up that works: `bsp_display_start_with_config()` with `ESP_LV_ADAPTER_DEFAULT_CONFIG()`, tear-avoid mode `TRIPLE_PARTIAL`, rotation 0 (the panel is natively 480 x 800 portrait). Every LVGL call outside an LVGL timer must be between `bsp_display_lock(-1)` and `bsp_display_unlock()`.
+- Memory: 32 MB flash in QIO mode, PSRAM at 200 MHz with malloc from PSRAM, L2 cache 256 KB with 128-byte lines, FreeRTOS 1000 Hz, main task stack 10 KB, optimisation for speed.
+- The USB serial chip is a CH343, so the port shows up as `/dev/ttyACM*` and its number changes; identify the board with `esptool chip_id`.
+- Fonts enabled there: Montserrat 14, 16, 20, 28. Merlin enables 14, 18, 20 and 48 for its own layout.
+- An earlier review of that firmware found no clash with GPIO4/5 or UART1; its console is UART0 on GPIO37/38, consistent with this note.
+
+## Not confirmed
+- Nothing has been run on the physical board.
+- The 5V and 3V3 rows are confirmed from the schematic; meter check 1 in `docs/merlin-build-guide.md` still verifies them on the real board.
+
+## Notes for future work (not researched yet)
+- **Camera (arrives Saturday, OV5647):** MIPI-CSI 15-pin 2-lane socket; Waveshare's example `09_video_lcd_display` shows a camera preview on this screen. Phase 3.
+- **Android app:** reads Nimue's Bluetooth service ("Ananizapta"); keep the line protocol and GATT stable.
+- **LoRa (Iolaus/Argus):** both TTGO T3 V1.6.1 boards run 915 MHz, spreading factor 9, bandwidth 125 kHz, sync word 0x5A. Same settings on both or they will not hear each other.
+- **RD-03DE radar, Home Assistant:** not read. The private repos `rd03d-lora-presence` and `home-assistant` are the starting point if Taelor wants this project to link up with them; `sentinel` stays untouched (10-26 rule).

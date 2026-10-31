@@ -29,6 +29,14 @@ jobs:
           - sketch: firmware/phase2-xiao-sniffer
             fqbn: esp32:esp32:XIAO_ESP32C5:CDCOnBoot=cdc
             core: esp32:esp32@3.3.12
+          - sketch: firmware/argus-ttgo-router
+            fqbn: esp32:esp32:ttgo-lora32:Revision=TTGO_LoRa32_v21new
+            core: esp32:esp32@3.3.12
+            libs: '"LoRa@0.8.0" "Adafruit SSD1306@2.5.13"'
+          - sketch: firmware/iolaus-ttgo-handheld
+            fqbn: esp32:esp32:ttgo-lora32:Revision=TTGO_LoRa32_v21new
+            core: esp32:esp32@3.3.12
+            libs: '"LoRa@0.8.0" "Adafruit SSD1306@2.5.13"'
     name: ${{ matrix.sketch }} (${{ matrix.fqbn }})
     env:
       ESP32_INDEX: https://espressif.github.io/arduino-esp32/package_esp32_index.json
@@ -58,3 +66,15 @@ jobs:
 
       - name: Compile
         run: arduino-cli compile --fqbn "${{ matrix.fqbn }}" --warnings default "${{ matrix.sketch }}"
+
+  merlin:
+    # Merlin (ESP32-P4 screen) is ESP-IDF, not Arduino.
+    runs-on: ubuntu-latest
+    name: firmware/merlin-p4-screen (ESP-IDF, esp32p4)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: release-v5.5
+          target: esp32p4
+          path: firmware/merlin-p4-screen
