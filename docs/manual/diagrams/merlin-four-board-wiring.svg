@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1500" height="1380" viewBox="0 0 1500 1380" font-family="Helvetica, Arial, sans-serif">
-<rect width="1500" height="1380" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1500" height="1404" viewBox="0 0 1500 1404" font-family="Helvetica, Arial, sans-serif">
+<rect width="1500" height="1404" fill="#ffffff"/>
 <text x="750.0" y="46" font-size="28" fill="#111" font-weight="bold" text-anchor="middle" >Hidden Device Hunter: pin-to-pin wiring</text>
 <text x="750.0" y="76" font-size="16" fill="#111" font-weight="bold" text-anchor="middle" >Every signal wire is 3.3 V. Only ONE wire carries 5 V: W1, which powers Nimue. Iolaus (LoRa) is powered from 3.3 V (W8), never 5 V.</text>
 <line x1="430" y1="104" x2="460" y2="104" stroke="#d32f2f" stroke-width="5"/>
@@ -126,7 +126,7 @@
 <text x="230.0" y="323" font-size="13" fill="#555" font-weight="normal" text-anchor="middle" >XIAO ESP32-C5 sniffer</text>
 <text x="230.0" y="340" font-size="11" fill="#9a9a9a" font-weight="normal" text-anchor="middle" >USB-C end at top</text>
 <text x="134" y="365" font-size="13" fill="#9a9a9a" font-weight="normal" text-anchor="start" >D0</text>
-<text x="326" y="365" font-size="13" fill="#111" font-weight="bold" text-anchor="end" >5V</text>
+<text x="326" y="365" font-size="13" fill="#111" font-weight="bold" text-anchor="end" >VBUS</text>
 <circle cx="120" cy="360" r="4" fill="#c4c4c4" stroke="#fff" stroke-width="1.5"/>
 <circle cx="340" cy="360" r="7" fill="#d32f2f" stroke="#fff" stroke-width="1.5"/>
 <text x="134" y="393" font-size="13" fill="#9a9a9a" font-weight="normal" text-anchor="start" >D1</text>
@@ -156,7 +156,7 @@
 <polyline points="340,360 560,360 560,330 640,330" fill="none" stroke="#d32f2f" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
 <rect x="368" y="349" width="34" height="20" rx="10" fill="#fff" stroke="#d32f2f" stroke-width="2"/>
 <text x="385" y="364" font-size="12" fill="#d32f2f" font-weight="bold" text-anchor="middle" >W1</text>
-<text x="230.0" y="582" font-size="12" fill="#d32f2f" font-weight="bold" text-anchor="middle" >5V pin = power in only.</text>
+<text x="230.0" y="582" font-size="12" fill="#d32f2f" font-weight="bold" text-anchor="middle" >VBUS = 5 V power in only.</text>
 <text x="230.0" y="598" font-size="12" fill="#d32f2f" font-weight="bold" text-anchor="middle" >Nimue makes its own 3.3 V inside.</text>
 <polyline points="340,388 530,388 530,398 640,398" fill="none" stroke="#111111" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
 <rect x="368" y="377" width="34" height="20" rx="10" fill="#fff" stroke="#111111" stroke-width="2"/>
@@ -223,7 +223,7 @@
 <rect x="60" y="1075" width="1380" height="168" rx="12" fill="#fafafa" stroke="#ccc" stroke-width="2"/>
 <text x="80" y="1103" font-size="16" fill="#111" font-weight="bold" text-anchor="start" >Wire list (Merlin pin numbers are J3 from Waveshare's schematic; pin 1 is the 5V end; the board prints GPIO numbers, not pin numbers)</text>
 <line x1="80" y1="1128" x2="110" y2="1128" stroke="#d32f2f" stroke-width="4"/>
-<text x="120" y="1133" font-size="14" fill="#222" font-weight="normal" text-anchor="start" ><tspan font-weight="bold">W1</tspan>  Nimue 5V → Merlin 5V (pin 1), the only 5 V wire</text>
+<text x="120" y="1133" font-size="14" fill="#222" font-weight="normal" text-anchor="start" ><tspan font-weight="bold">W1</tspan>  Nimue VBUS → Merlin 5V (pin 1 or 3), the only 5 V wire</text>
 <line x1="80" y1="1155" x2="110" y2="1155" stroke="#111111" stroke-width="4"/>
 <text x="120" y="1160" font-size="14" fill="#222" font-weight="normal" text-anchor="start" ><tspan font-weight="bold">W2</tspan>  Nimue GND → Merlin GND (pin 5)</text>
 <line x1="80" y1="1182" x2="110" y2="1182" stroke="#1b8a3a" stroke-width="4"/>
@@ -239,8 +239,9 @@
 <line x1="760" y1="1209" x2="790" y2="1209" stroke="#e07b00" stroke-width="4"/>
 <text x="800" y="1214" font-size="14" fill="#222" font-weight="normal" text-anchor="start" ><tspan font-weight="bold">W8</tspan>  Iolaus 3V3 → Merlin 3V3 (pin 18), 3.3 V power</text>
 <text x="60" y="1271" font-size="13" fill="#d32f2f" font-weight="bold" text-anchor="start" >⚠ 3.3 V on every signal pin. Never put Merlin's 5V on any GPIO of Nimue, Iolaus or Merlin.</text>
-<text x="60" y="1293" font-size="13" fill="#d32f2f" font-weight="bold" text-anchor="start" >Feed Nimue from Merlin 5V only with Nimue's USB unplugged. Feed Iolaus from Merlin 3V3 only with its USB and battery unplugged.</text>
+<text x="60" y="1293" font-size="13" fill="#d32f2f" font-weight="bold" text-anchor="start" >Feed Nimue VBUS from Merlin 5V only with Nimue's USB unplugged. Feed Iolaus from Merlin 3V3 only with its USB and battery unplugged.</text>
 <text x="60" y="1317" font-size="13" fill="#111" font-weight="bold" text-anchor="start" >METER CHECK 1 (Merlin on USB, nothing else wired, black probe on GND): pins 1 and 3 read 5.0 V; pins 2 and 18 read 3.3 V; GPIO5, 21 and 22 read 0 V. If not, stop.</text>
-<text x="60" y="1339" font-size="13" fill="#111" font-weight="bold" text-anchor="start" >METER CHECK 2 (everything unplugged, meter on beep): each wire beeps end-to-end. Merlin 5V to GPIO5, GPIO21, GPIO22 and 3V3 must NOT beep.</text>
+<text x="60" y="1339" font-size="13" fill="#111" font-weight="bold" text-anchor="start" >METER CHECK 2 (everything unplugged, meter on beep): each wire beeps end-to-end. Merlin 5V to GPIO5, GPIO21, GPIO22, 3V3 and Nimue 3V3 must NOT beep.</text>
 <text x="60" y="1361" font-size="13" fill="#333" font-weight="normal" text-anchor="start" >Camera (OV5647, Phase 3) uses Merlin's CAMERA ribbon socket, not header wires.</text>
+<text x="60" y="1383" font-size="13" fill="#d32f2f" font-weight="bold" text-anchor="start" >YOUR REAL WIRES: red = GND, teal/green = power (3V3 or VBUS). Diagram colours are only for reading the drawing.</text>
 </svg>

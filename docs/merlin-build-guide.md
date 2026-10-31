@@ -11,7 +11,7 @@ Written 10-30-2026. Do the steps in order, one board at a time. Nothing here has
 
 Wiring diagram: [`manual/diagrams/merlin-four-board-wiring.svg`](manual/diagrams/merlin-four-board-wiring.svg).
 
-**Safety:** every signal wire is 3.3 V. Only one wire carries 5 V (W1, Merlin 5V to Nimue's 5V power pin). Iolaus is powered from Merlin's 3V3, never 5 V. Flash every board **before** wiring it, with nothing else connected.
+**Safety:** every signal wire is 3.3 V. Only one wire carries 5 V (W1, Merlin 5V to Nimue's VBUS pin, its 5 V power input; the board prints VBUS, Seeed's chart calls it 5V). Iolaus is powered from Merlin's 3V3, never 5 V. Flash every board **before** wiring it, with nothing else connected.
 
 ## 0. Get the code (HaLjr)
 
@@ -105,7 +105,7 @@ Follow the diagram, W1 to W8, one wire at a time:
 
 | Wire | From | To |
 |---|---|---|
-| W1 | Nimue 5V | Merlin 5V (pin 1) |
+| W1 | Nimue VBUS | Merlin 5V (pin 1 or 3) |
 | W2 | Nimue GND | Merlin GND (pin 5) |
 | W3 | Nimue D7 (TX) | Merlin GPIO5 (pin 11) |
 | W4 (optional) | Merlin GPIO4 (pin 14) | Nimue D6 (RX): lets the screen's mode buttons work |

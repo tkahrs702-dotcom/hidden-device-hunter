@@ -13,7 +13,7 @@ strip_jpg, spk_jpg, out = sys.argv[1:4]
 def b64(p):
     return base64.b64encode(open(p, "rb").read()).decode()
 
-W, H = 1500, 1380
+W, H = 1500, 1404
 RED, BLK, GRN, PUR, GRY = "#d32f2f", "#111111", "#1b8a3a", "#7b2fa8", "#9a9a9a"
 ORG = "#e07b00"  # 3.3 V power
 s = []
@@ -96,7 +96,7 @@ text((NX0 + NX1) / 2, 286, "NIMUE", 22, "#1b8a3a", "bold", "middle")
 text((NX0 + NX1) / 2, 323, "XIAO ESP32-C5 sniffer", 13, "#555", anchor="middle")
 text((NX0 + NX1) / 2, 340, "USB-C end at top", 11, GRY, anchor="middle")
 left = ["D0", "D1", "D2", "D3", "D4", "D5", "D6"]
-right = ["5V", "GND", "3V3", "D10", "D9", "D8", "D7"]
+right = ["VBUS", "GND", "3V3", "D10", "D9", "D8", "D7"]
 for k in range(7):
     lu = k == 6
     ru = k in (0, 1, 6)
@@ -106,7 +106,7 @@ for k in range(7):
     dot(NX1, NY[k], {0: RED, 1: BLK, 6: GRN}.get(k, "#c4c4c4"), 7 if ru else 4)
 
 wire([(NX1, NY[0]), (560, NY[0]), (560, y(0)), (AX, y(0))], RED, tag="W1", tag_at=(385, NY[0]))
-text((NX0 + NX1) / 2, 582, "5V pin = power in only.", 12, RED, "bold", "middle")
+text((NX0 + NX1) / 2, 582, "VBUS = 5 V power in only.", 12, RED, "bold", "middle")
 text((NX0 + NX1) / 2, 598, "Nimue makes its own 3.3 V inside.", 12, RED, "bold", "middle")
 wire([(NX1, NY[1]), (530, NY[1]), (530, y(2)), (AX, y(2))], BLK, tag="W2", tag_at=(385, NY[1]))
 wire([(NX1, NY[6]), (500, NY[6]), (500, y(5)), (AX, y(5))], GRN, tag="W3", tag_at=(385, NY[6]))
@@ -164,7 +164,7 @@ LY = 1075
 add(f'<rect x="60" y="{LY}" width="1380" height="168" rx="12" fill="#fafafa" stroke="#ccc" stroke-width="2"/>')
 text(80, LY + 28, "Wire list (Merlin pin numbers are J3 from Waveshare's schematic; pin 1 is the 5V end; the board prints GPIO numbers, not pin numbers)", 16, "#111", "bold")
 rows = [
-    ("W1", RED, "Nimue 5V → Merlin 5V (pin 1), the only 5 V wire"),
+    ("W1", RED, "Nimue VBUS → Merlin 5V (pin 1 or 3), the only 5 V wire"),
     ("W2", BLK, "Nimue GND → Merlin GND (pin 5)"),
     ("W3", GRN, "Nimue D7 (TX) → Merlin GPIO5 (pin 11), Merlin listens"),
     ("W4", PUR, "Merlin GPIO4 (pin 14) → Nimue D6 (RX), optional, dashed"),
@@ -180,9 +180,10 @@ for k, (tag, col, t) in enumerate(rows):
     text(cx + 40, cy, f"<tspan font-weight=\"bold\">{tag}</tspan>  {t}", 14, "#222")
 
 text(60, LY + 196, "⚠ 3.3 V on every signal pin. Never put Merlin's 5V on any GPIO of Nimue, Iolaus or Merlin.", 13, RED, "bold")
-text(60, LY + 218, "Feed Nimue from Merlin 5V only with Nimue's USB unplugged. Feed Iolaus from Merlin 3V3 only with its USB and battery unplugged.", 13, RED, "bold")
+text(60, LY + 218, "Feed Nimue VBUS from Merlin 5V only with Nimue's USB unplugged. Feed Iolaus from Merlin 3V3 only with its USB and battery unplugged.", 13, RED, "bold")
 text(60, LY + 242, "METER CHECK 1 (Merlin on USB, nothing else wired, black probe on GND): pins 1 and 3 read 5.0 V; pins 2 and 18 read 3.3 V; GPIO5, 21 and 22 read 0 V. If not, stop.", 13, "#111", "bold")
-text(60, LY + 264, "METER CHECK 2 (everything unplugged, meter on beep): each wire beeps end-to-end. Merlin 5V to GPIO5, GPIO21, GPIO22 and 3V3 must NOT beep.", 13, "#111", "bold")
+text(60, LY + 264, "METER CHECK 2 (everything unplugged, meter on beep): each wire beeps end-to-end. Merlin 5V to GPIO5, GPIO21, GPIO22, 3V3 and Nimue 3V3 must NOT beep.", 13, "#111", "bold")
 text(60, LY + 286, "Camera (OV5647, Phase 3) uses Merlin's CAMERA ribbon socket, not header wires.", 13, "#333")
+text(60, LY + 308, "YOUR REAL WIRES: red = GND, teal/green = power (3V3 or VBUS). Diagram colours are only for reading the drawing.", 13, RED, "bold")
 add("</svg>")
 open(out, "w").write("\n".join(s))
