@@ -8,6 +8,8 @@ Phase 3 (P4 camera) and Phase 4 (optional add-ons) are parked for later research
 
 ## Where we left off
 
+Updated 10-31-2026. All four boards (Merlin P4, Nimue C5, Iolaus, Argus) flashed from PR #23. The C5 died during wiring; a new one arrives 10-31: follow shared-folder `hdh/new-c5-nimue-steps.md`. Nothing has been powered as a full system yet. Session note: [`docs/sessions/10-30-2026-build-and-flash.md`](docs/sessions/10-30-2026-build-and-flash.md).
+
 Updated 2026-10-26. V2 (Phase 1 + Phase 2) is built and bench-tested; Phases 3 and 4 are parked. Session note: [`docs/sessions/2026-10-26-01YKZUS1.md`](docs/sessions/2026-10-26-01YKZUS1.md).
 - State: the XIAO ESP32-C5 sniffer locks the default Tuya plug on boot and the UNO R4 WiFi shows bars, a peak dot (closest approach) and beeps. The R4 also serves a phone page (Wi-Fi `HDH-Finder`, `http://192.168.4.1`) with live dBm, a graph, a recommendation and up to 60 devices; hidden networks rank with the suspects and the page shows the BOOT presses that lock each. PRs #9 to #14 are merged and CI compiles every sketch. The phone page has not run on hardware yet. Details: [`docs/worklog/2026-10-26-c5-firmware-review.md`](docs/worklog/2026-10-26-c5-firmware-review.md).
 - READ FIRST (2026-10-27): Taelor says the current setup is too fiddly to work with; rethink for ease of use before adding features, see [`docs/v2/NOTE-ease-of-use-redesign.md`](docs/v2/NOTE-ease-of-use-redesign.md). Bluetooth scan and Wi-Fi/Bluetooth switch are on PR #16 (green, untested on hardware, default Wi-Fi only).
